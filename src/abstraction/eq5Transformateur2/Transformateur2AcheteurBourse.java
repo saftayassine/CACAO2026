@@ -11,7 +11,7 @@ import abstraction.eqXRomu.produits.Feve;
 public class Transformateur2AcheteurBourse extends Transformateur2Stock implements IAcheteurBourse {
 
 
-    public Transformateur2AcheteurBourse(List<Integer> stock){
+    public Transformateur2AcheteurBourse(){
         super();
     }
     public double demande(Feve f, double cours) {
@@ -23,7 +23,7 @@ public class Transformateur2AcheteurBourse extends Transformateur2Stock implemen
             return 0;
         }
     }
-
+    
     
     public void notificationAchat(Feve f, double quantiteEnT, double coursEnEuroParT) {
         this.getJournaux().get(1).ajouter("Achat effectué de: "+quantiteEnT+" fèves "+f+" au prix/tonne de "+coursEnEuroParT);

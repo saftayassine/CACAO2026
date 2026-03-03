@@ -69,10 +69,9 @@ public class Transformateur2Acteur implements IActeur {
 		return res;
 	}
 
-	// Renvoie les journaux
+	// Renvoie les journaux, auteur Maxence
 	public List<Journal> getJournaux() {
-		List<Journal> res=new ArrayList<Journal>();
-		return res;
+		return this.Journaux;
 	}
 
 	////////////////////////////////////////////////////////
