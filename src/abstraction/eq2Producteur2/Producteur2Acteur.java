@@ -2,17 +2,22 @@ package abstraction.eq2Producteur2;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
 public class Producteur2Acteur implements IActeur {
 	
 	protected int cryptogramme;
+	protected Variable stockTotal;
+	protected HashMap<Feve, Variable> stocks;
+	private int numero = 0;
 	protected Journal journal = new Journal("Journal Eq2", this);
 	protected Journal JournalBanque;
 
@@ -20,6 +25,12 @@ public class Producteur2Acteur implements IActeur {
 	public Producteur2Acteur() {
 
 		this.JournalBanque = new Journal("Journal Banque Eq2", this);
+		// Thomas
+		this.stocks = new HashMap<Feve, Variable>();
+		for (Feve f : Feve.values()) {
+			this.stocks.put(f, new Variable("Stock " + f, this, 0.0));
+		}
+		this.stockTotal = new Variable("Stock Total EQ2", this, 0.0);
 	}
 	
 	public void initialiser() {
@@ -38,8 +49,18 @@ public class Producteur2Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 
 	public void next() {
-		int etape = Filiere.LA_FILIERE.getEtape();
-		journal.ajouter("Étape " + etape);
+		// Thomas
+		double total = 0.0;
+		for (Feve f : Feve.values()) {
+			Variable v = this.stocks.get(f);
+			if (v != null) {
+				total += v.getValeur();
+			}
+		}
+		this.stockTotal.setValeur(this, total);
+		
+		journal.ajouter("Numero : " + numero + " | Stock total : " + total + " t");
+		numero++;
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -47,12 +68,13 @@ public class Producteur2Acteur implements IActeur {
 	}
 
 	public String getDescription() {
-		return "Bla bla bla";
+		return "Producteur de fèves de cacao simples (BQ, MQ, HQ).";
 	}
 
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+		res.add(this.stockTotal);
 		return res;
 	}
 
