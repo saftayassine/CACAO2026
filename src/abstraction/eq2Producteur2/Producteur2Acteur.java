@@ -35,7 +35,16 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	}
 	
 	public void initialiser() {
-	}
+    for (Feve f : Feve.values()) {
+        if (f == Feve.F_MQ) {
+            this.stocks.get(f).setValeur(this, 500);
+        } else if (f == Feve.F_BQ) {
+            this.stocks.get(f).setValeur(this, 300);
+        } else if (f == Feve.F_HQ) {
+            this.stocks.get(f).setValeur(this, 200);
+        }
+    }
+}
 
 	public String getNom() {// NE PAS MODIFIER
 		return "EQ2";
@@ -149,7 +158,7 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	public double offre(Feve f, double cours) {
 		// Thomas
 		if (f == Feve.F_MQ) {
-			return 120.0;
+			return 120;
 		} else {
 			return 0.0;
 		}
