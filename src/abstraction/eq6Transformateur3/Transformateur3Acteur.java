@@ -2,6 +2,7 @@ package abstraction.eq6Transformateur3;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import abstraction.eqXRomu.filiere.Filiere;
@@ -14,8 +15,11 @@ public class Transformateur3Acteur implements IActeur {
 	
 	protected Journal journal = new Journal("Journal Eq6", this);
 	protected int cryptogramme;
+	
+	protected Transformateur3Stocks stocks;
 
 	public Transformateur3Acteur() {
+		this.stocks = new Transformateur3Stocks(this);
 	}
 	
 	public void initialiser() {
@@ -49,6 +53,7 @@ public class Transformateur3Acteur implements IActeur {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+		res.add(this.stocks.getTotalStockVolume());
 		return res;
 	}
 
@@ -108,7 +113,7 @@ public class Transformateur3Acteur implements IActeur {
 
 	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
-			return 0; // A modifier
+			return this.stocks.getQuantiteEnStock(p);
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}
