@@ -22,11 +22,10 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	protected Journal journal = new Journal("Journal Eq2", this);
 	protected Journal JournalBanque;
 
-
+	/** @author Thomas */
 	public Producteur2Acteur() {
 
 		this.JournalBanque = new Journal("Journal Banque Eq2", this);
-		// Thomas
 		this.stocks = new HashMap<Feve, Variable>();
 		for (Feve f : Feve.values()) {
 			this.stocks.put(f, new Variable("Stock " + f, this, 0.0));
@@ -57,9 +56,8 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	////////////////////////////////////////////////////////
 	//         En lien avec l'interface graphique         //
 	////////////////////////////////////////////////////////
-
+	/** @author Thomas */
 	public void next() {
-		// Thomas
 		double total = 0.0;
 		for (Feve f : Feve.values()) {
 			Variable v = this.stocks.get(f);
@@ -153,17 +151,16 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	////////////////////////////////////////////////////////
 	//             En lien avec la Bourse                //
 	////////////////////////////////////////////////////////
-
+	/** @author Simon */
 	@Override
 	public double offre(Feve f, double cours) {
-		// Thomas
 		if (f == Feve.F_MQ) {
 			return 120;
 		} else {
 			return 0.0;
 		}
 	}
-
+	/** @author Simon */
 	@Override
 	public double notificationVente(Feve f, double quantiteEnT, double coursEnEuroParT) {
 		Variable v = this.stocks.get(f);

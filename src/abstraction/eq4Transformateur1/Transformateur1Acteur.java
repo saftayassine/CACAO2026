@@ -10,18 +10,22 @@ import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.IProduit;
 
-public class Transformateur1Acteur implements IActeur {
-	
-	private Journal journal= new Journal("numéro de l'étape",this );
 
+public class Transformateur1Acteur implements IActeur {
+	/**@author Ewan Lefort */
+	private Journal journal= new Journal("numéro de l'étape",this );
+	Transformateur1Stock stock= new Transformateur1Stock();
 	protected int cryptogramme;
-	private Variable v;
 
 	public Transformateur1Acteur() {
 	}
-	
-	public void initialiser() {if (Filiere.LA_FILIERE.getEtape()>=0){
-		journal.ajouter("etape:"+Filiere.LA_FILIERE.getEtape());}
+	/**@author Ewan Lefort */
+	public void initialiser() 
+	{if (Filiere.LA_FILIERE.getEtape()>=0){
+		journal.ajouter("etape:"+Filiere.LA_FILIERE.getEtape());
+		
+	}
+
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -35,7 +39,7 @@ public class Transformateur1Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 	//         En lien avec l'interface graphique         //
 	////////////////////////////////////////////////////////
-
+	/**@author Ewan Lefort */
 	public void next() {
 		if (Filiere.LA_FILIERE.getEtape()>=0){
 			int etape= Filiere.LA_FILIERE.getEtape()+1;
@@ -49,10 +53,13 @@ public class Transformateur1Acteur implements IActeur {
 	public String getDescription() {
 		return "Bla bla bla";
 	}
-
-	// Renvoie les indicateurs
+	/**@author Ewan Lefort */
+	// Renvoie les indicateurs.
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+		Variable totalstocks= new Variable("EQ4T Total Stocks", "<html>Quantite totale de feves en stock</html>", this,0);
+		totalstocks.setValeur(this, this.stock.getTotalStocks(), cryptogramme);
+		res.add(totalstocks);
 		return res;
 	}
 
@@ -61,8 +68,8 @@ public class Transformateur1Acteur implements IActeur {
 		List<Variable> res=new ArrayList<Variable>();
 		return res;
 	}
-
-	// Renvoie les journaux
+	/**@author Ewan Lefort */
+	// Renvoie les journaux.
 	public List<Journal> getJournaux() {
 		List<Journal> res=new ArrayList<Journal>();
 		res.add(journal);

@@ -1,6 +1,6 @@
 package abstraction.eq2Producteur2;
 import abstraction.eqXRomu.produits.Feve;
-//PAUL DELACOUR
+/** @author Paul */
 public class Plantation {
     private Feve typeFeve;          // Type de fèves cultivées
     private int parcelles;          // Nombre de parcelles de 100 ha
