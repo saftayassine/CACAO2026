@@ -3,7 +3,7 @@ import abstraction.eqXRomu.produits.Feve;
 /** @author Paul */
 public class Plantation {
     private Feve typeFeve;          // Type de fèves cultivées
-    private int parcelles;          // Nombre de parcelles de 100 ha
+    private int parcelles;          // Nombre de parcelles de 1 ha
     private int age;                // Âge de la plantation en steps
     private final int dureeDeVie;   // Durée de vie maximale avant remplacement
     private final int tempsAvantProduction; // Temps nécessaire avant production
@@ -24,41 +24,41 @@ public class Plantation {
             case F_BQ:
                 this.dureeDeVie = 960;  // 40 ans
                 this.tempsAvantProduction = 72;  // 3 ans
-                this.productionParParcelle = 3 ; //  tonnes par hectare à chaque step
-                this.prix_achat = 0;
-                this.prix_vente = 0;
-                this.prix_replantation = 0;
-                this.salaire_employe = 0;
+                this.productionParParcelle = 105 000 ; //  fèves par parcelle a chaque next
+                this.prix_achat = ;
+                this.prix_vente = ;
+                this.prix_replantation = ;
+                this.salaire_employe = 1800;
                 break;
  
             case F_MQ:
                 this.dureeDeVie = 960;
                 this.tempsAvantProduction = 72; // 3 ans
-                this.productionParParcelle = 4;
-                this.prix_achat = 0;
-                this.prix_vente = 0;
-                this.prix_replantation =0 ;
-                this.salaire_employe = 0;
+                this.productionParParcelle = 85 000;
+                this.prix_achat = ;
+                this.prix_vente = ;
+                this.prix_replantation = ;
+                this.salaire_employe = 1800;
                 break;
 
             case F_HQ:
                 this.dureeDeVie = 960;
                 this.tempsAvantProduction = 72; // 5 ans
-                this.productionParParcelle = 2;
-                this.prix_achat = 0;
-                this.prix_vente = 0;
-                this.prix_replantation = 0;
-                this.salaire_employe =0 ;
+                this.productionParParcelle = 63 000;
+                this.prix_achat = ;
+                this.prix_vente = ;
+                this.prix_replantation = ;
+                this.salaire_employe = 1800;
                 break;
 
             case F_HQ_E:
                 this.dureeDeVie = 960;
                 this.tempsAvantProduction = 72; // 5 ans
-                this.productionParParcelle = 0;
-                this.prix_achat = 0;
-                this.prix_vente = 0;
-                this.prix_replantation = 0;
-                this.salaire_employe = 0;
+                this.productionParParcelle = 63 000 ;
+                this.prix_achat = ;
+                this.prix_vente = ;
+                this.prix_replantation = ;
+                this.salaire_employe = 1800;
                 break;
             
             default:
@@ -66,11 +66,43 @@ public class Plantation {
         }
     }
 
-    /** @author Simon */
 
-    public Feve getTypeFeve() {
+
+    // Méthode pour vérifier si la plantation est productive
+    public boolean estProductive() {
+        return age >= tempsAvantProduction && age < dureeDeVie;
+    }
+
+
+
+
+    /**
+     * Avance l'âge de la plantation d'un step et renvoie la quantité de fèves produites.
+     */
+    public double prodPlantation() {
+        if (age == 0) {
+            return 0; // Plantation récente, pas encore en production
+        }
+        else if (age < tempsAvantProduction) {
+            return 0; // La plantation n'est pas encore en production
+        }
+        if (age >= dureeDeVie) {
+            return 0; // Plantation morte, nécessite un remplacement
+        }
+
+        // Calcul de la production en fèves sèches
+        double fevesTotales = parcelles * productionParParcelle;
+
+        return fevesTotales;
+    }
+
+    public void add_age() {
+        age++;
+    }
+
+        public Feve getTypeFeve() {
         return typeFeve;
-    } 
+    }
 
     public int getParcelles() {
         return parcelles;
@@ -109,6 +141,22 @@ public class Plantation {
     // Méthode pour vérifier si la plantation est productive
     public boolean estProductive() {
         return age >= tempsAvantProduction && age < dureeDeVie;
+    }
+
+    public String getEtat() {
+        if (age < tempsAvantProduction) {
+            return "en croissance";
+        } 
+    
+        else if (age >= tempsAvantProduction && age < dureeDeVie) {
+            return "en production";
+        } 
+    
+        else if (age >= dureeDeVie) {
+            return "mort";
+        }
+
+        else return "inconnu";
     }
 
 }
