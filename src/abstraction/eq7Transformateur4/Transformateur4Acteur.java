@@ -14,9 +14,13 @@ public class Transformateur4Acteur implements IActeur {
 	
 	protected int cryptogramme;
 	private Journal journal;
+	private StockEq7 stock_Equitable;
+	private StockEq7 stock_PasEquitable;
 
 	public Transformateur4Acteur() {
 		this.journal = new Journal("Journal equipe 7 (transformateur)", this);
+		this.stock_Equitable = new StockEq7(this);
+		this.stock_PasEquitable = new StockEq7(this);
 	}
 	
 	public void initialiser() {
