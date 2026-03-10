@@ -18,6 +18,8 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	protected int cryptogramme;
 	protected Variable stockTotal;
 	protected HashMap<Feve, Variable> stocks;
+	protected HashMap<Feve,Variable> stockvar;
+	protected HashMap<Feve,Double> fevesSeches;
 	private int numero = 0;
 	protected Journal journal = new Journal("Journal Eq2", this);
 	protected Journal JournalBanque  = new Journal("Journal Banque Eq2", this);;
