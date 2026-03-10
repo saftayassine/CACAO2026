@@ -16,20 +16,21 @@ import abstraction.eqXRomu.produits.IProduit;
 public class Producteur3Acteur implements IActeur {
 	private Journal journal_periode;
 	protected int cryptogramme;
-	protected HashMap<Feve,Variable> stock;
-	private double stockTotal;
-	private Variable StockToltal;
+	protected Producteur3Stock stock; 
+	private Variable StockTotal;
 	
 
 	public Producteur3Acteur() {
-		this.journal_periode = new Journal("Journal des périodes", this);
-		this.stock = new HashMap<Feve, Variable>();
-		this.stockTotal=0;
-		for (Feve f : Feve.values()) {
-    		this.stock.put(f, new VariableReadOnly(this + " Stock " + f, this, 10.0));
-			this.stockTotal=this.stockTotal+this.stock.get(f).getValeur();
-		}
-		this.StockToltal= new VariableReadOnly(this + " Stock total", this, this.stockTotal);
+		/** @author Vassili Spiridonov */
+		this.journal_periode = new Journal("Journal des périodes", this); 
+
+		
+		/** @author Guillaume Leroy */
+		this.stock = new Producteur3Stock();
+		this.stock.addStock(Feve.F_BQ , 250.0);
+		this.stock.addStock(Feve.F_MQ , 250.0);
+		this.stock.addStock(Feve.F_HQ , 250.0);
+		this.StockTotal= new VariableReadOnly(this + " Stock total", this, this.stock.getStockTotal());
 	}
 	
 	public void initialiser() {
@@ -50,14 +51,7 @@ public class Producteur3Acteur implements IActeur {
 	public void next() {
 		// défi 1 
 		this.journal_periode.ajouter("période : "+ Filiere.LA_FILIERE.getEtape());
-		//défi 2
-		this.StockToltal.retirer(this, this.stockTotal, cryptogramme);
-		this.stockTotal=0;
-		for (Feve f : Feve.values()) {
-    		this.stock.get(f).ajouter(this,10, cryptogramme);;
-    		this.stockTotal=this.stockTotal+this.stock.get(f).getValeur();
-		}
-		this.StockToltal.ajouter(this, this.stockTotal, cryptogramme);
+		this.StockTotal.setValeur(this,this.stock.getStockTotal(), cryptogramme);
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -71,14 +65,13 @@ public class Producteur3Acteur implements IActeur {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
-		res.add(this.StockToltal);
+		res.add(this.StockTotal);
 		return res;
 	}
 
 	// Renvoie les parametres
 	public List<Variable> getParametres() {
 		List<Variable> res=new ArrayList<Variable>();
-		res.addAll(this.stock.values());
 		return res;
 	}
 

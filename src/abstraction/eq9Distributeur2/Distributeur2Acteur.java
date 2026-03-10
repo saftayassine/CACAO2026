@@ -23,10 +23,14 @@ public class Distributeur2Acteur implements IActeur {
 		this.stock = new HashMap<>();
 		this.indicateurStockTotal = new Variable("EQ9_stock_total", this, 0.0);
 	}
+	    
 	
+	// Ajoute 100 tonnes d'un produit en rayon 
+		/**
+         * @author Anass Ouisrani
+         */ 
 	public void initialiser() {
 		this.stock.clear();
-		// Ajoute 100 tonnes d'un produit en rayon - Anass Ouisrani 
 		List<abstraction.eqXRomu.produits.ChocolatDeMarque> produits = abstraction.eqXRomu.filiere.Filiere.LA_FILIERE.getChocolatsProduits();
 		if (produits != null && !produits.isEmpty()) {
 			IProduit produit = produits.get(0);
@@ -46,12 +50,22 @@ public class Distributeur2Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 	//         En lien avec l'interface graphique         //
 	////////////////////////////////////////////////////////
-
+     
+		/**
+         * @author Paul Juhel
+		 * @author Anass Ouisrani
+         */ 
 	public void next() {
 		int etape = Filiere.LA_FILIERE.getEtape();
 		this.journal.ajouter("ETAPE" + etape);
+		List<abstraction.eqXRomu.produits.ChocolatDeMarque> produits = abstraction.eqXRomu.filiere.Filiere.LA_FILIERE.getChocolatsProduits();
+		if (produits != null && !produits.isEmpty()) {
+			IProduit produit = produits.get(0);
+			double quantiteActuelle = this.stock.getOrDefault(produit, 0.0);
+			this.stock.put(produit, quantiteActuelle + 100000.0);
 		// Mettre à jour l'indicateur de stock total
 		this.indicateurStockTotal.setValeur(this, getStockTotal());
+		}
 	}
 
 	private double getStockTotal() {
@@ -69,7 +83,10 @@ public class Distributeur2Acteur implements IActeur {
 	public String getDescription() {
 		return "Bla bla bla";
 	}
-
+     
+		/**
+         * @author Anass Ouisrani
+         */ 
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();

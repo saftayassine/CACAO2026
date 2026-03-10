@@ -11,7 +11,7 @@ import abstraction.eq4Transformateur1.Transformateur1;
 import abstraction.eq5Transformateur2.Transformateur2;
 import abstraction.eq6Transformateur3.Transformateur3;
 import abstraction.eq7Transformateur4.Transformateur4;
-import abstraction.eq8Distributeur2.Distributeur2;
+import abstraction.eq8Distributeur1.Distributeur1;
 import abstraction.eqXRomu.acteurs.DistributeurX;
 import abstraction.eqXRomu.acteurs.ProducteurX;
 import abstraction.eqXRomu.acteurs.Romu;
@@ -89,7 +89,7 @@ public class FiliereParDefaut extends Filiere {
 		this.ajouterActeur(new Transformateur3());
 		this.ajouterActeur(new TransformateurX());
 		this.ajouterActeur(new Transformateur4());
-		this.ajouterActeur(new Distributeur2());
+		this.ajouterActeur(new Distributeur1());
 		this.ajouterActeur(new abstraction.eq9Distributeur2.Distributeur2());
 		this.ajouterActeur(new DistributeurX());
 		this.ajouterActeur(new Romu());

@@ -8,13 +8,28 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+import abstraction.eqXRomu.general.VariableReadOnly;
+import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
+import abstraction.eqXRomu.encheres.MiseAuxEncheres;
 
+/** 
+ * @author Elise Dossal
+ */
 public class Producteur1Acteur implements IActeur {
-	
+
+
+	protected Journal journal;
 	protected int cryptogramme;
+	protected VariableReadOnly stock;
 
 	public Producteur1Acteur() {
+
+		//Créer un journal à chaque next  
+		this.journal = new Journal("Journal "+this.getNom(), this);
+
+		//Ajoutez un indicateur du volume total de notre stock, en tonne Elise Dossal/Théophile Trillat
+		this.stock = new VariableReadOnly("stock", "<html>Stock de fève</html>",this, 0.0, 10.0, 250.0);
 	}
 	
 	public void initialiser() {
@@ -33,6 +48,9 @@ public class Producteur1Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 
 	public void next() {
+		this.journal.ajouter("Check");
+
+
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -58,6 +76,7 @@ public class Producteur1Acteur implements IActeur {
 	// Renvoie les journaux
 	public List<Journal> getJournaux() {
 		List<Journal> res=new ArrayList<Journal>();
+		res.add(this.journal);
 		return res;
 	}
 

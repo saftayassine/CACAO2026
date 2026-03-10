@@ -16,8 +16,8 @@ public class Transformateur2Acteur implements IActeur {
 	protected int cryptogramme;
 	private List<Journal> Journaux;
 
-	/* Auteurs pour Journaux --> Pierre
-	*/ 
+	/** @author Pierre
+    **/
 	public Transformateur2Acteur() {
 		this.Journaux = new ArrayList<Journal>();
 		this.Journaux.add(new Journal("Ventes", this));
@@ -69,7 +69,8 @@ public class Transformateur2Acteur implements IActeur {
 		return res;
 	}
 
-	// Renvoie les journaux, auteur Maxence
+	/** @author Maxence
+    **/
 	public List<Journal> getJournaux() {
 		return this.Journaux;
 	}
