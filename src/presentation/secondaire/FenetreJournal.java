@@ -84,7 +84,36 @@ public class FenetreJournal extends JFrame {
 			gg.setVisible(false);
 
 			if (gg.checkBox!=null) {gg.checkBox.setSelected(false);} 
-		}});
+		}
+		public void windowOpened(WindowEvent e) {
+			if (journal.getCreateur() instanceof abstraction.eq6Transformateur3.Transformateur3Acteur) {
+				abstraction.eq6Transformateur3.Transformateur3Acteur acteur = (abstraction.eq6Transformateur3.Transformateur3Acteur) journal.getCreateur();
+				abstraction.eq6Transformateur3.Transformateur3Stocks stocks = acteur.getStocks();
+				if (stocks != null) {
+					journal.ajouter("=== État actuel des stocks ===");
+					for (abstraction.eqXRomu.produits.Feve f : stocks.getStockFeves().keySet()) {
+						double q = stocks.getStockFeves().get(f);
+						if (q > 0) {
+							journal.ajouter("Fèves " + f.getGamme() + " " + (f.isEquitable() ? "équitable" : "non équitable") + " : " + q + " kg");
+						}
+					}
+					for (abstraction.eqXRomu.produits.Chocolat c : stocks.getStockChoco().keySet()) {
+						double q = stocks.getStockChoco().get(c);
+						if (q > 0) {
+							journal.ajouter("Chocolat " + c.getGamme() + " " + (c.isEquitable() ? "équitable" : "non équitable") + " : " + q + " kg");
+						}
+					}
+					for (abstraction.eqXRomu.produits.ChocolatDeMarque cm : stocks.getStockChocoMarque().keySet()) {
+						double q = stocks.getStockChocoMarque().get(cm);
+						if (q > 0) {
+							journal.ajouter("Chocolat de marque " + cm.getMarque() + " : " + q + " kg");
+						}
+					}
+					journal.ajouter("Volume total de stock = " + stocks.getTotalStockVolume().getValeur() + " kg");
+				}
+			}
+		}
+		});
 
 	}
 

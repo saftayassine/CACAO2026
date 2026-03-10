@@ -2,20 +2,21 @@ package abstraction.eq6Transformateur3;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+import abstraction.eqXRomu.produits.Chocolat;
+import abstraction.eqXRomu.produits.ChocolatDeMarque;
+import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
 public class Transformateur3Acteur implements IActeur {
 	
 	protected Journal journal = new Journal("Journal Eq6", this);
 	protected int cryptogramme;
-	
 	protected Transformateur3Stocks stocks;
 
 	public Transformateur3Acteur() {
@@ -23,6 +24,17 @@ public class Transformateur3Acteur implements IActeur {
 	}
 	
 	public void initialiser() {
+		this.stocks.initialiserStocks(this, this.cryptogramme);
+		journal.ajouter("Stocks initialisés :");
+		for (Feve f : this.stocks.getStockFeves().keySet()) {
+			double q = this.stocks.getStockFeves().get(f);
+			journal.ajouter("Fèves " + f.getGamme() + " " + (f.isEquitable() ? "équitable" : "non équitable") + " : " + q + " kg");
+		}
+		for (Chocolat c : this.stocks.getStockChoco().keySet()) {
+			double q = this.stocks.getStockChoco().get(c);
+			journal.ajouter("Chocolat " + c.getGamme() + " " + (c.isEquitable() ? "équitable" : "non équitable") + " : " + q + " kg");
+		}
+		journal.ajouter("Volume total = " + this.stocks.getTotalStockVolume().getValeur() + " kg");
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -40,6 +52,26 @@ public class Transformateur3Acteur implements IActeur {
 	public void next() {
 		int etape = Filiere.LA_FILIERE.getEtape();
 		journal.ajouter("Étape " + etape);
+		journal.ajouter("=== État des stocks ===");
+		for (Feve f : this.stocks.getStockFeves().keySet()) {
+			double q = this.stocks.getStockFeves().get(f);
+			if (q > 0) {
+				journal.ajouter("Fèves " + f.getGamme() + " " + (f.isEquitable() ? "équitable" : "non équitable") + " : " + q + " kg");
+			}
+		}
+		for (Chocolat c : this.stocks.getStockChoco().keySet()) {
+			double q = this.stocks.getStockChoco().get(c);
+			if (q > 0) {
+				journal.ajouter("Chocolat " + c.getGamme() + " " + (c.isEquitable() ? "équitable" : "non équitable") + " : " + q + " kg");
+			}
+		}
+		for (ChocolatDeMarque cm : this.stocks.getStockChocoMarque().keySet()) {
+			double q = this.stocks.getStockChocoMarque().get(cm);
+			if (q > 0) {
+				journal.ajouter("Chocolat de marque " + cm.getMarque() + " : " + q + " kg");
+			}
+		}
+		journal.ajouter("Volume total de stock : " + this.stocks.getTotalStockVolume().getValeur() + " kg");
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -111,9 +143,17 @@ public class Transformateur3Acteur implements IActeur {
 		return Filiere.LA_FILIERE;
 	}
 
+	public Transformateur3Stocks getStocks() {
+		return this.stocks;
+	}
+
 	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
-			return this.stocks.getQuantiteEnStock(p);
+			if (this.stocks != null) {
+				return this.stocks.getQuantiteEnStock(p);
+			} else {
+				return 0.0;
+			}
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}
