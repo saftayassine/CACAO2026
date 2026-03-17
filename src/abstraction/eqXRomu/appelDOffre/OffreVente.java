@@ -30,6 +30,10 @@ public class OffreVente implements Comparable<OffreVente>{
 	public double getPrixT() {
 		return prixT;
 	}
+	
+	public double getQuantiteT() { // delegation
+		return offre.getQuantiteT();
+	}
 
 	public String toString() {
 		return "["+offre+" v="+vendeur+" choco="+produit+" px="+prixT+"]";

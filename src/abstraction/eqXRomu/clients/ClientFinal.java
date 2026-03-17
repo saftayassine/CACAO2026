@@ -302,6 +302,8 @@ public class ClientFinal implements IActeur, IAssermente, PropertyChangeListener
 					totalVentes+=quantiteAchetee;
 					Filiere.LA_FILIERE.getBanque().virer(this, cryptogramme, dist, quantiteAchetee*dist.prix(choco));
 					dist.vendre(this, choco, quantiteAchetee, quantiteAchetee*pri, this.cryptos.get(dist));
+
+					Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), dist, choco, -quantiteAchetee, "CLIENTS");
 				} 
 				if (quantiteDesiree>enVente) {
 					dist.notificationRayonVide(choco, this.cryptos.get(dist));

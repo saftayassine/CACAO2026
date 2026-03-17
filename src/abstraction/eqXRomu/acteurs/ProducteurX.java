@@ -1,6 +1,18 @@
 package abstraction.eqXRomu.acteurs;
 
-public class ProducteurX extends ProducteurXVendeurBourse {
+/**
+ * ProducteurXActeur
+ *    /|\
+ *     |
+ * ProdcuteurXVendeurBourse
+ *    /|\
+ *     |
+ * ProducteurXVendeurCCadre
+ *    /|\
+ *     |
+ * ProducteurX
+ */
+public class ProducteurX extends ProducteurXVendeurCCadre {
 	public ProducteurX() {
 		super();
 	}

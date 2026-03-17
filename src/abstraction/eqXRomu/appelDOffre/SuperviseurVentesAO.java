@@ -92,6 +92,8 @@ public class SuperviseurVentesAO implements IActeur, IAssermente {
 						this.laBanque.virer(acheteur, this.cryptos.get(acheteur), retenue.getVendeur(), retenue.getPrixT()*retenue.getOffre().getQuantiteT());
 						// On notifie l'acheteur que sa proposition a ete retenue afin qu'il mette a jour ses stocks. 
 						retenue.getVendeur().notifierVenteAO(retenue);
+						Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), acheteur, produit, quantiteT, "AO");
+						Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), retenue.getVendeur(), produit, -quantiteT, "AO");
 						// on avertit les autres acheteurs que leur proposition n'a pas ete retenue
 						for (OffreVente p : propositions) {
 							if (!p.equals(retenue)) {

@@ -50,7 +50,6 @@ public class BourseCacao implements IActeur, IAssermente {
 		// 1472 euros = 1600 dollars prix min du cours du cacao par tonne (sur les 20 annees avant 2023)
 		// 2417 euros = 2627 dollars prix moy du cours du cacao par tonne de l'annee passee
 		// 3221 euros = 3500 dollars prix max du cours du cacao par tonne (sur les 20 annees avant 2023)
-
 		this.cours.put(Feve.F_HQ, new VariableReadOnly(getNom()+" cours H", "<html>le cours actuel<br>de FEVE_HAUTE</html>", this,1672.0, 3621.0, 2717.0)); 
 		this.cours.put(Feve.F_MQ, new VariableReadOnly(getNom()+" cours M", "<html>le cours actuel<br>de FEVE_MOYENNE</html>", this,1472.0, 3221.0, 2417.0)); 
 		this.cours.put(Feve.F_BQ, new VariableReadOnly(getNom()+" cours B", "<html>le cours actuel<br>de FEVE_BASSE</html>", this,1272.0, 3021.0, 2217.0));
@@ -270,8 +269,10 @@ public class BourseCacao implements IActeur, IAssermente {
                     double totalLivre=0;
 					for (IVendeurBourse v : offres.keySet()){
 						// La quantite vendue est au prorata de la quantite mis en vente
-						double quantite = (totalDemandes*offres.get(v))/totalOffres; 
+						double quantite = Math.min(offres.get(v),(totalDemandes*offres.get(v))/totalOffres); 
 						double livre = v.notificationVente(f, quantite,cours);
+						Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), (IActeur)v, f, -quantite, "BOURSE");
+
 						totalLivre+=livre;
 						obtenusV.get(f).get(v).ajouter(etape, quantite);
 						if (livre+EPSILON>=quantite) {
@@ -290,12 +291,15 @@ public class BourseCacao implements IActeur, IAssermente {
 							obtenusA.get(f).get(a).ajouter(etape, quantite);
 							boolean virementOk = banque.virer((IActeur)a, cryptos.get((IActeur)a), this,cours*quantite);
 							if (virementOk) {
-								a.notificationAchat(f, quantite, cours);
+								a.notificationAchat(f, quantite, cours);								
+								Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), (IActeur)a, f, quantite, "BOURSE");
 								journal.get(f).ajouter(Journal.texteColore((IActeur)a, ((IActeur)a).getNom()+" obtient "+Journal.doubleSur(quantite,2)+" et paye "+Journal.doubleSur(cours*quantite, 2)));
 							} else { // Normalement la transaction peut avoir lieu vu qu'on a verifie au prealable la capacite de l'acheteur a payer
 								a.notificationBlackList(DUREE_BLACKLIST);
 								blackListA.put(a,DUREE_BLACKLIST);
 							}
+						} else {
+							obtenusA.get(f).get(a).ajouter(etape, 0);
 						}
 					}
 				} else if (totalOffres<=totalDemandes && totalOffres>0.0){ // offre<demande : Les vendeurs vont vendre tout ce qu'ils ont mis en vente et les acheteurs auront des feves au prorata de leur proposition d'achat
@@ -304,13 +308,17 @@ public class BourseCacao implements IActeur, IAssermente {
 					for (IVendeurBourse v : offres.keySet()){
 						// Chaque vendeur vend tout ce qu'il a annonce vouloir vendre
 						double quantite = offres.get(v); 
+						journal.get(f).ajouter("vendeur "+v+" vend tout ="+quantite);
 						obtenusV.get(f).get(v).ajouter(etape, quantite);
 						double livre = v.notificationVente(f, quantite,cours);
+						Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), (IActeur)v, f, -quantite, "BOURSE");
+
 						if (livre+EPSILON>=quantite) {
 							banque.virer(this, crypto, (IActeur)v,cours*quantite);
 							totalLivre+=livre;
 							journal.get(f).ajouter(Journal.texteColore((IActeur)v, ((IActeur)v).getNom()+" vend "+Journal.doubleSur(quantite, 2)+"T, livre "+livre+"T et est paye "+Journal.doubleSur(cours*quantite, 2)));
 						} else {
+							journal.get(f).ajouter(Journal.texteColore((IActeur)v, "vendeur "+v+" blackliste : demande a vendre "+quantite+" mais livre "+livre));
 							v.notificationBlackList(DUREE_BLACKLIST);
 							blackListV.put(v,DUREE_BLACKLIST);
 						}
@@ -324,12 +332,17 @@ public class BourseCacao implements IActeur, IAssermente {
 								boolean virementOk = banque.virer((IActeur)a, cryptos.get((IActeur)a), this,cours*quantite);
 								if (virementOk) { // normalement c'est le cas vu qu'on a verifie auparavant
 									a.notificationAchat(f, quantite, cours);
+									Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), (IActeur)a, f, quantite, "BOURSE");
+
 									journal.get(f).ajouter(Journal.texteColore((IActeur)a, ((IActeur)a).getNom()+" obtient "+Journal.doubleSur(quantite,2)+" et paye "+Journal.doubleSur(cours*quantite, 2)));
 								} else {
+									journal.get(f).ajouter(Journal.texteColore((IActeur)a, "acheteur "+a+" blackliste : ne parvient pas a payer ce qu'il a demande en bourse"));
 									a.notificationBlackList(DUREE_BLACKLIST);
 									blackListA.put(a,DUREE_BLACKLIST);
 								}
 							}
+						} else {
+							obtenusA.get(f).get(a).ajouter(etape, 0);
 						}
 					}
 				}
@@ -403,11 +416,14 @@ public class BourseCacao implements IActeur, IAssermente {
 							s=i+";";
 							for (IAcheteurBourse a : ab) {
 								s=s+souhaitsA.get(f).get(a).getY(i)+";";
-								s=s+obtenusA.get(f).get(a).getY(i)+";";
+								s=s+(souhaitsA.get(f).get(a).getY(i)>0?obtenusA.get(f).get(a).getY(i):0)+";";
 							}
 							for (IVendeurBourse a : vb) {
 								s=s+souhaitsV.get(f).get(a).getY(i)+";";
-								s=s+obtenusV.get(f).get(a).getY(i)+";";
+								s=s+(souhaitsV.get(f).get(a).getY(i)>0?obtenusV.get(f).get(a).getY(i):0)+";";
+								// if (souhaitsV.get(f).get(a).getY(i)<obtenusV.get(f).get(a).getY(i)) {
+								// 	System.out.println(">>> "+a+" veut "+souhaitsV.get(f).get(a).getY(i)+" et obtient "+obtenusV.get(f).get(a).getY(i));
+								// }
 							}
 							aEcrire.println( s );
 //							System.out.println(s);
