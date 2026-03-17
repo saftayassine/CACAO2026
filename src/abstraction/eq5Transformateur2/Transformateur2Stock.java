@@ -43,19 +43,39 @@ public class Transformateur2Stock extends Transformateur2Acteur{
     }
 
     // Méthodes
+    
+	/** @author Pierre
+    **/
+	public List<Variable> getIndicateurs() {
+		List<Variable> res = super.getIndicateurs();
+        res.add(new Variable("Stock Fève", this, getStock_feve_total()));
+        res.add(new Variable("Stock Chocolat", this, getStock_feve_total()));
+		return res;
+	}
 
     /** @author Pierre
     **/
-    public Double getStock_feve(){
+    public Double getStock_feve_total(){
         return this.stock_feve.get(Feve.F_BQ) + this.stock_feve.get(Feve.F_BQ_E) + this.stock_feve.get(Feve.F_MQ) + this.stock_feve.get(Feve.F_MQ_E) + this.stock_feve.get(Feve.F_HQ) + this.stock_feve.get(Feve.F_HQ_E);
         }
     
     /** @author Pierre
     **/
-    public Double getStock_chocolat(){
+    public Double getStock_chocolat_total(){
         return this.stock_chocolat.get(Chocolat.C_BQ) + this.stock_feve.get(Chocolat.C_BQ_E) + this.stock_feve.get(Chocolat.C_MQ) + this.stock_feve.get(Chocolat.C_MQ_E) + this.stock_feve.get(Chocolat.C_HQ) + this.stock_feve.get(Chocolat.C_HQ_E);
-        }
-
+    }
+    /**
+     * @author Maxence
+     */
+    public Double getStock_feve(IProduit q){
+        return this.stock_feve.get(q);
+    }
+    /**
+     * @author Maxence
+     */
+    public Double getStock_chocolat(IProduit q){
+        return this.stock_chocolat.get(q);
+    }
     /** @author Pierre
     **/
     public void add_feve(Double n, Feve q){
