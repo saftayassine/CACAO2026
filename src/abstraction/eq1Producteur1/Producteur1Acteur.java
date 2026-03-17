@@ -11,7 +11,7 @@ import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.general.VariableReadOnly;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
-import abstraction.eqXRomu.encheres.MiseAuxEncheres;
+
 
 /** 
  * @author Elise Dossal
@@ -21,7 +21,7 @@ public class Producteur1Acteur implements IActeur {
 
 	protected Journal journal;
 	protected int cryptogramme;
-	protected VariableReadOnly stock;
+	protected Variable stock;
 
 	public Producteur1Acteur() {
 
@@ -29,7 +29,7 @@ public class Producteur1Acteur implements IActeur {
 		this.journal = new Journal("Journal "+this.getNom(), this);
 
 		//Ajoutez un indicateur du volume total de notre stock, en tonne Elise Dossal/Théophile Trillat
-		this.stock = new VariableReadOnly("stock", "<html>Stock de fève</html>",this, 0.0, 10.0, 250.0);
+		this.stock = new VariableReadOnly("stock de EQ1", "<html>Stock de EQ1</html>",this, 0.0, 10.0, 250.0);
 	}
 	
 	public void initialiser() {
@@ -48,7 +48,8 @@ public class Producteur1Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 
 	public void next() {
-		this.journal.ajouter("Check");
+		int etape = Filiere.LA_FILIERE.getEtape();
+		this.journal.ajouter(String.valueOf(etape));
 
 
 	}
@@ -64,6 +65,7 @@ public class Producteur1Acteur implements IActeur {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+		res.add(this.stock);
 		return res;
 	}
 
