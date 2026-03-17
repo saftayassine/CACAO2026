@@ -1,6 +1,6 @@
 package abstraction.eq9Distributeur2;
 
-public class Pseudo-code {
+public class Pseudo {
     
 
 
@@ -76,5 +76,5 @@ public class Pseudo-code {
     // - lancerAppelOffres()
     // - gererEncheres()
     // - negocierContratsCadres()
-    
-}
+
+    }
