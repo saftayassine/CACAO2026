@@ -40,7 +40,7 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AcheteurBo
     }
 
     public Enchere choisir(List<Enchere> propositions) {
-        Enchere choisie=propositions.getFirst();
+        Enchere choisie=propositions.get(0);
         for (Enchere enchere : propositions) {
             if(enchere.getPrixTonne()<choisie.getPrixTonne()){
                 choisie=enchere;
