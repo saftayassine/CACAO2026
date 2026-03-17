@@ -3,8 +3,8 @@ package abstraction.eq3Producteur3;
 import java.util.HashMap;
 import abstraction.eqXRomu.produits.Feve;
 
+/** @author Guillaume Leroy */
 public class Producteur3Stock {
-    /** @author Guillaume Leroy */
     private HashMap<Feve, Double> stock;
     public Producteur3Stock(){
         this.stock = new HashMap<Feve, Double>();

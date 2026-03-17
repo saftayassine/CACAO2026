@@ -26,13 +26,14 @@ public class Producteur3Acteur implements IActeur {
 
 		/** @author Guillaume Leroy */
 		this.stock = new Producteur3Stock();
-		this.stock.addStock(Feve.F_BQ , 250.0);
-		this.stock.addStock(Feve.F_MQ , 250.0);
-		this.stock.addStock(Feve.F_HQ , 250.0);
 		this.StockTotal= new VariableReadOnly(this + " Stock total", this, this.stock.getStockTotal());
 	}
 	
 	public void initialiser() {
+		/** @author Guillaume Leroy */
+		this.stock.addStock(Feve.F_BQ , 250.0);
+		this.stock.addStock(Feve.F_MQ , 250.0);
+		this.stock.addStock(Feve.F_HQ , 250.0);
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -50,7 +51,8 @@ public class Producteur3Acteur implements IActeur {
 	public void next() {
 		// défi 1 
 		this.journal_periode.ajouter("période : "+ Filiere.LA_FILIERE.getEtape()); /** @author Vassili Spiridonov */
-		this.StockTotal.setValeur(this,this.stock.getStockTotal(), cryptogramme);
+		// défi 2
+		this.StockTotal.setValeur(this,this.stock.getStockTotal(), cryptogramme); /** @author Guillaume Leroy */
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -63,6 +65,7 @@ public class Producteur3Acteur implements IActeur {
 
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
+		/** @author Guillaume Leroy */
 		List<Variable> res = new ArrayList<Variable>();
 		res.add(this.StockTotal);
 		return res;
@@ -76,7 +79,8 @@ public class Producteur3Acteur implements IActeur {
 
 	// Renvoie les journaux
 	public List<Journal> getJournaux() {
-		List<Journal> res=new ArrayList<Journal>(); /** @author Vassili Spiridonov */
+		/** @author Vassili Spiridonov */
+		List<Journal> res=new ArrayList<Journal>(); 
 		res.add(this.journal_periode);
 		return res;
 	}
