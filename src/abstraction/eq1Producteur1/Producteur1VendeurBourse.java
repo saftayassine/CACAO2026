@@ -36,6 +36,11 @@ public class Producteur1VendeurBourse extends Producteur1AcheteurBourse implemen
 	 * @return la quantite en tonnes de feves de type f que this souhaite vendre 
 	 */
 	public double offre(Feve f, double cours){
+        if(f == Feve.F_MQ){
+            return 120;
+        }
+
+        return 0;
     }
 
 
@@ -73,4 +78,3 @@ public class Producteur1VendeurBourse extends Producteur1AcheteurBourse implemen
 }
 
 //*/
-}
