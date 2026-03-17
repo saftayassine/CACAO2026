@@ -58,4 +58,8 @@ public class Arbre_Hectare extends Producteur3VendeurBourse{
         }
     }
 
+    public void ageIncr(){
+        this.age++;
+    }
+
 }
