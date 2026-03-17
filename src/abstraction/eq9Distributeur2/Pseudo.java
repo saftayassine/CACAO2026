@@ -129,14 +129,14 @@ public class Pseudo {
         return diffRel <= 0.03 && scoreFidelite >= 0.7;
     }
 
-    /**
-     * Achats en volume – V1 (tres basique).
-     *
-     * Regle : on vise un stock cible = ventes recentes * COUVERTURE_STEPS.
-     * Si le prix actuel est sous le prix moyen, on achete un peu plus.
-     */
-    public static class AchatsEnVolumeV1 {
-        private static final int COUVERTURE_STEPS = 6;
+   
+     // Achats en volume – V1.
+     
+     // Regle : on vise un stock cible = ventes recentes * COUVERTURE_STEPS.
+     // Si le prix actuel est sous le prix moyen, on achete un peu plus.
+     /** @author Paul Rossignol */
+    public double AchatsEnVolumeV1(ChocolatDeMarque produit, double prixActuel, double stockActuel, double capaciteStock) {
+        private static   final int COUVERTURE_STEPS = 6;
         private static final double FACTEUR_PRIX_BAS = 1.50;
 
         public double quantiteAAcheter(ChocolatDeMarque produit, double prixActuel, double stockActuel, double capaciteStock) {
