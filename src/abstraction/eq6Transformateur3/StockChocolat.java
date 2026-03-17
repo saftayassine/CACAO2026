@@ -30,7 +30,6 @@ public class StockChocolat{
         stock.put(Chocolat.C_HQ_E,100000);
         stock.put(Chocolat.C_MQ,0);
         stock.put(Chocolat.C_MQ_E,0);
-
     }
 
     // Ajouter un produit au stock
