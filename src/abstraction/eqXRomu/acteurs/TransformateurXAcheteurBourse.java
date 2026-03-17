@@ -15,6 +15,7 @@ public class TransformateurXAcheteurBourse extends TransformateurXActeur impleme
 
 	public void notificationAchat(Feve f, double quantiteEnT, double coursEnEuroParT) {
 		this.stockFeves.put(f, this.stockFeves.get(f)+quantiteEnT);
+		this.totalStocksFeves.ajouter(this, quantiteEnT, cryptogramme);
 	}
 
 

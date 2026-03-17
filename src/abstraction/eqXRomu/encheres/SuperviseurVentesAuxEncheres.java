@@ -101,6 +101,9 @@ public class SuperviseurVentesAuxEncheres implements IActeur, IAssermente {
 					this.laBanque.virer(retenue.getAcheteur(), this.cryptos.get(retenue.getAcheteur()), vendeur, retenue.getPrixTonne()*retenue.getMiseAuxEncheres().getQuantiteT());
 					// On notifie l'acheteur que sa proposition a ete retenue afin qu'il mette a jour ses stocks. 
 					retenue.getAcheteur().notifierAchatAuxEncheres(retenue);
+					Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), retenue.getAcheteur(), produit, quantiteT, "enchere");
+					Filiere.LA_FILIERE.ajouterEchange(this, this.cryptos.get(this), vendeur, produit, -quantiteT, "enchere");
+
 					// on avertit les autres acheteurs que leur proposition n'a pas ete retenue
 					for (Enchere p : encheres) {
 						if (!p.equals(retenue)) {

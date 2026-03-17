@@ -1,5 +1,7 @@
 package abstraction.eqXRomu.encheres;
 
+import abstraction.eqXRomu.produits.IProduit;
+
 public class Enchere implements Comparable<Enchere>{
 	private MiseAuxEncheres miseAuxEncheres;
 	private IAcheteurAuxEncheres acheteur;
@@ -15,12 +17,25 @@ public class Enchere implements Comparable<Enchere>{
 		return miseAuxEncheres;
 	}
 
+	
 	public IAcheteurAuxEncheres getAcheteur() {
 		return acheteur;
 	}
 
 	public double getPrixTonne() {
 		return prixTonne;
+	}
+	
+	public IProduit getProduit() { // delegation
+		return miseAuxEncheres.getProduit();
+	}
+	
+	public double getQuantiteT() { // delegation
+		return miseAuxEncheres.getQuantiteT();
+	}
+	
+	public IVendeurAuxEncheres getVendeur() { //delegation
+		return miseAuxEncheres.getVendeur();
 	}
 
 	public String toString() {

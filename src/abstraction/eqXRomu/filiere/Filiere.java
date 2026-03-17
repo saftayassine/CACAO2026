@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Random;
 
 import abstraction.eqXRomu.clients.ClientFinal;
+import abstraction.eqXRomu.contratsCadres.ContratCadre;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
+import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 import presentation.FenetrePrincipale;
 
@@ -93,6 +95,7 @@ public class Filiere implements IAssermente {
 		this.qualiteMoyenneMarque = new HashMap<String, Double>();
 		this.presenceEnTG = new LinkedList<String>();
 		this.nbPresencesEnTg = new HashMap<String, Integer>();
+		this.echanges = new ArrayList<Echange>();	
 		this.ajouterActeur(this.laBanque);
 	}
 
@@ -485,6 +488,7 @@ public class Filiere implements IAssermente {
 				}
 			}
 		}
+		echangesToCSV();
 		this.incEtape();
 	}
 

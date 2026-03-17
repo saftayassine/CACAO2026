@@ -35,6 +35,6 @@ public class Producteur1AcheteurBourse extends Producteur1Planteur implements IA
     @Override
     public double demande(Feve f, double cours) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'demande'");
+        return 0;
     }
 }
