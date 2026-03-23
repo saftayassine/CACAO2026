@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -107,7 +110,7 @@ public class FenetrePrincipale extends JFrame {
 			}
 		}
 		Filiere.LA_FILIERE.initialiser();
-		
+
 		//Filiere.LA_FILIERE.peupler();
 		this.setLayout(new BorderLayout());
 
@@ -297,12 +300,34 @@ public class FenetrePrincipale extends JFrame {
 			}
 
 		}
+		JPanel pCombo = new JPanel();
+				
+		List<FenetreGraphique> graphiques = Filiere.LA_FILIERE.getGraphiques();
+		String[] titresGraphiques = new String[graphiques.size()];
+		int pos=0;
+		for (FenetreGraphique fen : graphiques) {
+			titresGraphiques[pos]=fen.getTitre();
+			pos++;
+		}
+
+
+		pCombo.setLayout(new BorderLayout());
+		JComboBox combo = new JComboBox<String>(titresGraphiques);
+		pCombo.add(combo, BorderLayout.CENTER);
+		combo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				graphiques.get(combo.getSelectedIndex()).setVisible(true);
+			}
+			
+		});
 		JPanel pGauche = new JPanel();
 		//pGauche.setBorder(BorderFactory.createTitledBorder("Indicateurs"));
 		//	pIndicateurs.setToolTipText("bla bla bla");
 
 		pGauche.setLayout(new BoxLayout(pGauche, BoxLayout.Y_AXIS));
 		pGauche.add(pIndicateurs);		
+		pGauche.add(Box.createVerticalGlue());
+		pGauche.add(pCombo);
 		pGauche.add(Box.createVerticalGlue());
 		pGauche.add(pParametres);		
 		//pGauche.add(Box.createVerticalGlue());
