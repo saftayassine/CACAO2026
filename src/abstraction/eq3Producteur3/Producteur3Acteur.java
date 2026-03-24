@@ -17,7 +17,7 @@ public class Producteur3Acteur implements IActeur {
 	protected int cryptogramme;
 	protected Producteur3Stock stock; 
 	private Variable StockTotal;
-	private Plantation3 plantationeq3; 
+	public Plantation3 plantationeq3; 
 	
 
 	public Producteur3Acteur() {
