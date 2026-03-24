@@ -17,6 +17,7 @@ public class Producteur3Acteur implements IActeur {
 	protected int cryptogramme;
 	protected Producteur3Stock stock; 
 	private Variable StockTotal;
+	private Plantation3 plantationeq3; 
 	
 
 	public Producteur3Acteur() {
@@ -27,6 +28,7 @@ public class Producteur3Acteur implements IActeur {
 		/** @author Guillaume Leroy */
 		this.stock = new Producteur3Stock();
 		this.StockTotal= new VariableReadOnly(this + " Stock total", this, this.stock.getStockTotal());
+		this.plantationeq3= new Plantation3();
 	}
 	
 	public void initialiser() {
@@ -51,8 +53,15 @@ public class Producteur3Acteur implements IActeur {
 	public void next() {
 		// défi 1 
 		this.journal_periode.ajouter("période : "+ Filiere.LA_FILIERE.getEtape()); /** @author Vassili Spiridonov */
+		/** @author Guillaume Leroy */
+		for (Feve f : List.of(Feve.F_BQ, Feve.F_MQ, Feve.F_HQ)){
+			this.stock.addStock(f, this.plantationeq3.getProductionFeve(f));
+			// vente des feves par contrat, en bourse .... (à faire après avoir implémenter la classe)
+		}
 		// défi 2
 		this.StockTotal.setValeur(this,this.stock.getStockTotal(), cryptogramme); /** @author Guillaume Leroy */
+		//coût de stockage final des feves et impôt sur le nombre d'hectare
+		this.plantationeq3.nextStep();
 	}
 
 	public Color getColor() {// NE PAS MODIFIER

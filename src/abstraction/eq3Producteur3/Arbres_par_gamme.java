@@ -8,18 +8,19 @@ import java.util.List;
 import java.util.Map;
 
 
-/** @author Victor Vannier-Moreau, Guillaume Leroy et Vassili Spiridonov */
 public class Arbres_par_gamme {
+    /** @author Victor Vannier-Moreau*/
     private Feve feve;
-    // Liste de 961 éléments (de l'indice 0 à 960)
+    // Liste de 961 éléments (de l'indice 0 à 960) qui indique le nombre d'hectares pour chaque age.
     private List<Integer> distributionAge; 
-    private int nbHectareTotal;
+    public int nbHectareTotal;
 
     
     public Arbres_par_gamme(Feve feve) {
+        /** @author Victor Vannier-Moreau*/
         this.feve = feve;
         this.distributionAge = new ArrayList<>(961);
-        this.nbHectareTotal = 961*350;
+        this.nbHectareTotal = 961*350; // plus facile à manipluer car multiple de 961 et proche de 3.5 millions
         
         int arbresParAge = nbHectareTotal / 961;
 
@@ -28,10 +29,15 @@ public class Arbres_par_gamme {
         }
     }
 
-        /**
+    public int getNbHectare(){
+        return this.nbHectareTotal;
+    }
+
+    /**
      * Regroupe les données de la liste dans une HashMap pour l'affichage
      */
     public Map<String, Integer> getTranches() {
+        /** @author Vassili Spiridonov*/
         Map<String, Integer> recap = new HashMap<>();
         recap.put("0-3", 0);
         recap.put("3-5", 0);
@@ -59,44 +65,49 @@ public class Arbres_par_gamme {
     }
 
     /**
-     * Calcule la production de fèves selon les paliers d'âge
+     * Calcule la production de fèves selon les paliers d'âge.
      */
-    public int getProductionFeve() {
-        // 1. On récupère la HashMap des tranches
-        Map<String, Integer> recap = this.getTranches();
-        
-        // 2. On récupère le nombre d'arbres pour chaque tranche productive
-        int nbJeunes = recap.get("3-5");   // Tranche 3-5 ans
-        int nbAdultes = recap.get("5-25"); // Tranche 5-25 ans
-        int nbVieux = recap.get("25-40");  // Tranche 25-40 ans
+    public double getProductionFeve() { // On mesure la quantité de fève en tonne de fève (en considérant qu'une fève pèse 1g)
+    /** @author Guillaume Leroy*/
+    Map<String, Integer> recap = this.getTranches();
+    
+    // On utilise des long pour les calculs intermédiaires par sécurité
+    long nbJeunes = recap.get("3-5");   
+    long nbAdultes = recap.get("5-25"); 
+    long nbVieux = recap.get("25-40");  
 
-        // 3. Calcul des cabosses selon tes paliers
-        int totalCabosses = 0;
-        totalCabosses = totalCabosses + (nbJeunes * 10);
-        totalCabosses = totalCabosses + (nbAdultes * 50);
-        totalCabosses = totalCabosses + (nbVieux * 25);
+    long totalCabosses = 0;
+    totalCabosses = totalCabosses + (nbJeunes * 10L);
+    totalCabosses = totalCabosses + (nbAdultes * 50L);
+    totalCabosses = totalCabosses + (nbVieux * 25L);
 
-        // 4. Calcul du coefficient selon la gamme
-        int coeffGamme;
-        Gamme g = this.feve.getGamme();
-        
-        if (g == Gamme.BQ) {
-            coeffGamme = 50;
-        } else if (g == Gamme.MQ) {
-            coeffGamme = 40;
-        } else {
-            coeffGamme = 30; 
-        }
-        
-        return totalCabosses * coeffGamme * 1000;
+    long coeffGamme;
+    Gamme g = this.feve.getGamme();
+    
+    if (g == Gamme.BQ) {
+        coeffGamme = 50;
+    } else if (g == Gamme.MQ) {
+        coeffGamme = 40;
+    } else {
+        coeffGamme = 30; 
     }
+    
+    // 1. Calcul de la production annuelle totale en grammes (fèves)
+    long prodAnnuelleGrammes = totalCabosses * coeffGamme * 1000L;
 
+    // 2. Conversion en tonnes ( / 1 000 000 )
+    double prodAnnuelleTonnes = prodAnnuelleGrammes / 1000000.0;
+
+    // 3. Conversion en production PAR PÉRIODE ( / 24 )
+    return prodAnnuelleTonnes / 24.0;
+}
 
 
     /**
      * Fait vieillir la plantation d'une période
      */
     public void ageIncr() {
+        /** @author Victor Vannier-Moreau*/
         // 1. On retire les arbres qui ont fini leur 960ème période (40 ans)
         int arbresSortants = distributionAge.remove(960); 
         

@@ -38,9 +38,6 @@ public class Lot {
 
     public Feve getGamme(){
         this.setGamme();
-        if(this.quantite == 0 ){
-            return null;
-        }
         return this.f;
     }
 

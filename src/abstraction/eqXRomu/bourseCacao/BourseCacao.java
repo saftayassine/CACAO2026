@@ -279,6 +279,7 @@ public class BourseCacao implements IActeur, IAssermente {
 							banque.virer(this, crypto, (IActeur)v,cours*quantite);
 							journal.get(f).ajouter(Journal.texteColore((IActeur)v, ((IActeur)v).getNom()+" vend "+Journal.doubleSur(quantite, 2)+" et est paye "+Journal.doubleSur(cours*quantite, 2)));
 						} else {
+							journal.get(f).ajouter(Journal.texteColore((IActeur)v, ((IActeur)v).getNom()+" blackliste car n'a pas su fournir la quantite qu'il indiquait mettre en vente "));
 							v.notificationBlackList(DUREE_BLACKLIST);
 							blackListV.put(v,DUREE_BLACKLIST);
 						}

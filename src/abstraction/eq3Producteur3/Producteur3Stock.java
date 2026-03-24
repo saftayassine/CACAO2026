@@ -35,4 +35,9 @@ public class Producteur3Stock {
             this.stock.put(f , c);
         }
     }
+    public double getCoutStockage(){
+        double cout_stockage_tonne= 0; 
+        return this.getStockTotal()*cout_stockage_tonne;
+        
+    }
 }
