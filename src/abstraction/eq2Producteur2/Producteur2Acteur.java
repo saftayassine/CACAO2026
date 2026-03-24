@@ -23,6 +23,7 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 	protected Journal journal = new Journal("Journal Eq2", this);
 	protected Journal JournalBanque  = new Journal("Journal Banque Eq2", this);;
 	protected List<Plantation> plantations;
+	protected Producteur2Stock stockManager;
 
 	/** @author Thomas */
 	public Producteur2Acteur() {
@@ -33,6 +34,10 @@ public class Producteur2Acteur implements IActeur, IVendeurBourse {
 		}
 		this.stockTotal = new Variable("Stock Total EQ2", this, 0.0);
 		this.plantations = new ArrayList<Plantation>();
+		this.stockManager = new Producteur2Stock();
+		for (Feve f : Feve.values()) {
+			this.stocks.get(f).setValeur(this, this.stockManager.stock_initial.get(f));
+		}
 	}
 	
 	/** @author Thomas */

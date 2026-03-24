@@ -27,6 +27,7 @@ public class Transformateur1 extends Transformateur1AcheteurBourse  {
 		}
 	}
 	public void next(){
+		super.next();
 		this.totalstocks.setValeur(this, this.getTotalStocks(), cryptogramme);
 
 	}

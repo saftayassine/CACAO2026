@@ -65,13 +65,13 @@ public class Distributeur2Acteur implements IActeur {
 		if (produits != null && !produits.isEmpty()) {
 			IProduit produit = produits.get(0);
 			double quantiteActuelle = this.stock.getOrDefault(produit, 0.0);
-			this.stock.put(produit, quantiteActuelle + 100000.0);
+			this.stock.put(produit, quantiteActuelle + 10.0);
 		// Mettre à jour l'indicateur de stock total
 		this.indicateurStockTotal.setValeur(this, getStockTotal());
 		}
 	}
-
-	private double getStockTotal() {
+		/** @author Anass Ouisrani*/ 
+	protected double getStockTotal() {
 		double total = 0.0;
 		for (double q : stock.values()) {
 			total += q;

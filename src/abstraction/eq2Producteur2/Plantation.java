@@ -21,7 +21,7 @@ public class Plantation {
         this.age = age; // Plantation récente
         
         // Initialisation des paramètres selon la qualité des fèves
-        switch (typeFeve) {
+        switch(typeFeve) {
             case F_BQ:
                 this.dureeDeVie = 960;  // 40 ans
                 this.tempsAvantProduction = 72;  // 3 ans

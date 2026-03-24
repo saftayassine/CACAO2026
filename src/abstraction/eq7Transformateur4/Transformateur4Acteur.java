@@ -13,10 +13,23 @@ import abstraction.eqXRomu.produits.IProduit;
 public class Transformateur4Acteur implements IActeur {
 	
 	protected int cryptogramme;
-	private Journal journal;
-
+	private Journal journal; //Aymeric
+	private StockEq7 stock_Equitable;
+	private StockEq7 stock_PasEquitable;
+	private Variable LQ; //Indicateur LQ Equitable + pas equitable
+	private Variable MQ; //Idem pour MQ
+	private Variable HQ; //Idem pour HQ
 	public Transformateur4Acteur() {
+		//Aymeric
 		this.journal = new Journal("Journal equipe 7 (transformateur)", this);
+		this.stock_Equitable = new StockEq7(this);
+		this.stock_PasEquitable = new StockEq7(this);
+		
+		//Matteo
+		this.LQ=new Variable("LQ", this,0);
+		this.MQ=new Variable("MQ",this,0);
+		this.HQ=new Variable("HQ", this, 0);
+
 	}
 	
 	public void initialiser() {
@@ -37,6 +50,13 @@ public class Transformateur4Acteur implements IActeur {
 	public void next() {
 		int etape=Filiere.LA_FILIERE.getEtape();
 		this.journal.ajouter("Etape "+ String.valueOf(etape));
+
+		this.LQ.setValeur(this,this.stock_Equitable.getLowQ()+this.stock_PasEquitable.getLowQ());
+		this.MQ.setValeur(this,this.stock_Equitable.getMedQ()+this.stock_PasEquitable.getMedQ());
+		this.HQ.setValeur(this,this.stock_Equitable.getHighQ()+this.stock_PasEquitable.getHighQ());
+
+		this.stock_Equitable.next();
+		this.stock_PasEquitable.next();
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -50,6 +70,12 @@ public class Transformateur4Acteur implements IActeur {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+		//Matteo
+		res.add(this.LQ);
+		res.add(this.MQ);
+		res.add(this.HQ);
+		
+
 		return res;
 	}
 
@@ -64,6 +90,14 @@ public class Transformateur4Acteur implements IActeur {
 		List<Journal> res=new ArrayList<Journal>();
 		res.add(this.journal);
 		return res;
+	}
+
+	//Matteo
+	public StockEq7 get_EqStock(){
+		return this.stock_Equitable;
+	}
+	public StockEq7 get_Stock(){
+		return this.stock_PasEquitable;
 	}
 
 	////////////////////////////////////////////////////////
