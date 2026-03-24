@@ -6,14 +6,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import abstraction.eqXRomu.bourseCacao.IAcheteurBourse;
+import abstraction.eqXRomu.bourseCacao.IVendeurBourse;
 import abstraction.eqXRomu.clients.ClientFinal;
 import abstraction.eqXRomu.contratsCadres.ContratCadre;
+import abstraction.eqXRomu.general.Courbe;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+import abstraction.eqXRomu.general.VariableReadOnly;
+import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 import presentation.FenetrePrincipale;
+import presentation.secondaire.FenetreGraphique;
 
 import java.awt.Color;
 import java.beans.PropertyChangeListener;
@@ -40,6 +46,12 @@ public class Filiere implements IAssermente {
 
 	public static Filiere LA_FILIERE; // Filiere.LA_FILIERE reference l'unique instance de Filiere
 	public static double SEUIL_EN_TETE_DE_GONDOLE_POUR_IMPACT = 0.05; // Si les produits d'une marque m representent au moins 5% de la quantite totale en tete de gondole alors il y a un impact positif sur l'attrait de la marque.
+	private static final int DUREE_HISTORIQUE_ECHANGES = 12;
+
+	// le carcul des parts de marche s'appuie sur les achats/ventes enregistrees sur les 
+	// DUREE_EN_ETAPES_CALCUL_PARTS_DE_MARCHE dernieres etapes.
+	private static final int DUREE_EN_ETAPES_CALCUL_PARTS_DE_MARCHE = 6;
+
 
 
 	private int etape;                   // Le numero d'etape en cours
@@ -61,6 +73,9 @@ public class Filiere implements IAssermente {
 	private HashMap<ChocolatDeMarque, List<IFabricantChocolatDeMarque>> fabricantsChocolatDeMarque; // Associe a chaque chocolat de marque la liste des acteurs qui le produise 
 	private HashMap<String, Double> qualiteMoyenneMarque; // Associe a une marque la qualite moyenne des produits portant cette marque
 	private List<Echange> echanges; // Historique des echanges 
+	private HashMap<IActeur, HashMap<Feve, VariableReadOnly>> ventesFeves, achatsFeves;
+	private HashMap<IActeur, HashMap<Chocolat, VariableReadOnly>> ventesChocolats, achatsChocolats, ventesChocolatsMarques;
+
 
 	// Influence des tetes de gondole sur la notoriete des marques
 	private List<String> presenceEnTG; // A chaque step, si les produits d'une marque representent au moins 5% des quantites mis 
@@ -68,7 +83,10 @@ public class Filiere implements IAssermente {
 	private HashMap<String, Integer> nbPresencesEnTg; // nombre d'occurrence de la marque dans la liste presenceEnTG;
 	private HashMap<IActeur, Integer> cryptos;
 	public HashMap<String, Long> tempsEquipes = new HashMap<String, Long>();
-
+	private HashMap<Feve, FenetreGraphique> graphiqueVentesFeves, graphiqueAchatsFeves;
+	private HashMap<Chocolat, FenetreGraphique> graphiqueVentesChocolats, graphiqueAchatsChocolats, graphiqueVentesChocolatsMarque;
+	private HashMap<Feve, HashMap<IActeur, Courbe>> courbeVentesFeves, courbeAchatsFeves;
+    private HashMap<Chocolat, HashMap<IActeur, Courbe>> courbeVentesChocolats, courbeAchatsChocolats, courbeVentesChocolatsMarque;
 	/**
 	 * Initialise la filiere de sorte que le numero d'etape soit 0, 
 	 * et qu'il n'y ait pour l'heure que la Banque pour unique acteur. 
@@ -95,9 +113,15 @@ public class Filiere implements IAssermente {
 		this.qualiteMoyenneMarque = new HashMap<String, Double>();
 		this.presenceEnTG = new LinkedList<String>();
 		this.nbPresencesEnTg = new HashMap<String, Integer>();
-		this.echanges = new ArrayList<Echange>();	
+		this.echanges = new ArrayList<Echange>();
+		this.ventesFeves = new HashMap<IActeur, HashMap<Feve, VariableReadOnly>>();
+		this.achatsFeves = new HashMap<IActeur, HashMap<Feve, VariableReadOnly>>();	
+		this.ventesChocolats = new HashMap<IActeur, HashMap<Chocolat, VariableReadOnly>>();
+		this.achatsChocolats = new HashMap<IActeur, HashMap<Chocolat, VariableReadOnly>>();
+		this.ventesChocolatsMarques = new HashMap<IActeur, HashMap<Chocolat, VariableReadOnly>>();
 		this.ajouterActeur(this.laBanque);
 	}
+
 
 	public void initialiser() {
 		// Depot des marques de chocolat
@@ -180,6 +204,111 @@ public class Filiere implements IAssermente {
 			this.journalFiliere.ajouter("qualite moyenne de la marque "+marque+" = "+this.qualiteMoyenneMarque.get(marque));
 		}
 
+		// Creation des variable memorisant les volumes de ventes/achats des differents acteurs pour les differents produits (utile pour le calcul des parts de marche)
+			IActeur romu = getActeur("EQX");
+			for (IActeur acteur : this.getActeurs()) {
+				if (acteur instanceof IVendeurBourse) { // un producteur
+					this.ventesFeves.put(acteur, new HashMap<Feve, VariableReadOnly>());
+					for (Feve ff : Feve.values()) {
+					    this.ventesFeves.get(acteur).put(ff, new VariableReadOnly("VF_"+acteur.getNom()+"_"+ff.name(), romu,0.0 ));
+						//m.out.println("creation variable ventesFeves "+acteur+" "+ff);
+					}
+				} else if (acteur instanceof IMarqueChocolat || acteur instanceof IAcheteurBourse) { // un transformateur
+					this.achatsFeves.put(acteur, new HashMap<Feve, VariableReadOnly>());
+					for (Feve ff : Feve.values()) {
+					    this.achatsFeves.get(acteur).put(ff, new VariableReadOnly("AF_"+acteur.getNom()+"_"+ff.name(), romu,0.0 ));
+						//System.out.println("creation variable achatssFeves "+acteur+" "+ff);
+					}
+					this.ventesChocolats.put(acteur, new HashMap<Chocolat, VariableReadOnly>());
+					for (Chocolat cc : Chocolat.values()) {
+					    this.ventesChocolats.get(acteur).put(cc, new VariableReadOnly("VC_"+acteur.getNom()+"_"+cc.name(), romu,0.0 ));
+						//System.out.println("creation variable ventesChocolats "+acteur+" "+cc);
+					}
+				} else if (acteur instanceof IDistributeurChocolatDeMarque) {
+					this.achatsChocolats.put(acteur, new HashMap<Chocolat, VariableReadOnly>());
+					this.ventesChocolatsMarques.put(acteur, new HashMap<Chocolat, VariableReadOnly>());	
+					for (Chocolat cc : Chocolat.values()) {
+					    this.achatsChocolats.get(acteur).put(cc, new VariableReadOnly("AC_"+acteur.getNom()+"_"+cc.name(), romu,0.0 ));
+						//System.out.println("creation variable achatsChocolats "+acteur+" "+cc);
+					    this.ventesChocolatsMarques.get(acteur).put(cc, new VariableReadOnly("VCM_"+acteur.getNom()+"_"+cc.name(), romu,0.0 ));
+						//System.out.println("creation variable ventesChocolatsMarques "+acteur+" "+cc);
+					}				
+				}
+			}
+		
+
+		// Creation des courbes pour les parts de marche
+	this.graphiqueVentesFeves=new HashMap<Feve, FenetreGraphique>();
+	this.graphiqueAchatsFeves=new HashMap<Feve, FenetreGraphique>();
+	this.graphiqueVentesChocolats=new HashMap<Chocolat, FenetreGraphique>();
+	this.graphiqueAchatsChocolats=new HashMap<Chocolat, FenetreGraphique>();
+	this.graphiqueVentesChocolatsMarque=new HashMap<Chocolat, FenetreGraphique>();
+	this.courbeVentesFeves=new HashMap<Feve, HashMap<IActeur, Courbe>>();
+	this.courbeAchatsFeves=new HashMap<Feve, HashMap<IActeur, Courbe>>();
+	this.courbeVentesChocolats=new HashMap<Chocolat, HashMap<IActeur, Courbe>>();
+	this.courbeAchatsChocolats=new HashMap<Chocolat, HashMap<IActeur, Courbe>>();
+	this.courbeVentesChocolatsMarque=new HashMap<Chocolat, HashMap<IActeur, Courbe>>();
+
+	int numMarque=0;
+	for (Feve ff : Feve.values()) {
+		this.graphiqueVentesFeves.put(ff, new FenetreGraphique("Parts de marche des ventes de feve "+ff, 500,400));
+		this.graphiqueAchatsFeves.put(ff, new FenetreGraphique("Parts de marche des achats de feve "+ff, 500,400));
+		this.courbeVentesFeves.put(ff,new HashMap<IActeur, Courbe>());
+		this.courbeAchatsFeves.put(ff,new HashMap<IActeur, Courbe>());
+		for (IActeur acteur : this.getActeurs()) {
+				if (acteur instanceof IVendeurBourse) { // un producteur
+					Courbe c = new Courbe("PM_"+acteur+"_"+ff);
+					c.setCouleur(acteur.getColor());
+					c.setMarque(numMarque);
+					numMarque+=43;
+					this.courbeVentesFeves.get(ff).put(acteur, c);
+					this.graphiqueVentesFeves.get(ff).ajouter(c);
+				} else if (acteur instanceof IMarqueChocolat || acteur instanceof IAcheteurBourse) {
+					Courbe c = new Courbe("PM_"+acteur+"_"+ff);
+					c.setCouleur(acteur.getColor());
+					c.setMarque(numMarque);
+					numMarque+=43;
+					this.courbeAchatsFeves.get(ff).put(acteur, c);
+					this.graphiqueAchatsFeves.get(ff).ajouter(c);
+				}
+		}
+
+	}
+	for (Chocolat cc : Chocolat.values()) {
+		this.graphiqueVentesChocolats.put(cc, new FenetreGraphique("Parts de marche des ventes de chocolat "+cc, 500,400));
+		this.graphiqueAchatsChocolats.put(cc, new FenetreGraphique("Parts de marche des achats de chocolat "+cc, 500,400));
+		this.graphiqueVentesChocolatsMarque.put(cc, new FenetreGraphique("Parts de marche des ventes de chocolat de marque "+cc, 500,400));		
+		this.courbeVentesChocolats.put(cc,new HashMap<IActeur, Courbe>());
+		this.courbeAchatsChocolats.put(cc,new HashMap<IActeur, Courbe>());
+		this.courbeVentesChocolatsMarque.put(cc,new HashMap<IActeur, Courbe>());
+		for (IActeur acteur : this.getActeurs()) {
+				if (acteur instanceof IMarqueChocolat || acteur instanceof IAcheteurBourse) { // un producteur
+					Courbe c = new Courbe("PM_"+acteur+"_"+cc);
+					c.setCouleur(acteur.getColor());
+					c.setMarque(numMarque);
+					numMarque+=43;
+					this.courbeVentesChocolats.get(cc).put(acteur, c);
+					this.graphiqueVentesChocolats.get(cc).ajouter(c);
+				} else if (acteur instanceof IDistributeurChocolatDeMarque) {
+					Courbe c = new Courbe("PM_"+acteur+"_"+cc);
+					c.setCouleur(acteur.getColor());
+					c.setMarque(numMarque);
+					numMarque+=43;
+					this.courbeAchatsChocolats.get(cc).put(acteur, c);
+					this.graphiqueAchatsChocolats.get(cc).ajouter(c);
+					Courbe c2 = new Courbe("PM_"+acteur+"_"+cc);
+					c2.setCouleur(acteur.getColor());
+					c2.setMarque(numMarque);
+					numMarque+=43;
+					//System.out.println(" distributeur "+acteur+" graphique vente chocoloat marque "+cc);
+					this.courbeVentesChocolatsMarque.get(cc).put(acteur, c2);
+					this.graphiqueVentesChocolatsMarque.get(cc).ajouter(c2);
+				}
+		}
+
+	}
+
+
 		// Initialisation de la presence en TG
 		for (String marque : getMarquesChocolat()) {
 			this.nbPresencesEnTg.put(marque, 0);
@@ -192,6 +321,30 @@ public class Filiere implements IAssermente {
 		}
 	}
 
+
+
+	public List<FenetreGraphique> getGraphiques() {
+		List<FenetreGraphique> res = new ArrayList<FenetreGraphique>();
+		for (Feve f : graphiqueVentesFeves.keySet()) {
+			res.add(graphiqueVentesFeves.get(f));
+		}
+		for (Feve f : graphiqueAchatsFeves.keySet()) {
+			res.add(graphiqueAchatsFeves.get(f));
+		}
+		for (Chocolat c : graphiqueVentesChocolats.keySet()) {
+			res.add(graphiqueVentesChocolats.get(c));
+		}
+		for (Chocolat c : graphiqueAchatsChocolats.keySet()) {
+			res.add(graphiqueAchatsChocolats.get(c));
+		}
+		for (Chocolat c : graphiqueVentesChocolatsMarque.keySet()) {
+			res.add(graphiqueVentesChocolatsMarque.get(c));
+		}
+		return res;
+	}
+	public VariableReadOnly getVentesFeves(IActeur acteur, Feve f ) {
+		return this.ventesFeves.get(acteur).get(f);
+	}
 	/**
 	 * @return La liste de toutes les marques de chocolat deposees
 	 */
@@ -488,8 +641,239 @@ public class Filiere implements IAssermente {
 				}
 			}
 		}
-		echangesToCSV();
+		updateVariablesEchanges();
+		updatePartsMarche();
+		purgerEchanges(); // Elimine les echanges trop anciens.
+		echangesToCSV();  // Ecrit les echanges dans echanges.csv si le parametre d'affichage est different de 0
 		this.incEtape();
+	}
+
+	/**
+	 * Elimine de l'historique des echanges tous les echanges trop anciens
+	 */
+	private void purgerEchanges() {
+		int limite = Filiere.LA_FILIERE.getEtape() - Filiere.DUREE_HISTORIQUE_ECHANGES;
+		while (this.echanges.size()>0 && this.echanges.get(0).getStep()<limite) {
+			this.echanges.remove(0);
+		}
+	}
+
+	private void updateVariablesEchanges() {
+		//System.out.println("etape "+Filiere.LA_FILIERE.getEtape()+" dernier echange a etape "+(this.echanges.size()>0?this.echanges.get(this.echanges.size()-1).getStep():"<<aucun>>"));
+		int last = this.echanges.size()-1;
+		int now = Filiere.LA_FILIERE.getEtape();
+		int i=last;
+		IActeur romu = this.getActeur("EQX");
+		int pwd = this.cryptos.get(romu);
+		for (IActeur a : ventesFeves.keySet()) {
+			for (Feve f : ventesFeves.get(a).keySet()) {
+				ventesFeves.get(a).get(f).setValeur(romu, 0, pwd);
+			}
+		}
+		for (IActeur a : achatsFeves.keySet()) {
+			for (Feve f : achatsFeves.get(a).keySet()) {
+				achatsFeves.get(a).get(f).setValeur(romu, 0, pwd);
+			}
+		}
+		for (IActeur a : ventesChocolats.keySet()) {
+			for (Chocolat f : ventesChocolats.get(a).keySet()) {
+				ventesChocolats.get(a).get(f).setValeur(romu, 0, pwd);
+			}
+		}
+		for (IActeur a : achatsChocolats.keySet()) {
+			for (Chocolat f : achatsChocolats.get(a).keySet()) {
+				achatsChocolats.get(a).get(f).setValeur(romu, 0, pwd);
+			}
+		}
+		for (IActeur a : ventesChocolatsMarques.keySet()) {
+			for (Chocolat f : ventesChocolatsMarques.get(a).keySet()) {
+				ventesChocolatsMarques.get(a).get(f).setValeur(romu, 0, pwd);
+			}
+		}		
+		while (i>=0 && this.echanges.get(i).getStep()==now) {
+			Echange echange = echanges.get(i);
+			IProduit produit = echange.getProduit();
+			IActeur acteur = echange.getActeur();
+			double volume = echange.getVolume();
+			if (produit instanceof Feve){
+				if (echange.getVolume()<0) {
+					ventesFeves.get(acteur).get(produit).setValeur(romu,ventesFeves.get(acteur).get(produit).getValeur() - volume, pwd);
+				} else {
+					//System.out.println("update achatsFeves "+acteur+" "+produit+" +"+volume);
+					achatsFeves.get(acteur).get(produit).setValeur(romu,achatsFeves.get(acteur).get(produit).getValeur() + volume, pwd);
+				}
+			} else if (produit instanceof ChocolatDeMarque && acteur instanceof IDistributeurChocolatDeMarque){
+				Chocolat choco = ((ChocolatDeMarque)produit).getChocolat(); 
+				if (echange.getVolume()<0) {
+					//System.out.println(now+" update ventesChocolatsMarques "+acteur+" "+choco+" +"+volume);
+					ventesChocolatsMarques.get(acteur).get(choco).setValeur(romu,ventesChocolatsMarques.get(acteur).get(choco).getValeur() - volume, pwd);
+				} else {
+					achatsChocolats.get(acteur).get(choco).setValeur(romu,achatsChocolats.get(acteur).get(choco).getValeur() + volume, pwd);
+//					System.out.println("Aie... dans filiere.updateEchange on s'apercoit qu'un distributeur est mentionne avec un volume positif");
+//					System.out.println("Aie... "+acteur+" "+produit+" "+volume+" "+echange.getTypeEchange());
+				}
+			} else { // c'est un chocolat
+				Chocolat choco = (produit instanceof Chocolat) ? (Chocolat)produit : ((ChocolatDeMarque)produit).getChocolat(); 
+				if (echange.getVolume()<0) {
+					ventesChocolats.get(acteur).get(choco).setValeur(romu,ventesChocolats.get(acteur).get(choco).getValeur() - volume, pwd);
+				} else {
+					achatsChocolats.get(acteur).get(produit).setValeur(romu,achatsChocolats.get(acteur).get(produit).getValeur() + volume, pwd);
+				}
+			}
+			i--;
+		}
+	}
+
+	private void updatePartsMarche() {
+		// TODO 
+		int now = Filiere.LA_FILIERE.getEtape();
+		int start = Math.max(0, now-DUREE_EN_ETAPES_CALCUL_PARTS_DE_MARCHE);
+		for (Feve f : Feve.values()) {
+			// VENTES DE FEVES =================================================
+			HashMap<IActeur, Double> totaux = new HashMap<IActeur, Double>();
+			double totalPourCetteFeve = 0.0;
+			for (IActeur acteur : ventesFeves.keySet()) {
+				double totalActeur = 0.0;
+				for (int etape=start; etape<=now; etape++) {
+					totalActeur+=ventesFeves.get(acteur).get(f).getValeur(etape);
+				}
+				totaux.put(acteur, totalActeur);
+				totalPourCetteFeve+=totalActeur;
+			}
+			for (IActeur acteur : ventesFeves.keySet()) {
+				courbeVentesFeves.get(f).get(acteur).ajouter(now, totalPourCetteFeve==0?0:(100*totaux.get(acteur))/totalPourCetteFeve);
+			}
+			// ACHATS DE FEVES =================================================
+			totaux = new HashMap<IActeur, Double>();
+			totalPourCetteFeve = 0.0;
+			for (IActeur acteur : achatsFeves.keySet()) {
+				double totalActeur = 0.0;
+				for (int etape=start; etape<=now; etape++) {
+					totalActeur+=achatsFeves.get(acteur).get(f).getValeur(etape);
+				}
+				totaux.put(acteur, totalActeur);
+				totalPourCetteFeve+=totalActeur;
+			}
+			for (IActeur acteur : achatsFeves.keySet()) {
+				courbeAchatsFeves.get(f).get(acteur).ajouter(now, totalPourCetteFeve==0?0:(100*totaux.get(acteur))/totalPourCetteFeve);
+			}
+		}
+		for (Chocolat c : Chocolat.values()) {
+			// VENTES DE CHOCOLATS =================================================
+			HashMap<IActeur, Double> totaux = new HashMap<IActeur, Double>();
+			double totalPourCeChocolat = 0.0;
+			for (IActeur acteur : ventesChocolats.keySet()) {
+				double totalActeur = 0.0;
+				for (int etape=start; etape<=now; etape++) {
+					totalActeur+=ventesChocolats.get(acteur).get(c).getValeur(etape);
+				}
+				totaux.put(acteur, totalActeur);
+				totalPourCeChocolat+=totalActeur;
+			}
+			for (IActeur acteur : ventesChocolats.keySet()) {
+				courbeVentesChocolats.get(c).get(acteur).ajouter(now,totalPourCeChocolat==0?0: (100*totaux.get(acteur))/totalPourCeChocolat);
+				//System.out.println(now+" update ventes C : "+c+" acteur "+acteur+" "+Math.round(((100*totaux.get(acteur))/totalPourCeChocolat))+" acteur="+totaux.get(acteur)+" tous="+totalPourCeChocolat);
+				//System.out.println("courbe="+courbeVentesChocolats.get(c).get(acteur).toString());
+			}
+			// ACHATS DE CHOCOLATS =================================================
+			totaux = new HashMap<IActeur, Double>();
+			totalPourCeChocolat = 0.0;
+			for (IActeur acteur : achatsChocolats.keySet()) {
+				double totalActeur = 0.0;
+				for (int etape=start; etape<=now; etape++) {
+					totalActeur+=achatsChocolats.get(acteur).get(c).getValeur(etape);
+				}
+				totaux.put(acteur, totalActeur);
+				totalPourCeChocolat+=totalActeur;
+			}
+			for (IActeur acteur : achatsChocolats.keySet()) {
+				courbeAchatsChocolats.get(c).get(acteur).ajouter(now, totalPourCeChocolat==0?0:Math.round((100*totaux.get(acteur))/totalPourCeChocolat));
+				//System.out.println(now+" update achats C : "+c+" acteur "+acteur+" "+Math.round(((100*totaux.get(acteur))/totalPourCeChocolat))+" acteur="+totaux.get(acteur)+" tous="+totalPourCeChocolat);
+				//System.out.println("courbe="+courbeAchatsChocolats.get(c).get(acteur).toString());
+			}
+			// VENTES DE CHOCOLATS DE MARQUE =================================================
+			totaux = new HashMap<IActeur, Double>();
+			totalPourCeChocolat = 0.0;
+			for (IActeur acteur : ventesChocolatsMarques.keySet()) {
+				double totalActeur = 0.0;
+				for (int etape=start; etape<=now; etape++) {
+					totalActeur+=ventesChocolatsMarques.get(acteur).get(c).getValeur(etape);
+				}
+				totaux.put(acteur, totalActeur);
+				totalPourCeChocolat+=totalActeur;
+			}
+			for (IActeur acteur : ventesChocolatsMarques.keySet()) {
+				//System.out.println(now+" update CMarque : "+c+" acteur "+acteur+" "+Math.round(((100*totaux.get(acteur))/totalPourCeChocolat))+" acteur="+totaux.get(acteur)+" tous="+totalPourCeChocolat);
+				courbeVentesChocolatsMarque.get(c).get(acteur).ajouter(now, totalPourCeChocolat==0?0:Math.round((100*totaux.get(acteur))/totalPourCeChocolat));
+				//System.out.println("courbe="+courbeVentesChocolatsMarque.get(c).get(acteur).toString());
+			}
+		}
+		// if (now==5) {
+		// 	graphiqueVentesFeves.get(Feve.F_MQ).setVisible(true);
+		// 	graphiqueVentesChocolats.get(Chocolat.C_MQ).setVisible(true);
+		// }
+// 		System.out.println("etape "+Filiere.LA_FILIERE.getEtape()+" dernier echange a etape "+(this.echanges.size()>0?this.echanges.get(this.echanges.size()-1).getStep():"<<aucun>>"));
+// 		int last = this.echanges.size()-1;
+// 		int now = Filiere.LA_FILIERE.getEtape();
+// 		int i=last;
+// 		IActeur romu = this.getActeur("EQX");
+// 		int pwd = this.cryptos.get(romu);
+// 		for (IActeur a : ventesFeves.keySet()) {
+// 			for (Feve f : ventesFeves.get(a).keySet()) {
+// 				ventesFeves.get(a).get(f).setValeur(romu, 0, pwd);
+// 			}
+// 		}
+// 		for (IActeur a : achatsFeves.keySet()) {
+// 			for (Feve f : achatsFeves.get(a).keySet()) {
+// 				achatsFeves.get(a).get(f).setValeur(romu, 0, pwd);
+// 			}
+// 		}
+// 		for (IActeur a : ventesChocolats.keySet()) {
+// 			for (Chocolat f : ventesChocolats.get(a).keySet()) {
+// 				ventesChocolats.get(a).get(f).setValeur(romu, 0, pwd);
+// 			}
+// 		}
+// 		for (IActeur a : achatsChocolats.keySet()) {
+// 			for (Chocolat f : achatsChocolats.get(a).keySet()) {
+// 				achatsChocolats.get(a).get(f).setValeur(romu, 0, pwd);
+// 			}
+// 		}
+// 		for (IActeur a : ventesChocolatsMarques.keySet()) {
+// 			for (Chocolat f : ventesChocolatsMarques.get(a).keySet()) {
+// 				ventesChocolatsMarques.get(a).get(f).setValeur(romu, 0, pwd);
+// 			}
+// 		}		
+// 		while (i>=0 && this.echanges.get(i).getStep()==now) {
+// 			Echange echange = echanges.get(i);
+// 			IProduit produit = echange.getProduit();
+// 			IActeur acteur = echange.getActeur();
+// 			double volume = echange.getVolume();
+// 			if (produit instanceof Feve){
+// 				if (echange.getVolume()<0) {
+// 					ventesFeves.get(acteur).get(produit).setValeur(romu,ventesFeves.get(acteur).get(produit).getValeur() - volume, pwd);
+// 				} else {
+// 					System.out.println("update achatsFeves "+acteur+" "+produit+" +"+volume);
+// 					achatsFeves.get(acteur).get(produit).setValeur(romu,achatsFeves.get(acteur).get(produit).getValeur() + volume, pwd);
+// 				}
+// 			} else if (produit instanceof ChocolatDeMarque && acteur instanceof IDistributeurChocolatDeMarque){
+// 				Chocolat choco = ((ChocolatDeMarque)produit).getChocolat(); 
+// 				if (echange.getVolume()<0) {
+// 					ventesChocolatsMarques.get(acteur).get(choco).setValeur(romu,ventesChocolatsMarques.get(acteur).get(choco).getValeur() - volume, pwd);
+// 				} else {
+// 					achatsChocolats.get(acteur).get(choco).setValeur(romu,achatsChocolats.get(acteur).get(choco).getValeur() + volume, pwd);
+// //					System.out.println("Aie... dans filiere.updateEchange on s'apercoit qu'un distributeur est mentionne avec un volume positif");
+// //					System.out.println("Aie... "+acteur+" "+produit+" "+volume+" "+echange.getTypeEchange());
+// 				}
+// 			} else { // c'est un chocolat
+// 				Chocolat choco = (produit instanceof Chocolat) ? (Chocolat)produit : ((ChocolatDeMarque)produit).getChocolat(); 
+// 				if (echange.getVolume()<0) {
+// 					ventesChocolats.get(acteur).get(choco).setValeur(romu,ventesChocolats.get(acteur).get(choco).getValeur() - volume, pwd);
+// 				} else {
+// 					achatsChocolats.get(acteur).get(produit).setValeur(romu,achatsChocolats.get(acteur).get(produit).getValeur() + volume, pwd);
+// 				}
+// 			}
+// 			i--;
+// 		}
 	}
 
 	public void addObserver(PropertyChangeListener obs) {
@@ -563,7 +947,7 @@ public class Filiere implements IAssermente {
 			this.echanges.add(new Echange(this.etape, acteur, produit, volume, typeEchange));
 		} 
 	}
-	public void echangesToCSV() {
+	private void echangesToCSV() {
 		//	Variable aff = Filiere.LA_FILIERE.getIndicateur("BourseCacao Aff.Graph");
 		if (getIndicateur("BourseCacao Aff.Graph.").getValeur()!=0.0) {
 

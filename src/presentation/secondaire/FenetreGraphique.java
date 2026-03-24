@@ -16,6 +16,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileFilter;
 
+import abstraction.eqXRomu.general.Clavier;
 import abstraction.eqXRomu.general.Courbe;
 
 /**
@@ -377,6 +378,7 @@ public class FenetreGraphique extends JFrame implements MouseListener, Component
 			Courbe c;
 			for (int i=0; i<this.nbCourbes(); i++) {
 				c = this.getCourbe(i);
+				//System.out.println(c.toString());
 				for (int j=0; j<c.getNbPoints(); j++) {
 					if ((c.getX(j)<minX)&&(this.minX!=this.minXU)) {
 						minX=c.getX(j);
@@ -393,6 +395,10 @@ public class FenetreGraphique extends JFrame implements MouseListener, Component
 				}
 
 			}
+			if (minY==maxY) {// rajoute pour les constantes en projet Cacao
+				maxY=100;
+				minY=0;
+			}
 			// determination largeur etiquettes axe ord
 			NumberFormat nf = NumberFormat.getInstance(Locale.FRENCH);
 			nf.setMaximumFractionDigits(this.maxFractionDigits);
@@ -405,7 +411,7 @@ public class FenetreGraphique extends JFrame implements MouseListener, Component
 			
 
 			double y=(int)(this.minY+pasOrd);
-			while (pasOrd>0 && y<this.maxY) {
+			while (pasOrd>0.001 && y<this.maxY) {
 				if ((int)(gc.getFontMetrics().getStringBounds(nf.format(y), gc).getBounds().getWidth())>largeurMax) {
 					largeurMax=(int)(gc.getFontMetrics().getStringBounds(nf.format(y), gc).getBounds().getWidth());
 				}
@@ -492,11 +498,10 @@ public class FenetreGraphique extends JFrame implements MouseListener, Component
 				gc.drawLine(minAxeAbs, minAxeOrd, maxAxeAbs, minAxeOrd);
 			}
 			//			Axe des ordonnees
-
 			gc.drawString(nf.format(this.maxY),minAxeAbs-3-(int)(gc.getFontMetrics().getStringBounds(nf.format(this.maxY), gc).getBounds().getWidth()), maxAxeOrd+(int)(g.getFontMetrics().getStringBounds(nf.format(this.maxY), g).getBounds().getHeight()/2));
 			y=(this.minY);
 			int min=minAxeOrd+(int)(gc.getFontMetrics().getStringBounds(nf.format(y), gc).getBounds().getHeight()/2);
-			while (pasOrd>0 && y<this.maxY) {
+			while (pasOrd>0.001 && y<this.maxY) {
 				if (this.traitsHorizonaux && y!=this.minY) {
 					gc.setColor(Color.LIGHT_GRAY);
 					gc.drawLine(minAxeAbs, ordonneeEcran(y), maxAxeAbs, ordonneeEcran(y));
@@ -523,9 +528,8 @@ public class FenetreGraphique extends JFrame implements MouseListener, Component
 			gc.drawString(nf.format(this.minX), minAxeAbs-(int)(gc.getFontMetrics().getStringBounds(nf.format(this.minX), gc).getBounds().getHeight()/2), (int)(minAxeOrd+gc.getFontMetrics().getStringBounds(nf.format(this.minX), gc).getBounds().getHeight()));
 			gc.drawString(nf.format(this.maxX),(int)(maxAxeAbs-(gc.getFontMetrics().getStringBounds(nf.format(this.maxX), gc).getBounds().getWidth()/2)), (int)(this.basse+gc.getFontMetrics().getStringBounds(nf.format(this.minX), gc).getBounds().getHeight()));
 			minAxeAbs+=gc.getFontMetrics().getStringBounds(nf.format(this.minX), gc).getBounds().getWidth();
-
 			double x=this.minX;
-			while (pasAbs>0 && x<this.maxX) {
+			while (pasAbs>0.001 && x<this.maxX) {
 				if (this.traitsVerticaux && x!=this.minX) {
 					gc.setColor(Color.LIGHT_GRAY);
 					gc.drawLine(abscisseEcran(x), maxAxeOrd, abscisseEcran(x), minAxeOrd);

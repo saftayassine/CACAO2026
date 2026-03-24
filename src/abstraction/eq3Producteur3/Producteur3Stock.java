@@ -3,8 +3,8 @@ package abstraction.eq3Producteur3;
 import java.util.HashMap;
 import abstraction.eqXRomu.produits.Feve;
 
+/** @author Guillaume Leroy */
 public class Producteur3Stock {
-    /** @author Guillaume Leroy */
     private HashMap<Feve, Double> stock;
     public Producteur3Stock(){
         this.stock = new HashMap<Feve, Double>();
@@ -34,5 +34,10 @@ public class Producteur3Stock {
         if (c>=0){
             this.stock.put(f , c);
         }
+    }
+    public double getCoutStockage(){
+        double cout_stockage_tonne= 0; 
+        return this.getStockTotal()*cout_stockage_tonne;
+        
     }
 }

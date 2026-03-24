@@ -8,7 +8,7 @@ import abstraction.eqXRomu.produits.Feve;
 /**
  * Auteur Maxence
  */
-public class Transformateur2AcheteurBourse extends Transformateur2Stock implements IAcheteurBourse {
+public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarche implements IAcheteurBourse {
 
     /** @author Maxence
     **/

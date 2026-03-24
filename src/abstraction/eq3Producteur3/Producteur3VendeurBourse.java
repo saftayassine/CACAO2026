@@ -4,10 +4,12 @@ import abstraction.eqXRomu.bourseCacao.IVendeurBourse;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.Gamme;
 
+
+/** @author Victor Vannier-Moreau */
 public class Producteur3VendeurBourse extends Producteur3Acteur implements IVendeurBourse {
 
+
     public Producteur3VendeurBourse() {
-		/** @author Victor Vannier-Moreau */
 		super();
 	}
 
