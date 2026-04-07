@@ -148,10 +148,10 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 
 	/** @author Alexandre Cornet */
 	public String changerTailleRayon(double d){
-		Banque b=Filiere.LA_FILIERE.getBanque();
+		//Banque b=Filiere.LA_FILIERE.getBanque();
 		this.TailleRayon+=d;
 		if(d>=0){
-			b.payerCout(this, this.cryptogramme, "Achat de Rayonnage", 0);
+			//b.payerCout(this, this.cryptogramme, "Achat de Rayonnage", 0);
 			return ("La taille du rayon a été augmentée de "+d+"T");
 		}else{
 			d=-d;
@@ -160,7 +160,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 				this.TailleRayon+=d;
 				return("Il y a trop de quantité en rayon pour baisser la taille du rayon");
 			}else{
-				b.payerCout(this, this.cryptogramme, "Vente de Rayonnage", 0);
+				//b.payerCout(this, this.cryptogramme, "Vente de Rayonnage", 0);
 				return ("La taille du rayon a été diminuée de "+d+"T");
 			}
 		}
