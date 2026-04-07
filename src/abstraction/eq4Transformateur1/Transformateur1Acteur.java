@@ -18,7 +18,7 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
 
-public class Transformateur1Acteur implements IActeur, IFabricantChocolatDeMarque, IMarqueChocolat {
+public class Transformateur1Acteur implements IActeur {
 	private Journal journal= new Journal("numéro de l'étape",this );
 	protected int cryptogramme;
 		
@@ -30,17 +30,7 @@ public class Transformateur1Acteur implements IActeur, IFabricantChocolatDeMarqu
 		
 	}
 	
-	public List<ChocolatDeMarque> getChocolatsProduits(){
-		ChocolatDeMarque ProntellaM= new ChocolatDeMarque(Chocolat.C_MQ, "ProntellaM", 65);
-		List<ChocolatDeMarque> ListeChoco=new ArrayList<ChocolatDeMarque>();
-		ListeChoco.add(ProntellaM);
-		return ListeChoco;
-	}
-	public List<String> getMarquesChocolat(){
-		List<String> ListeNoms= new ArrayList<String>();
-		ListeNoms.add("ProntellaM");
-		return ListeNoms;
-	}
+
 	
 
 	public String getNom() {// NE PAS MODIFIER

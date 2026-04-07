@@ -48,13 +48,16 @@ public class Transformateur4Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 
 	public void next() {
+		//Aymeric
 		int etape=Filiere.LA_FILIERE.getEtape();
 		this.journal.ajouter("Etape "+ String.valueOf(etape));
 
+		//Matteo
 		this.LQ.setValeur(this,this.stock_Equitable.getLowQ()+this.stock_PasEquitable.getLowQ());
 		this.MQ.setValeur(this,this.stock_Equitable.getMedQ()+this.stock_PasEquitable.getMedQ());
 		this.HQ.setValeur(this,this.stock_Equitable.getHighQ()+this.stock_PasEquitable.getHighQ());
 
+		//Matteo
 		this.stock_Equitable.next();
 		this.stock_PasEquitable.next();
 	}
@@ -111,7 +114,7 @@ public class Transformateur4Acteur implements IActeur {
 		this.cryptogramme = crypto;
 	}
 
-	// Appelee lorsqu'un acteur fait faillite (potentiellement vous)
+	// Appelle lorsqu'un acteur fait faillite (potentiellement vous)
 	// afin de vous en informer.
 	public void notificationFaillite(IActeur acteur) {
 	}

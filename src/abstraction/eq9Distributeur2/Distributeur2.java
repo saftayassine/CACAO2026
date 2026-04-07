@@ -1,14 +1,27 @@
 package abstraction.eq9Distributeur2;
 
-public class Distributeur2 extends Distributeur2Acteur  {
+import abstraction.eqXRomu.appelDOffre.IAcheteurAO;
+
+/**
+ * Classe principale du Distributeur2
+ * @author Paul Rossignol
+ */
+public class Distributeur2 extends Distributeur2AcheteurCC implements IAcheteurAO {
 
 	public Distributeur2() {
 		super();
 	}
 
-	/** @author Paul Juhel */
+	/**
+	 * Étape du distributeur : gestion des stocks, CC, AO
+	 */
+	@Override
 	public void next() {
 		super.next();
-		this.getJournaux().get(0).ajouter("+100 t en rayon");
+
+		// Appels d'offres après la politique CC et prévention des ruptures
+		faireUnAppelDOffre();
+
+		journal.ajouter("Distributeur2 - Next complet CC+AO");
 	}
 }
