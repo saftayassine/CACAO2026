@@ -13,6 +13,7 @@ import abstraction.eqXRomu.produits.IProduit;
 import java.util.LinkedList;
 import java.util.List;
 
+/** @author Thomas */
 public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurContratCadre {
 
     private SuperviseurVentesContratCadre supCC;
