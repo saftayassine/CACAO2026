@@ -118,7 +118,7 @@ public class Approvisionnement2 extends Distributeur1Acteur {
                 ChocolatDeMarque suivant = liste.get(i + 1);
                 prixMax = this.prixDAchat.getOrDefault(suivant, prixCible * 1.2);
             } else {
-                prixMax = prixCible * 1.2; 
+                prixMax = prixCible * 1.2;
             }
             remplirProduit(actuel, volumeCibleGamme, prixCible, prixMax);
         }
@@ -126,15 +126,15 @@ public class Approvisionnement2 extends Distributeur1Acteur {
 
     private void remplirProduit(ChocolatDeMarque cdm, double volumeCibleGamme, double prixCible, double prixMax) {
         double stockActuelGamme = calculerStockGamme(cdm.getGamme());
-        
+    
         if (stockActuelGamme < volumeCibleGamme) {
             double besoin = volumeCibleGamme - stockActuelGamme;
-            double quantiteAchetee = methodeIntermediaireAchat(cdm, besoin, prixCible, prixMax);
-            double nouveauStock = stockPredit.getOrDefault(cdm, 0.0) + quantiteAchetee;
-            this.journal3.ajouter("Achat de "+ quantiteAchetee + " T de : "+cdm);
-            stockPredit.put(cdm, nouveauStock);
+            // La méthode est maintenant void, l'actualisation du stock est interne
+            methodeIntermediaireAchat(cdm, besoin, prixCible, prixMax);
         }
     }
+
+
 
     private double calculerStockGamme(Gamme gamme) {
         double total = 0;
@@ -146,9 +146,8 @@ public class Approvisionnement2 extends Distributeur1Acteur {
         return total;
     }
 
-    protected double methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax) {
-        // Logique à implémenter (Contrats Cadres / Enchères)
-        return 0.0; 
+    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax) {
+    // Vide ici, implémentée dans ContratCadre
     }
 
     /**
@@ -166,16 +165,32 @@ public class Approvisionnement2 extends Distributeur1Acteur {
             }
         }
 
-    // 2 . On ajoute les livraisons prévues pour CE tour par les anciens contrats
-    for (ExemplaireContratCadre contrat : this.mesContrats) {
-        IProduit p = contrat.getProduit();
-        if (p instanceof ChocolatDeMarque) {
-            ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-            double quantiteAttendue = contrat.getEcheancier().getQuantite(etapeActuelle);
-            double stockActuel = predit.getOrDefault(cdm, 0.0);
-            predit.put(cdm, stockActuel + quantiteAttendue);
+        // 2 . On ajoute les livraisons prévues pour CE tour par les anciens contrats
+        for (ExemplaireContratCadre contrat : this.mesContrats) {
+            IProduit p = (IProduit) contrat.getProduit();
+            if (p instanceof ChocolatDeMarque) {
+                ChocolatDeMarque cdm = (ChocolatDeMarque) p;
+                double quantiteAttendue = contrat.getEcheancier().getQuantite(etapeActuelle);
+                double stockActuel = predit.getOrDefault(cdm, 0.0);
+                predit.put(cdm, stockActuel + quantiteAttendue);
+            }
+        }
+        return predit;
+    }
+
+    protected void actualiserStockPredit(ExemplaireContratCadre nouveauContrat) {
+        if (nouveauContrat != null) {
+            IProduit p = (IProduit) nouveauContrat.getProduit();
+            if (p instanceof ChocolatDeMarque) {
+                ChocolatDeMarque cdm = (ChocolatDeMarque) p;
+                int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+            
+                // On récupère la livraison prévue pour l'étape en cours par ce nouveau contrat
+                double livraisonImmediate = nouveauContrat.getEcheancier().getQuantite(etapeActuelle);
+            
+                double ancienStockPredit = this.stockPredit.getOrDefault(cdm, 0.0);
+                this.stockPredit.put(cdm, ancienStockPredit + livraisonImmediate);
+            }
         }
     }
-    return predit;
-}
 }

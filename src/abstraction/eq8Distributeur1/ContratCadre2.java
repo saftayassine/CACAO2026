@@ -50,26 +50,26 @@ public class ContratCadre2 extends Approvisionnement2 implements IAcheteurContra
     }
 
     @Override
-    protected double methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax) {
-        // On fixe les variables de session directement
+    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax) {
         this.besoinCourant = besoinParEtape;
         this.prixCibleCourant = prixCible;
         this.prixMaxCourant = prixMax;
 
         SuperviseurVentesContratCadre sup = (SuperviseurVentesContratCadre) (Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
         List<IVendeurContratCadre> vendeurs = sup.getVendeurs(cdm);
-        
+    
         if (vendeurs.size() > 0) {
+            // Échéancier de 12 étapes
             Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, besoinParEtape);
-            // On lance la demande
+        
             ExemplaireContratCadre c = sup.demandeAcheteur(this, vendeurs.get(0), cdm, ech, this.cryptogramme, false);
-            
+        
             if (c != null) {
                 this.mesContrats.add(c);
-                return c.getQuantiteTotale();
+                // ACTION CRUCIALE : On informe le système de la hausse du stock prédit
+                this.actualiserStockPredit(c);
             }
         }
-        return 0.0;
     }
 
     public boolean achete(IProduit produit) {

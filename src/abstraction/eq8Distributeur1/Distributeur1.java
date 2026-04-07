@@ -26,7 +26,6 @@ public class Distributeur1 extends MiseEnRayon {
 		double volumeCibleTotal = 1000.0;
 
 		// On remet tout les produits du rayon en stock pour simplifier les calculs
-		List<ChocolatDeMarque> p = Filiere.LA_FILIERE.getChocolatsProduits();
 		for (int i = 0; i < p.size(); i++) {
             double q = this.getQuantiteEnStock(p.get(i), this.cryptogramme);
 		    double f = this.getQuantiteEnRayon(p.get(i), this.cryptogramme);
