@@ -38,7 +38,8 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
         for (Feve f : stocks.keySet()) {
             double disponible = stocks.get(f).getValeur(this.cryptogramme) - restantDu(f);
             this.journalContratCadre.ajouter("Stock disponible " + f + " = " + disponible);
-            if (disponible > 1200) {
+            double seuilCC = (f == Feve.F_HQ) ? 100.0 : 1200.0;
+            if (disponible > seuilCC) {
                 double parStep = Math.max(100.0, disponible / 24.0);
                 Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
                 List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
@@ -74,8 +75,10 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
             return false;
         }
         Feve f = (Feve) produit;
-        boolean peutVendre = stocks.get(f).getValeur(this.cryptogramme) - restantDu(f) > 1200;
-        this.journalContratCadre.ajouter("vend? " + f + " -> " + peutVendre);
+        double disponible = stocks.get(f).getValeur(this.cryptogramme) - restantDu(f);
+        double seuilVente = (f == Feve.F_HQ) ? 100.0 : 1200.0;
+        boolean peutVendre = disponible > seuilVente;
+        this.journalContratCadre.ajouter("vend? " + f + " (disponible=" + disponible + ", seuil=" + seuilVente + ") -> " + peutVendre);
         return peutVendre;
     }
 

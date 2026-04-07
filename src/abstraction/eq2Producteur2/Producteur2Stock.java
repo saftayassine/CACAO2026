@@ -38,6 +38,7 @@ public class Producteur2Stock {
 
         this.stock_initial.put(Feve.F_BQ, 1000.0);
         this.stock_initial.put(Feve.F_MQ, 1000.0);
+        this.stock_initial.put(Feve.F_HQ, 1200.0);
 
         for (Feve f : Feve.values()) {
             this.stockvar.get(f).setValeur(null, this.stock_initial.get(f));
