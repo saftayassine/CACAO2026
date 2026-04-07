@@ -22,3 +22,4 @@ import abstraction.eqXRomu.produits.IProduit;
 public class Bourse {
     
 }
+
