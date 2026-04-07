@@ -15,7 +15,7 @@ import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
-public class Distributeur1Acteur implements IActeur, IDistributeurChocolatDeMarque {
+public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	
 	protected Journal journal0;/** @author Ewen Landron */
 	protected Journal journal1;/** @author Alexandre Cornet */
@@ -300,8 +300,9 @@ public class Distributeur1Acteur implements IActeur, IDistributeurChocolatDeMarq
 	/** @author Alexandre Cornet */
 	public double getPrixProduit(IProduit p, int cryptogramme) {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
+
 			/** @author Lucas Levillain */ 
-			this.Prix(p).put(IProduit)(p, value : (CoutParArticle.getOrDefault() + prixDAchat.getOrDefault())*1,1)	
+			//this.Prix.get(p).put((IProduit)(p), (CoutParArticle.getOrDefault() + prixDAchat.getOrDefault())*1,1);	
 			return this.Prix.get(p);
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
