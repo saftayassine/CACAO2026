@@ -300,6 +300,8 @@ public class Distributeur1Acteur implements IActeur, IDistributeurChocolatDeMarq
 	/** @author Alexandre Cornet */
 	public double getPrixProduit(IProduit p, int cryptogramme) {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
+			/** @author Lucas Levillain */ 
+			this.Prix(p).put(IProduit)(p, value : (CoutParArticle.getOrDefault() + prixDAchat.getOrDefault())*1,1)	
 			return this.Prix.get(p);
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
