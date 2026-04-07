@@ -5,38 +5,56 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import abstraction.eqXRomu.clients.ClientFinal;
+import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
+import abstraction.eqXRomu.filiere.IDistributeurChocolatDeMarque;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
-public class Distributeur1Acteur implements IActeur {
+public class Distributeur1Acteur implements IActeur, IDistributeurChocolatDeMarque {
 	
 	protected Journal journal0;/** @author Ewen Landron */
+	protected Journal journal1;/** @author Alexandre Cornet */
+	protected Journal journal2;/** @author Alexandre Cornet */
+	protected Journal journal3;/** @author Alexandre Cornet */
+	protected Journal journal4;/** @author Alexandre Cornet */
+	protected Journal journal5;/** @author Ewen Landron */
 	protected Variable volumeStock;/** @author Alexandre Cornet */
 	protected HashMap<IProduit, Double> Rayon;/** @author Alexandre Cornet */
 	protected int cryptogramme;/** @author Alexandre Cornet */
 	protected HashMap<IProduit, Double> Stock;/** @author Alexandre Cornet */
+	protected HashMap<IProduit, Double> Prix;/** @author Alexandre Cornet */
 	protected double TailleRayon;/** @author Alexandre Cornet */
 	protected double volumerayon;/** @author Alexandre Cornet */
-
+	/**
+         * @author Alexandre Cornet
+		 * @author Ewen Landron
+         */ 
 	public Distributeur1Acteur() {
-		this.journal0 = new Journal("Journal Eq 8 numéro étape ", this);
-		this.volumeStock=new Variable("volumeStock", this); /** @author Alexandre Cornet */
-		this.Rayon = new HashMap<IProduit, Double>(); /** @author Alexandre Cornet */
-		this.Stock = new HashMap<IProduit,Double>();/** @author Alexandre Cornet */
-		this.TailleRayon = 100.0;/** @author Alexandre Cornet */
-		this.volumerayon = 0.0;/** @author Alexandre Cornet */
+		this.journal0 = new Journal("Journal EQ8 étapes ", this);
+		this.journal1 = new Journal("Journal EQ8 Rayon ", this);
+		this.journal2 = new Journal("Journal EQ8 Stock ", this);
+		this.journal3 = new Journal("Journal EQ8 Actions ", this);
+		this.journal4 = new Journal("Journal EQ8 Frais ", this);
+		this.journal5 = new Journal("Journal EQ8 Contrats ", this);
+		this.volumeStock=new Variable("EQ8 StockTotal", this); 
+		this.Rayon = new HashMap<IProduit, Double>(); 
+		this.Stock = new HashMap<IProduit, Double>();
+		this.Prix = new HashMap<IProduit, Double>();
+		this.TailleRayon = 1000.0;
+		this.volumerayon = 0.0;
 	}
-	
+	/** @author Alexandre Cornet */
 	public void initialiser() {
-		/** @author Alexandre Cornet */
 		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
 		for (int i=0; i<p.size(); i++){
-			this.Stock.put((IProduit)(p.get(i)),200.0);
+			this.Stock.put((IProduit)(p.get(i)),500.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);
+			this.Prix.put((IProduit)(p.get(i)),8000.0);
 			this.volumeStock.ajouter(this,getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme));
 		}
 	}
@@ -52,10 +70,48 @@ public class Distributeur1Acteur implements IActeur {
 	////////////////////////////////////////////////////////
 	//         En lien avec l'interface graphique         //
 	////////////////////////////////////////////////////////
-
+	/**
+         * @author Alexandre Cornet
+		 * @author Ewen Landron
+         */ 
 	public void next() {
-		this.journal0.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());/** @author Ewen Landron */
-		this.getvolumestock();/** @author Alexandre Cornet */
+		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
+		Banque b=Filiere.LA_FILIERE.getBanque();
+		Variable v=this.getvolumestock();
+		double v1=v.getValeur();
+		//JournalActions
+		this.journal3.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		this.journal3.ajouter(AjoutenRayon(p.get(0), 100));
+		this.journal3.ajouter(changerTailleRayon(0));
+		this.journal3.ajouter("----------------------------------------------");
+		//Journal Étapes
+		this.journal0.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		//Journal Rayon
+		this.journal1.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		this.journal1.ajouter("Taille du Rayon : "+this.TailleRayon+"T");
+		for (int i=0; i<p.size(); i++){
+			double q=this.getQuantiteEnRayon(p.get(i),this.cryptogramme);
+			this.journal1.ajouter(p.get(i)+" : "+q+"T");
+		}
+		this.journal1.ajouter("----------------------------------------------");
+		//Journal Stock
+		this.journal2.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		for (int i=0; i<p.size(); i++){
+			double q=this.getQuantiteEnStock(p.get(i),this.cryptogramme);
+			this.journal2.ajouter(p.get(i)+" : "+q+"T");
+		}
+		this.journal2.ajouter("----------------------------------------------");
+		//Journal Frais
+		
+		this.journal4.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		b.payerCout(this, this.cryptogramme, "Frais de Rayonnage", TailleRayon*0.01);
+		this.journal4.ajouter("Frais de Rayon : "+TailleRayon*0.01 +" €");
+		b.payerCout(this, this.cryptogramme, "Frais de Stockage", v1*0.01);
+		this.journal4.ajouter("Frais de Stockage : "+v1*0.01+" €");
+		this.journal4.ajouter("----------------------------------------------");
+		if(this.volumerayon<this.TailleRayon){
+			this.TailleRayon=this.volumerayon;
+		}
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -77,10 +133,29 @@ public class Distributeur1Acteur implements IActeur {
 		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
 		this.volumerayon=0.0;
 		for (int i=0; i<p.size(); i++){
-			this.volumerayon+=getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme);
+			this.volumerayon+=getQuantiteEnRayon((IProduit)(p.get(i)),this.cryptogramme);
 		}
 		return this.volumerayon;
 	}
+
+	/** @author Alexandre Cornet */
+	public String changerTailleRayon(double d){
+		this.TailleRayon+=d;
+		if(d>=0){
+			return ("La taille du rayon a été augmentée de "+d+"T");
+		}else{
+			d=-d;
+			double v=this.getvolumerayon();
+			if(this.TailleRayon<v){
+				this.TailleRayon+=d;
+				return("Il y a trop de quantité en rayon pour baisser la taille du rayon");
+			}else{
+				return ("La taille du rayon a été diminuée de "+d+"T");
+			}
+		}
+		
+	}
+
 
 	/** @author Alexandre Cornet */
 	public String AjoutenRayon(IProduit p ,double d){
@@ -90,16 +165,17 @@ public class Distributeur1Acteur implements IActeur {
 		if(v+d>this.TailleRayon){
 			String  s="il n'y a pas assez de place dans le rayon";
 			return s;
-		}else if(q>d){
+		}else if(q<d){
 			String s="vous n'avez pas assez de stock pour ajouter cette quantité";
 			return s;
 		}else{
 			this.Rayon.put(p,f+d);
 			this.Stock.put(p,q-d);
-			String s="Vous avez ajouté le produit en rayon";
+			String s="Vous avez ajouté " + d + "T de " + p + " en rayon.";
+			this.volumerayon+=d;
+			this.volumeStock.ajouter(this, -d);
 			return s;
 		}
-
 	}
 
 	public String getDescription() {
@@ -125,6 +201,10 @@ public class Distributeur1Acteur implements IActeur {
 	public List<Journal> getJournaux() {
 		List<Journal> res=new ArrayList<Journal>();
 		res.add(this.journal0);
+		res.add(this.journal1);
+		res.add(this.journal2);
+		res.add(this.journal3);
+		res.add(this.journal4);
 		return res;
 	}
 
@@ -205,5 +285,43 @@ public class Distributeur1Acteur implements IActeur {
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}
+	}
+	/** @author Alexandre Cornet */
+	public double getPrixProduit(IProduit p, int cryptogramme) {
+		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
+			return this.Prix.get(p);
+		} else {
+			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
+		}
+	}
+
+	/** @author Alexandre Cornet */
+	@Override
+	public double prix(ChocolatDeMarque choco) {
+		return this.getPrixProduit(choco, this.cryptogramme);
+	}
+	/** @author Alexandre Cornet */
+	@Override
+	public double quantiteEnVente(ChocolatDeMarque choco, int crypto) {
+		return this.getQuantiteEnRayon(choco, this.cryptogramme);
+	}
+	/** @author Alexandre Cornet */
+	@Override
+	public double quantiteEnVenteTG(ChocolatDeMarque choco, int crypto) {
+		return 0.0;
+		
+	}
+	/** @author Alexandre Cornet */
+	@Override
+	public void vendre(ClientFinal client, ChocolatDeMarque choco, double quantite, double montant, int crypto) {
+		double v=getQuantiteEnRayon(choco,this.cryptogramme);
+		this.Rayon.put((IProduit)(choco),v-quantite);
+
+	}
+	/** @author Alexandre Cornet */
+	@Override
+	public void notificationRayonVide(ChocolatDeMarque choco, int crypto) {
+		this.journal0.ajouter("Rayon de "+choco+" en rupture");
+		
 	}
 }
