@@ -32,7 +32,7 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     }
 
     public double propositionPrix(ExemplaireContratCadre contrat){
-        return 2500;
+        return 9000;
     }
 
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){

@@ -5,12 +5,14 @@ import java.util.List;
 
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.general.VariablePrivee;
+import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
 /**@author Safta Yassine */ 
-public class Transformateur1 extends Transformateur1AcheteurBourse  {
+public class Transformateur1 extends Transformateur1VendeurCC  {
 	/** @author Ewan Lefort */
-	VariablePrivee totalstocks= new VariablePrivee("EQ4T Total Stocks", "<html>Quantite totale de feves en stock</html>", this,0);
+	VariablePrivee totalstocks= new VariablePrivee("EQ4T Total Stocks", "<html>Quantite totale de produits en stock</html>", this,0);
+	VariablePrivee stockProntellaM= new VariablePrivee("EQ4T Stock ProntellaM", "<html>Quantite totale de ProntellaM en stock</html>", this, 0);
 
 	/** @author Safta Yassine */
 	public Transformateur1() {
@@ -29,12 +31,14 @@ public class Transformateur1 extends Transformateur1AcheteurBourse  {
 	public void next(){
 		super.next();
 		this.totalstocks.setValeur(this, this.getTotalStocks(), cryptogramme);
-
+		this.stockProntellaM.setValeur(this, this.getStocksProduit(ProntellaM), cryptogramme);
+		
 	}
 
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
 		res.add(totalstocks);
+		res.add(stockProntellaM);
 		return res;
 	}
 }

@@ -15,21 +15,24 @@ public class Producteur1Stock extends Producteur1Acteur{
 
     private List<Lot> lots;
     HashMap<Feve, Double> stock = new HashMap<>();
-    private double totalStock=0;
+    protected double totalStock=0;
 
     public Producteur1Stock(){
         super();
         this.lots= new ArrayList<Lot>();
-        this.stock.put(Feve.F_BQ,4000.);
+        this.stock.put(Feve.F_BQ,0.);
         this.stock.put(Feve.F_BQ_E,0.);
-        this.stock.put(Feve.F_MQ,2000.);
+        this.stock.put(Feve.F_MQ,0.);
         this.stock.put(Feve.F_MQ_E,0.);
         this.stock.put(Feve.F_HQ,0.);
         this.stock.put(Feve.F_HQ_E,0.);
 
-        for (double quantite : stock.values()){
-            this.totalStock += quantite;
-        }
+        this.add_lot(Feve.F_BQ, 4000,0);
+        this.add_lot(Feve.F_MQ, 6000,0);
+
+
+        System.out.println("1 "+this.totalStock);
+        this.stockTot.setValeur(this, totalStock, this.cryptogramme);
     }
 
 	/////////////////////////////////////////////
@@ -49,6 +52,7 @@ public class Producteur1Stock extends Producteur1Acteur{
     public void changeStock(Feve f, double quantite){
         this.stock.put(f, this.stock.get(f) + quantite);
         this.totalStock += quantite;
+        System.out.println("3 "+this.totalStock);
     }
 
 
@@ -77,12 +81,14 @@ public class Producteur1Stock extends Producteur1Acteur{
 	//////////////////////////////////////////
 	//         Manipulation de lots         //
 	//////////////////////////////////////////
-
     public void add_lot( Feve f, double quantite ){
-        Lot lot = new Lot(f, Filiere.LA_FILIERE.getEtape(), quantite);
+        this.add_lot(f, quantite, Filiere.LA_FILIERE.getEtape());
+    }
+
+    public void add_lot( Feve f, double quantite, int etape){
+        Lot lot = new Lot(f, etape, quantite);
         this.lots.add(lot);  // les lots sont trié du plus vieux au plus récent
-        this.totalStock = this.totalStock + quantite;
-        this.stock.put(f, this.stock.get(f) + quantite);
+        System.out.println("2 "+this.totalStock);
         this.changeStock(f, quantite);
     }
 
@@ -91,6 +97,7 @@ public class Producteur1Stock extends Producteur1Acteur{
     }
 
     public List<Lot> takeFeve(Feve f,double quantite){  // Permet d'extraire des stocks les plus vieilles fêves de la qualité voulue
+        System.out.println("take feve "+ quantite);
         if(quantite > this.stock.get(f)){
             return null;
 
@@ -101,7 +108,7 @@ public class Producteur1Stock extends Producteur1Acteur{
         double rest = quantite;
         for(int i=0; i<this.lots.size() && rest != 0 ;i++){
             Lot lot = this.lots.get(i);
-            if(lot.getGamme() == f){
+            if(lot.getGamme().equals(f)){
                 if(lot.getQuantite() <= rest){ // Si on peut prendre tout le lot, on le prend
                     take_out.add(lot);
                     rest -= lot.getQuantite();
@@ -120,6 +127,33 @@ public class Producteur1Stock extends Producteur1Acteur{
             }
         }
 
+        System.out.println("take feve " + this.totalStock);
+        this.stockTot.setValeur(this, this.totalStock, this.cryptogramme);
+        System.out.println("--->"+stockTot.getValeur());
+
         return take_out;
     }
+
+    ///////////////////////////////////
+	//         Actions autres        //
+	///////////////////////////////////
+    
+    public void next() {
+        super.next();
+
+		// donne le stock à la fin de la période après tous les échanges
+        // mettre à jour stockTot
+        System.out.println("last " + this.totalStock);
+        this.stockTot.setValeur(this, this.totalStock, this.cryptogramme);
+        System.out.println("--->"+stockTot.getValeur());
+        // Permet de suivre le stock de fève
+		this.journal.ajouter( "Stock fève BQ :"+String.valueOf(this.stock.get(Feve.F_BQ)));
+        this.journal.ajouter( "Stock fève BQ_E :"+String.valueOf(this.stock.get(Feve.F_BQ_E)));
+        this.journal.ajouter( "Stock fève MQ :"+String.valueOf(this.stock.get(Feve.F_MQ)));
+        this.journal.ajouter( "Stock fève MQ_E :"+String.valueOf(this.stock.get(Feve.F_MQ_E)));
+        this.journal.ajouter( "Stock fève HQ :"+String.valueOf(this.stock.get(Feve.F_HQ)));
+        this.journal.ajouter( "Stock fève HQ_E :"+String.valueOf(this.stock.get(Feve.F_HQ_E)));
+
+    }
+
 }

@@ -7,11 +7,13 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 import abstraction.eqXRomu.acteurs.Romu;
 import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.filiere.IFabricantChocolatDeMarque;
+import abstraction.eqXRomu.filiere.IMarqueChocolat;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 
-public class Transformateur1Stock extends Transformateur1Acteur{
+public class Transformateur1Stock extends Transformateur1Acteur implements IFabricantChocolatDeMarque, IMarqueChocolat{
 
     private HashMap<IProduit, Double> stock;
     public ChocolatDeMarque ProntellaM= new ChocolatDeMarque(Chocolat.C_MQ, "ProntellaM", 65);
@@ -52,7 +54,12 @@ public class Transformateur1Stock extends Transformateur1Acteur{
     }
 
     public double getStocksProduit(IProduit produit){
+        if (this.getStock().keySet().contains(produit)){
         return this.getStock().get(produit);
+    }
+        else{
+            return 0;
+        }
     }
 
     public double getTotalStocksFeves(){

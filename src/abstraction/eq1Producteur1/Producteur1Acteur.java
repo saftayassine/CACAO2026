@@ -21,7 +21,7 @@ public class Producteur1Acteur implements IActeur {
 
 	protected Journal journal;
 	protected int cryptogramme;
-	protected Variable stock;
+	protected Variable stockTot;
 
 	public Producteur1Acteur() {
 
@@ -29,7 +29,7 @@ public class Producteur1Acteur implements IActeur {
 		this.journal = new Journal("Journal "+this.getNom(), this);
 
 		//Ajoutez un indicateur du volume total de notre stock, en tonne Elise Dossal/Théophile Trillat
-		this.stock = new VariableReadOnly("stock de EQ1", "<html>Stock de EQ1</html>",this, 0.0, 10.0, 250.0);
+		this.stockTot = new VariableReadOnly("stock de EQ1", "<html>Stock de EQ1</html>",this, 0.0, 1000000000.0, 6000.0);
 	}
 	
 	public void initialiser() {
@@ -65,7 +65,7 @@ public class Producteur1Acteur implements IActeur {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
-		res.add(this.stock);
+		res.add(this.stockTot);
 		return res;
 	}
 
