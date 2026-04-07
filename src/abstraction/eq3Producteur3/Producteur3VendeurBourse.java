@@ -16,11 +16,15 @@ public class Producteur3VendeurBourse extends Producteur3Acteur implements IVend
 
 	public double offre(Feve f, double cours) {
 		if (f.getGamme()==Gamme.MQ) {
-			return 120;
+			double offre = 120.0 ; 
+			journal_vente_bouse.ajouter(Filiere.LA_FILIERE.getEtape()+" : je met en vente "+offre+" T de "+f);
+			return offre;
 			} 
 		else {
 		if (f.getGamme()==Gamme.BQ){
-				return this.stock.getStock(Feve.F_BQ);
+			double offre= this.stock.getStock(Feve.F_BQ);
+			journal_vente_bouse.ajouter(Filiere.LA_FILIERE.getEtape()+" : je met en vente "+offre+" T de "+f);
+				return offre;
 			}
 		else{
 				return 0.0;
