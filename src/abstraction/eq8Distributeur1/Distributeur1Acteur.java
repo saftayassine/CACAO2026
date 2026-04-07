@@ -15,7 +15,7 @@ import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
-public class Distributeur1Acteur implements IActeur, IDistributeurChocolatDeMarque {
+public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	
 	protected Journal journal0;/** @author Ewen Landron */
 	protected Journal journal1;/** @author Alexandre Cornet */
