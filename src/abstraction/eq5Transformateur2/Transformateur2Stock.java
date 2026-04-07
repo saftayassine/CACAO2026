@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.lang.Integer;
 
 import abstraction.eqXRomu.filiere.Filiere;
@@ -22,9 +23,12 @@ public class Transformateur2Stock extends Transformateur2Acteur{
     private HashMap<Chocolat, Double> stock_chocolat;
     private Variable stock_feve_affichage;
     private Variable stock_chocolat_affichage;
-    private List SacsHQ;
-    private List SacsMQ;
-    private List SacsBQ;
+    private List<SacDeFeves> sacsHQ;
+    private List<SacDeFeves> sacsMQ;
+    private List<SacDeFeves> sacsBQ;
+    private List<SacDeFeves> sacsHQ_E;
+    private List<SacDeFeves> sacsMQ_E;
+    private List<SacDeFeves> sacsBQ_E;
 
     
     // Constructeur
@@ -52,9 +56,12 @@ public class Transformateur2Stock extends Transformateur2Acteur{
         this.stock_feve_affichage=new Variable("EQ5 Stock Fève", this, 0);
         this.stock_chocolat_affichage=new Variable("EQ5 Stock Chocloat", this, 0);
 
-        this.SacsHQ=new LinkedList<>();/*Va stocker les sacs de fèves HQ et HQ_E */
-        this.SacsMQ=new LinkedList<>();/*Va stocker les sacs de fèves MQ et MQ_E */
-        this.SacsBQ=new LinkedList<>();/*Va stocker les sacs de fèves BQ et BQ_E */
+        this.sacsHQ=new LinkedList<SacDeFeves>();
+        this.sacsMQ=new LinkedList<SacDeFeves>();
+        this.sacsBQ=new LinkedList<SacDeFeves>();
+        this.sacsHQ_E=new LinkedList<SacDeFeves>();
+        this.sacsMQ_E=new LinkedList<SacDeFeves>();
+        this.sacsBQ_E=new LinkedList<SacDeFeves>();
     }
 
     // Méthodes
@@ -101,9 +108,29 @@ public class Transformateur2Stock extends Transformateur2Acteur{
         this.stock_feve_affichage.ajouter(this,n);
         
         int etape = Filiere.LA_FILIERE.getEtape();
-        if(q==Feve.F_HQ || q==Feve.F_HQ_E){
+        if(q==Feve.F_HQ){
             SacDeFeves sac=new SacDeFeves(q,n,etape+6);
-            
+            this.sacsHQ.add(sac);
+            }
+        if(q==Feve.F_HQ_E){
+            SacDeFeves sac=new SacDeFeves(q,n,etape+6);
+            this.sacsHQ_E.add(sac);
+            }
+        if(q==Feve.F_MQ){
+            SacDeFeves sac=new SacDeFeves(q,n,etape+12);
+            this.sacsMQ.add(sac);
+            }
+        if(q==Feve.F_MQ_E){
+            SacDeFeves sac=new SacDeFeves(q,n,etape+12);
+            this.sacsMQ_E.add(sac);
+            }
+        if(q==Feve.F_BQ){
+            SacDeFeves sac=new SacDeFeves(q,n,etape+24);
+            this.sacsBQ.add(sac);
+        }
+        else{
+            SacDeFeves sac=new SacDeFeves(q,n,etape+24);
+            this.sacsBQ_E.add(sac);
         }
 
     }
@@ -116,7 +143,62 @@ public class Transformateur2Stock extends Transformateur2Acteur{
             this.stock_feve.put(q, this.stock_feve.get(q) - n);
             this.getJournaux().get(1).ajouter("Déstockage de" + (n).toString()+ "de fève de qualité" + (q).toString() + "\n");
             this.stock_feve_affichage.retirer(this,n);
-        }
+
+            if(q==Feve.F_HQ){
+                Double resteAEnlever=n;
+                while (resteAEnlever>0.0) {
+                    resteAEnlever=this.sacsHQ.get(0).remove_feve(resteAEnlever);
+                    if(this.sacsHQ.get(0).getQuantite()==0.0){
+                        this.sacsHQ.remove(0);
+                    }
+                }
+                }
+            if(q==Feve.F_HQ_E){
+                Double resteAEnlever=n;
+                while (resteAEnlever>0.0) {
+                    resteAEnlever=this.sacsHQ_E.get(0).remove_feve(resteAEnlever);
+                    if(this.sacsHQ_E.get(0).getQuantite()==0.0){
+                        this.sacsHQ_E.remove(0);
+                    }
+                }
+            }
+            if(q==Feve.F_MQ){
+                Double resteAEnlever=n;
+                while (resteAEnlever>0.0) {
+                    resteAEnlever=this.sacsMQ.get(0).remove_feve(resteAEnlever);
+                    if(this.sacsMQ.get(0).getQuantite()==0.0){
+                        this.sacsMQ.remove(0);
+                    }
+                }
+            }
+            if(q==Feve.F_MQ_E){
+                Double resteAEnlever=n;
+                while (resteAEnlever>0.0) {
+                    resteAEnlever=this.sacsMQ_E.get(0).remove_feve(resteAEnlever);
+                    if(this.sacsMQ_E.get(0).getQuantite()==0.0){
+                        this.sacsMQ_E.remove(0);
+                    }
+                }
+            }
+            if(q==Feve.F_BQ){
+                Double resteAEnlever=n;
+                while (resteAEnlever>0.0) {
+                    resteAEnlever=this.sacsBQ.get(0).remove_feve(resteAEnlever);
+                    if(this.sacsBQ.get(0).getQuantite()==0.0){
+                        this.sacsBQ.remove(0);
+                    }
+                }
+            }
+            else{
+                Double resteAEnlever=n;
+                while (resteAEnlever>0.0) {
+                    resteAEnlever=this.sacsBQ_E.get(0).remove_feve(resteAEnlever);
+                    if(this.sacsBQ_E.get(0).getQuantite()==0.0){
+                        this.sacsBQ_E.remove(0);
+                    }
+                }
+            }
+        }       
     }
 
     /** @author Raphaël et Maxence
@@ -140,4 +222,36 @@ public class Transformateur2Stock extends Transformateur2Acteur{
             this.stock_chocolat.put(q, this.stock_chocolat.get(q) - n);
             this.stock_chocolat_affichage.retirer(this,n);
             }
+
+        /**@author Maxence
+        **/
+        public void update_peremption(){
+            int etape = Filiere.LA_FILIERE.getEtape();
+            while(this.sacsHQ.get(0).getDatePeremption()==etape){
+                SacDeFeves sac=this.sacsHQ.remove(0);
+                SacDeFeves newSac=new SacDeFeves(Feve.F_MQ, sac.getQuantite());
+                this.sacsMQ.add(newSac);
+            }
+            while(this.sacsHQ_E.get(0).getDatePeremption()==etape){
+                SacDeFeves sac=this.sacsHQ_E.remove(0);
+                SacDeFeves newSac=new SacDeFeves(Feve.F_MQ_E, sac.getQuantite());
+                this.sacsMQ_E.add(newSac);
+            }
+            while(this.sacsMQ.get(0).getDatePeremption()==etape){
+                SacDeFeves sac=this.sacsMQ.remove(0);
+                SacDeFeves newSac=new SacDeFeves(Feve.F_BQ, sac.getQuantite());
+                this.sacsBQ.add(newSac);
+            }
+            while(this.sacsMQ_E.get(0).getDatePeremption()==etape){
+                SacDeFeves sac=this.sacsMQ_E.remove(0);
+                SacDeFeves newSac=new SacDeFeves(Feve.F_BQ_E, sac.getQuantite());
+                this.sacsBQ_E.add(newSac);
+            }
+            while(this.sacsBQ.get(0).getDatePeremption()==etape){
+                this.sacsBQ.remove(0);
+            }
+            while(this.sacsBQ_E.get(0).getDatePeremption()==etape){
+                this.sacsBQ_E.remove(0);
+            }
+        }
     }
