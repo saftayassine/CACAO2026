@@ -1,7 +1,7 @@
 package abstraction.eq3Producteur3;
 
 /** @author Vassili Spiridonov*/
-public class Agriculteurs3 extends Producteur3Acteur {
+public class Agriculteurs3 {
     private int nbCDI;  
     private int nbInterim;
     private int nbEnfant;    
@@ -10,7 +10,7 @@ public class Agriculteurs3 extends Producteur3Acteur {
     private double salaireEnfant;   
     private boolean exploitationEnfant; 
 
-    public void Agriculteur3(Plantation3 plantation) {
+    public Agriculteurs3(Plantation3 plantation) {
         this.nbCDI = 30 * plantation.getNbHectareTotal();
         this.nbInterim = 0;
         this.nbEnfant = 0; // Entrerpise éthique : aucun enfants exploités 
