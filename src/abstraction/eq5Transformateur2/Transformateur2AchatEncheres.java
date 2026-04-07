@@ -3,6 +3,8 @@ package abstraction.eq5Transformateur2;
 import java.util.HashMap;
 import java.util.List;
 import abstraction.eqXRomu.produits.Gamme;
+import abstraction.eqXRomu.produits.IProduit;
+import abstraction.eqXRomu.bourseCacao.BourseCacao;
 import abstraction.eqXRomu.bourseCacao.IAcheteurBourse;
 import abstraction.eqXRomu.encheres.Enchere;
 import abstraction.eqXRomu.encheres.ExempleAbsAcheteurAuxEncheres;
@@ -10,67 +12,66 @@ import abstraction.eqXRomu.encheres.IAcheteurAuxEncheres;
 import abstraction.eqXRomu.encheres.IVendeurAuxEncheres;
 import abstraction.eqXRomu.encheres.MiseAuxEncheres;
 import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.Feve;
 
 /**
- * Auteur Raphaël
+ * Auteur Maxence
  */
 
 
-/**
-public class Transformateur2AchatEncheres extends ExempleAbsAcheteurAuxEncheres implements IAcheteurAuxEncheres {
 
-    public Transformateur2AchatEncheres(double prixInit) {
-        super(prixInit);
-        //TODO Auto-generated constructor stub
+public class Transformateur2AchatEncheres extends Transformateur2ProductionChocolat implements IAcheteurAuxEncheres {
+
+
+    public Transformateur2AchatEncheres() {
+        super();
     }
 
-    @Override
-    public double proposerPrix(MiseAuxEncheres miseAuxEncheres) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'proposerPrix'");
-    }
-
-    @Override
-    public void notifierAchatAuxEncheres(Enchere enchereRetenue) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'notifierAchatAuxEncheres'");
-    }
-
-    @Override
-    public void notifierEnchereNonRetenue(Enchere enchereNonRetenue) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'notifierEnchereNonRetenue'");
-    }
-    
-
-    protected HashMap<IVendeurAuxEncheres, Double> prix;
-	
-	public ExempleAcheteurAuxEncheres(double prixInit) {
-		super(prixInit);
-		this.prix=new HashMap<IVendeurAuxEncheres, Double>();
-	}
 
 	public double proposerPrix(MiseAuxEncheres offre) {
-		journal.ajouter("ProposerPrix("+offre+"):");
-			double px = this.prixInit;
-			if (this.prix.keySet().contains(offre.getVendeur())) {
-				px = this.prix.get(offre.getVendeur());
+		IProduit produit = offre.getProduit();
+		if (produit instanceof Feve){
+			Feve f=(Feve) produit;
+			Double quantite = offre.getQuantiteT();
+			if(f==Feve.F_BQ){
+				Double cours = ((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_BQ).getValeur();
+				if (quantite>this.DemandeChocolat().get(Chocolat.C_BQ)*0.1){
+					return 0.85*cours;
+				}
+				else{
+					return 0.9*cours;
+				}
 			}
-			journal.ajouter("   je propose "+px);
-			return px;
+			if(f==Feve.F_MQ){
+				Double cours = ((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur();
+				if (quantite>this.DemandeChocolat().get(Chocolat.C_MQ)*0.1){
+					return 0.85*cours;
+				}
+				else{
+					return 0.9*cours;
+				}
+			}
+			else{
+				Double cours = ((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_HQ).getValeur();
+				if (quantite>this.DemandeChocolat().get(Chocolat.C_MQ)*0.1){
+					return 0.85*cours;
+				}
+				else{
+					return 0.9*cours;
+				}
+			}
+		}
+		else{
+			return 0.0;
+		}
 	}
 
 	public void notifierAchatAuxEncheres(Enchere propositionRetenue) {
-		double stock = (this.stock.keySet().contains(propositionRetenue.getMiseAuxEncheres().getProduit())) ?this.stock.get(propositionRetenue.getMiseAuxEncheres().getProduit()) : 0.0;
-		this.stock.put(propositionRetenue.getMiseAuxEncheres().getProduit(), stock+ propositionRetenue.getMiseAuxEncheres().getQuantiteT());
-		this.prix.put(propositionRetenue.getMiseAuxEncheres().getVendeur(), propositionRetenue.getPrixTonne()-1000.0);
-		journal.ajouter("   mon prix a ete accepte. Mon prix pour "+propositionRetenue.getMiseAuxEncheres().getVendeur()+" passe a "+(propositionRetenue.getPrixTonne()-1000.0));
+
 	}
 
 	public void notifierEnchereNonRetenue(Enchere propositionNonRetenue) {
-		this.prix.put(propositionNonRetenue.getMiseAuxEncheres().getVendeur(), propositionNonRetenue.getPrixTonne()+100.);
-		journal.ajouter("   mon prix a ete refuse. Mon prix pour "+propositionNonRetenue.getMiseAuxEncheres().getVendeur()+" passe a "+(propositionNonRetenue.getPrixTonne()+100.));
+		
 	}
 }
-*/

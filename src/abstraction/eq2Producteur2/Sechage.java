@@ -43,4 +43,68 @@ public class Sechage extends Récolte {
             }
         }
     }
+    
+    public void mettreAJourSechage() {
+        int stepActuel = Filiere.LA_FILIERE.getEtape();
+        HashMap<Feve, Double> sechageFini = new HashMap<>();
+
+        for (Feve f : Feve.values()) {
+            sechageFini.put(f, 0.0);
+
+            List<Double> lots = fileSechage.get(f);
+            List<Integer> stepsFin = fileSechageSteps.get(f);
+            List<Double> nouveauxLots = new ArrayList<>();
+            List<Integer> nouveauxSteps = new ArrayList<>();
+
+            for (int i = 0; i < lots.size(); i++) {
+                if (stepsFin.get(i) <= stepActuel) {
+                    sechageFini.put(f, sechageFini.get(f) + lots.get(i));
+                } else {
+                    nouveauxLots.add(lots.get(i));
+                    nouveauxSteps.add(stepsFin.get(i));
+                }
+            }
+
+            // Mise à jour des listes après suppression des lots séchés
+            fileSechage.put(f, nouveauxLots);
+            fileSechageSteps.put(f, nouveauxSteps);
+
+            // Mise à jour des fèves sèches et passage en tonnes
+            switch (f) {
+                case F_BQ:
+                    fevesSeches.put(f, sechageFini.get(f));
+                    break;
+                case F_MQ:
+                    fevesSeches.put(f, sechageFini.get(f));
+                    break;
+                case F_HQ:
+                    fevesSeches.put(f, sechageFini.get(f));
+                    break;
+                case F_HQ_E:
+                    fevesSeches.put(f, sechageFini.get(f));
+                    break;
+
+            }
+        }
+
+        journalSechage.ajouter("Step " + stepActuel + " : Nouvelles tonnes de fèves sèches : " + fevesSeches);
+
+    }
+    
+    public double getFevesSeches(Feve f) {
+        return fevesSeches.get(f);
+    }
+
+    public void next() {
+        super.next();
+        ajouterAuSechage();
+        mettreAJourSechage();
+    }
+
+    public List<Journal> getJournaux() {
+        List<Journal> res = super.getJournaux();
+        res.add(journalSechage);
+        return res;
+    }
+
 }

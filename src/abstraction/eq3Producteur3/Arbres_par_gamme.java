@@ -11,7 +11,7 @@ import java.util.Map;
 public class Arbres_par_gamme {
     /** @author Victor Vannier-Moreau*/
     private Feve feve;
-    // Liste de 961 éléments (de l'indice 0 à 960)
+    // Liste de 961 éléments (de l'indice 0 à 960) qui indique le nombre d'hectares pour chaque age.
     private List<Integer> distributionAge; 
     public int nbHectareTotal;
 
@@ -20,13 +20,18 @@ public class Arbres_par_gamme {
         /** @author Victor Vannier-Moreau*/
         this.feve = feve;
         this.distributionAge = new ArrayList<>(961);
-        this.nbHectareTotal = 961*350;
+        this.nbHectareTotal = 961*350; // plus facile à manipluer car multiple de 961 et proche de 330 000.
         
         int arbresParAge = nbHectareTotal / 961;
 
         for (int i = 0; i <= 960; i++) {
             this.distributionAge.add(arbresParAge);
         }
+    }
+
+    public int getNbHectare(){
+        /** @author Victor Vannier-Moreau*/
+        return this.nbHectareTotal;
     }
 
     /**
@@ -61,22 +66,23 @@ public class Arbres_par_gamme {
     }
 
     /**
-     * Calcule la production de fèves selon les paliers d'âge
+     * Calcule la production de fèves selon les paliers d'âge.
      */
-    public long getProductionFeve() { 
-    /** @author Guillaule Leroy*/
+    public double getProductionFeve() { // On mesure la quantité de fève en tonne de fève (en considérant qu'une fève pèse 1g)
+    /** @author Guillaume Leroy*/
     Map<String, Integer> recap = this.getTranches();
     
+    // On utilise des long pour les calculs intermédiaires par sécurité
     long nbJeunes = recap.get("3-5");   
     long nbAdultes = recap.get("5-25"); 
     long nbVieux = recap.get("25-40");  
 
-    long totalCabosses = 0; 
-    totalCabosses = totalCabosses + (nbJeunes * 10);
-    totalCabosses = totalCabosses + (nbAdultes * 50);
-    totalCabosses = totalCabosses + (nbVieux * 25);
+    long totalCabosses = 0;
+    totalCabosses = totalCabosses + (nbJeunes * 10L);
+    totalCabosses = totalCabosses + (nbAdultes * 50L);
+    totalCabosses = totalCabosses + (nbVieux * 25L);
 
-    long coeffGamme; 
+    long coeffGamme;
     Gamme g = this.feve.getGamme();
     
     if (g == Gamme.BQ) {
@@ -87,10 +93,15 @@ public class Arbres_par_gamme {
         coeffGamme = 30; 
     }
     
-    // Le L après 1000 force Java à faire le calcul en long
-    return totalCabosses * coeffGamme * 1000L; 
-}
+    // 1. Calcul de la production annuelle totale en grammes (fèves)
+    long prodAnnuelleGrammes = totalCabosses * coeffGamme * 1000L;
 
+    // 2. Conversion en tonnes ( / 1 000 000 )
+    double prodAnnuelleTonnes = prodAnnuelleGrammes / 1000000.0;
+
+    // 3. Conversion en production PAR PÉRIODE ( / 24 )
+    return prodAnnuelleTonnes / 24.0;
+}
 
 
     /**

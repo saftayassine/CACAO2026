@@ -27,7 +27,7 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AcheteurBou
 
 	public OffreVente proposerVente(AppelDOffre offre){
         if (offre.getQuantiteT() <= getStock_chocolat(offre.getProduit())){
-            OffreVente OV = new OffreVente(offre, this, offre.getProduit(),((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur()*1.2);
+            OffreVente OV = new OffreVente(offre, this, offre.getProduit(),((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur()*1.2*offre.getQuantiteT());
             return OV;
         } else {
             return null;

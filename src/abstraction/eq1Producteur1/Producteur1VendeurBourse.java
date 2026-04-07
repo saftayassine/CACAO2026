@@ -59,6 +59,7 @@ public class Producteur1VendeurBourse extends Producteur1AcheteurBourse implemen
 	 * @return la quantite en tonnes de feves de type f rellement livree (retiree du stock) 
 	 */
 	public double notificationVente(Feve f, double quantiteEnT, double coursEnEuroParT){
+		System.out.println("notif vente "+quantiteEnT);
         double vrai_quantite= Math.min(quantiteEnT,getStock(f));
         this.takeFeve(f, vrai_quantite);
         return vrai_quantite;
