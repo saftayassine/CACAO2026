@@ -49,7 +49,7 @@ public class Producteur1Acteur implements IActeur {
 
 	public void next() {
 		int etape = Filiere.LA_FILIERE.getEtape();
-		this.journal.ajouter(String.valueOf(etape));
+		this.journal.ajouter("Etape : "+ String.valueOf(etape));
 
 
 	}

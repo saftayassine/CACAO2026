@@ -13,7 +13,7 @@ import abstraction.eqXRomu.produits.Feve;
 /**
  * @author Théophile Trillat & Elise Dossal
  */
-public class Producteur1AcheteurBourse extends Producteur1Planteur implements IAcheteurBourse {
+public class Producteur1AcheteurBourse extends Producteur1Cooperative implements IAcheteurBourse {
 
     public Producteur1AcheteurBourse() {
         super();

@@ -1,7 +1,9 @@
 package abstraction.eq1Producteur1;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.Feve;
 
@@ -11,6 +13,8 @@ public class Producteur1Planteur extends Producteur1Stock{
 
     private List<Plantation> plantations = new ArrayList<Plantation>();
     private double taille_totale=10000;
+    private double tailleEq;
+    private double tailleNonEq;
 
     /**
      * @author Théophile Trillat
@@ -26,8 +30,18 @@ public class Producteur1Planteur extends Producteur1Stock{
     /**
      * @author Elise Dossal
      */
-    public double getTaille(){
+    public double getTaillePlantation(){
         return this. taille_totale;
+    }
+
+    public double getTaillePlantation(Boolean eq){
+        if(eq){
+            return this.tailleEq;
+        }
+
+        else{
+            return this.tailleNonEq;
+        }
     }
 
     /**
@@ -36,13 +50,33 @@ public class Producteur1Planteur extends Producteur1Stock{
     public void planter(Feve f, double taille){
         Plantation newP = new Plantation(f, taille , Filiere.LA_FILIERE.getEtape());
         this.plantations.add(newP);
+        if(f.isEquitable()){
+            this.tailleEq += taille;
+        }
+
+        else{
+            this.tailleNonEq += taille;
+        }
+
+        // BQ 1800/h    MQ 3500/h    HQ 7000/h
     }
 
     /**
      * @author Elise Dossal
      */
     public void couper(int i){
+        double taille = this.plantations.get(i).getTaille();
+        Feve f = this.plantations.get(i).getGamme();
         this.plantations.remove(i);
+        if(f.isEquitable()){
+            this.tailleEq -= taille;
+        }
+
+        else{
+            this.tailleNonEq -= taille;
+        }
+
+        this.taille_totale -= taille;
     }
 
     /**
@@ -100,15 +134,30 @@ public class Producteur1Planteur extends Producteur1Stock{
 
     }
 
-    
+    public void impots(){
+        double montant = 250*this.taille_totale;
+        Banque banque=Filiere.LA_FILIERE.getBanque();
+        banque.payerCout(this, this.cryptogramme, "Impot plantation" ,montant);
+        this.journal.ajouter("Impot plantation : " + montant);
+    }
+
+    public void charge(){
+        Banque banque=Filiere.LA_FILIERE.getBanque();
+        banque.payerCout(this, this.cryptogramme, "Masse salariale" , 617.65);
+        this.journal.ajouter("Charges payées : " + 617.65);
+    }
+
+
     /**
      * @author Elise Dossal
      */
     public void next(){
         super.next();
         int etape = Filiere.LA_FILIERE.getEtape();
+        this.impots();
         if(etape%24 == 0){ //Une collecte tous les ans, a une dâte arbitraire pour l'instant
             this.collecter();
+            this.charge();
         }
     }
 

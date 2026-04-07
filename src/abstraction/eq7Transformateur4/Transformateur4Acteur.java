@@ -114,7 +114,7 @@ public class Transformateur4Acteur implements IActeur {
 		this.cryptogramme = crypto;
 	}
 
-	// Appelee lorsqu'un acteur fait faillite (potentiellement vous)
+	// Appelle lorsqu'un acteur fait faillite (potentiellement vous)
 	// afin de vous en informer.
 	public void notificationFaillite(IActeur acteur) {
 	}
