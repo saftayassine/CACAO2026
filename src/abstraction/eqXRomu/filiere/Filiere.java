@@ -87,6 +87,7 @@ public class Filiere implements IAssermente {
 	private HashMap<Chocolat, FenetreGraphique> graphiqueVentesChocolats, graphiqueAchatsChocolats, graphiqueVentesChocolatsMarque;
 	private HashMap<Feve, HashMap<IActeur, Courbe>> courbeVentesFeves, courbeAchatsFeves;
     private HashMap<Chocolat, HashMap<IActeur, Courbe>> courbeVentesChocolats, courbeAchatsChocolats, courbeVentesChocolatsMarque;
+
 	/**
 	 * Initialise la filiere de sorte que le numero d'etape soit 0, 
 	 * et qu'il n'y ait pour l'heure que la Banque pour unique acteur. 
@@ -342,6 +343,52 @@ public class Filiere implements IAssermente {
 		}
 		return res;
 	}
+	public int getPartMarcheVentesFeves(Feve f, IActeur acteur, int etape) {
+		if (f==null || acteur==null || etape<0 || etape>Filiere.LA_FILIERE.getEtape()
+		  || !courbeVentesFeves.keySet().contains(f)
+		  || !courbeVentesFeves.get(f).keySet().contains(acteur)) {
+			return Integer.MIN_VALUE;
+		} else {
+			return (int)(courbeVentesFeves.get(f).get(acteur).getY(etape));
+		}
+	}
+	public int getPartMarcheAchatsFeves(Feve f, IActeur acteur, int etape) {
+		if (f==null || acteur==null || etape<0 || etape>Filiere.LA_FILIERE.getEtape()
+		  || !courbeAchatsFeves.keySet().contains(f)
+		  || !courbeAchatsFeves.get(f).keySet().contains(acteur)) {
+			return Integer.MIN_VALUE;
+		} else {
+			return (int)(courbeAchatsFeves.get(f).get(acteur).getY(etape));
+		}
+	}
+	public int getPartMarcheVentesChocolats(Chocolat c, IActeur acteur, int etape) {
+		if (c==null || acteur==null || etape<0 || etape>Filiere.LA_FILIERE.getEtape()
+		  || !courbeVentesChocolats.keySet().contains(c)
+		  || !courbeVentesChocolats.get(c).keySet().contains(acteur)) {
+			return Integer.MIN_VALUE;
+		} else {
+			return (int)(courbeVentesChocolats.get(c).get(acteur).getY(etape));
+		}
+	}
+	public int getPartMarcheAchatsChocolats(Chocolat c, IActeur acteur, int etape) {
+		if (c==null || acteur==null || etape<0 || etape>Filiere.LA_FILIERE.getEtape()
+		  || !courbeAchatsChocolats.keySet().contains(c)
+		  || !courbeAchatsChocolats.get(c).keySet().contains(acteur)) {
+			return Integer.MIN_VALUE;
+		} else {
+			return (int)(courbeAchatsChocolats.get(c).get(acteur).getY(etape));
+		}
+	}
+	public int getPartMarcheVentesChocolatsMarque(Chocolat c, IActeur acteur, int etape) {
+		if (c==null || acteur==null || etape<0 || etape>Filiere.LA_FILIERE.getEtape()
+		  || !courbeVentesChocolatsMarque.keySet().contains(c)
+		  || !courbeVentesChocolatsMarque.get(c).keySet().contains(acteur)) {
+			return Integer.MIN_VALUE;
+		} else {
+			return (int)(courbeVentesChocolatsMarque.get(c).get(acteur).getY(etape));
+		}
+	}
+
 	public VariableReadOnly getVentesFeves(IActeur acteur, Feve f ) {
 		return this.ventesFeves.get(acteur).get(f);
 	}
