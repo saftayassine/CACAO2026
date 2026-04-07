@@ -1,7 +1,7 @@
 package abstraction.eq3Producteur3;
 
 /** @author Vassili Spiridonov*/
-public class Agriculteurs3 {
+public class Agriculteurs3 extends Producteur3Acteur {
     private int nbCDI;  
     private int nbInterim;
     private int nbEnfant;    
