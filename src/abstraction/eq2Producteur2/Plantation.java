@@ -156,6 +156,23 @@ public class Plantation {
         }
     }
 
+    public double getcout_amorti() {
+        if ((age == 0) && (replante == false)) {
+            return parcelles*prix_achat / 960;
+        }
+        else if ((age == 0) && (replante == true)) {
+            return parcelles*prix_replantation / 960;
+        }
+        else if ((age <= dureeDeVie) && (replante == false)){
+            return parcelles*salaire_employe + (parcelles*prix_achat / 960);
+        }
+        else if ((age <= dureeDeVie) && (replante == true)){
+            return parcelles*salaire_employe + (parcelles*prix_replantation / 960);
+        }
+        else {
+            return 0;
+        }
+    }
 
     public double get_prix_vente() {
         return prix_vente;
