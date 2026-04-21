@@ -37,9 +37,9 @@ public class Approvisionnement2 extends Distributeur1Acteur {
     /**
      * Initialise les prix avec les données historiques (1 an en arrière)
      */
-    private void initialiserPrixReferenceUniquementChocolats() {
+    protected void initialiserPrixReferenceUniquementChocolats() {
         // On récupère directement la liste des chocolats de marque enregistrés dans la filière
-        for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsDeMarque()) {
+        for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsProduits()) {
         
             int etapeActuelle = Filiere.LA_FILIERE.getEtape();
             int etapeCible = Math.max(0, etapeActuelle - 1);
