@@ -18,12 +18,12 @@ import abstraction.eqXRomu.produits.IProduit;
 /** @author Victor Vannier-Moreau */
 public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IVendeurContratCadre {
     
-    protected List<ExemplaireContratCadre> contratsEnCours;
+    
     protected Journal journalCC;
 
     public Producteur3VendeurCC() {
         super();
-        this.contratsEnCours = new LinkedList<ExemplaireContratCadre>();
+        
         this.journalCC = new Journal("Journal Ventes CC EQ3", this);
     }
 
@@ -44,8 +44,8 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
         //On identifie tous les acheteurs potentiels pour ce produit 
         List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
         
-        // On calcule une quantité à proposer (ex: 10% de ton stock par acheteur)
-        double quantiteTotaleVoulue = this.stock.getStock(f) * 0.1;
+        // On calcule une quantité à proposer (ex: 30% du stock par acheteur)
+        double quantiteTotaleVoulue = this.stock.getStock(f) * 0.3;
         double quantiteParStep = quantiteTotaleVoulue / 12; // Étallé sur 6 mois
 
         if (quantiteParStep >= 100.0) {
@@ -135,13 +135,39 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
         return aLivre;
     }
 
-    public double propositionPrix(ExemplaireContratCadre contrat) { 
-        return 2000.0; 
-    }
+    public double propositionPrix(ExemplaireContratCadre contrat) {
+    double coutTotalCacao = this.gestionCouts.getCoutTot(this);
+    double productionTotale = this.plantationeq3.getProductionTotale();
+    double coutParTonne = coutTotalCacao / productionTotale;
+
+    //Fixer le prix avec 35% de marge 
+    double prixVente = coutParTonne * 1.35;
+
+    return prixVente;
+}
 
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat) {
-        return contrat.getPrix(); 
+    double coutTotalCacao = this.gestionCouts.getCoutTot(this);
+    double productionTotale = this.plantationeq3.getProductionTotale();
+
+    // La marge minimum est de 10%, on ne vend pas en dessous.
+    double prixPlancher = (coutTotalCacao / productionTotale) * 1.10;
+
+    double prixAcheteur = contrat.getPrix();
+
+    //Logique de négociation
+    if (prixAcheteur >= prixPlancher) {
+        // Si l'acheteur propose plus que notre minimum, on accepte
+        return prixAcheteur;
+    } else {
+        // Sinon, on propose une contre-proposition à mi-chemin 
+        // entre notre prix initial et notre prix plancher
+        double prixInitial = this.propositionPrix(contrat);
+        double contreProposition = (prixInitial + prixPlancher) / 2.0;
+
+        return contreProposition;
     }
+}
     
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
     String client = contrat.getAcheteur().getNom();

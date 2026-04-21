@@ -9,7 +9,7 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
 /**@author Safta Yassine */ 
-public class Transformateur1 extends Transformateur1AcheteurEnchere  {
+public class Transformateur1 extends Transformateur1AcheteurCC  {
 	/** @author Ewan Lefort */
 	VariablePrivee totalstocks= new VariablePrivee("EQ4T Total Stocks", "<html>Quantite totale de produits en stock</html>", this,0);
 	VariablePrivee stockProntellaM= new VariablePrivee("EQ4T Stock ProntellaM", "<html>Quantite totale de ProntellaM en stock</html>", this, 0);

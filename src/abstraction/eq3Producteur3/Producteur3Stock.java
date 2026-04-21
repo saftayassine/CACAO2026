@@ -93,7 +93,7 @@ public class Producteur3Stock {
                 // On parcourt les lots (indice 0 = plus récent)
                 for (int i = 0; i < lots.size(); i++) {
                     if (lots.get(i) > 0) {
-                        detail = detail + "[Age " + i + ": " + lots.get(i) + "t] ";
+                        detail = detail + "[Age produit " + i + ": " + lots.get(i) + "t] ";
                     }
                 }
                 this.journalStock.ajouter("Fève " + f + " | Total: " + total + "t | " + detail);

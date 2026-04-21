@@ -17,7 +17,7 @@ import abstraction.eqXRomu.bourseCacao.BourseCacao;
 /**
  * @author Pierre GUTTIEREZ
  */
-public class Transformateur2AchatCC extends Transformateur2AcheteurBourse implements IAcheteurContratCadre{
+public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres implements IAcheteurContratCadre{
 
     public Transformateur2AchatCC() {
         super();
@@ -93,9 +93,7 @@ public class Transformateur2AchatCC extends Transformateur2AcheteurBourse implem
 	 * 
 	 * @param contrat
 	 */
-	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
-		this.getJournaux().get(3).ajouter(contrat.toString()+ "\n");
-	}
+	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){}
 
 	/**
 	 * Methode appelee par le SuperviseurVentesContratCadre afin de notifier

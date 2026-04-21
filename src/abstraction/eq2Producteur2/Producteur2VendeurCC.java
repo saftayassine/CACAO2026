@@ -9,15 +9,15 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
-
 import java.util.LinkedList;
 import java.util.List;
 
-public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurContratCadre {
+/** @author Thomas */
+public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurContratCadre {
 
     private SuperviseurVentesContratCadre supCC;
     private List<ExemplaireContratCadre> contratsEnCours;
-    private int PRIX_DEFAUT = 5000;
+    private static final double MARGE_MIN = 1.2;
 
     public Producteur2VendeurCC() {
         super();
@@ -47,7 +47,9 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
                     IAcheteurContratCadre acheteur = acheteurs.get(Filiere.random.nextInt(acheteurs.size()));
                     ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur, this, f, e, cryptogramme, false);
                     if (contrat != null) {
-                        this.contratsEnCours.add(contrat);
+                        if (!this.contratsEnCours.contains(contrat)) {
+                            this.contratsEnCours.add(contrat);
+                        }
                         this.journalContratCadre.ajouter("Contrat signé avec " + acheteur.getNom() + " pour " + f + " = " + contrat.getQuantiteTotale());
                     } else {
                         this.journalContratCadre.ajouter("Négociation échouée pour " + f);
@@ -89,13 +91,20 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
         }
         Feve f = (Feve) contrat.getProduit();
         double disponible = stocks.get(f).getValeur(this.cryptogramme) - restantDu(f);
-        if (disponible < 1200) {
+        if (disponible < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
             return null;
         }
-        if (contrat.getEcheancier().getQuantiteTotale() <= disponible) {
+        double quantiteDemandee = contrat.getEcheancier().getQuantiteTotale();
+        // Regle stricte : on accepte l'echeancier si la quantite demandee est couverte par le stock.
+        if (quantiteDemandee <= disponible) {
             return contrat.getEcheancier();
         }
-        return new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, disponible / 12.0);
+        // Sinon on contre-propose sur 12 steps avec notre disponible.
+        double quantiteParStep = disponible / 12.0;
+        if (quantiteParStep * 12.0 < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
+            return null;
+        }
+        return new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, quantiteParStep);
     }
 
     @Override
@@ -103,10 +112,8 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
         if (!(contrat.getProduit() instanceof Feve)) {
             return 0;
         }
-        double cours = ((Feve) contrat.getProduit()).isEquitable() ? 0.0
-                : ((abstraction.eqXRomu.bourseCacao.BourseCacao) Filiere.LA_FILIERE.getActeur("BourseCacao"))
-                        .getCours((Feve) contrat.getProduit()).getValeur();
-        double prix = Math.max(PRIX_DEFAUT, cours * 1.2);
+        Feve feve = (Feve) contrat.getProduit();
+        double prix = this.prixMinimumAcceptable(feve);
         this.journalContratCadre.ajouter("Proposition prix " + prix + " pour " + contrat.getProduit());
         return prix;
     }
@@ -116,13 +123,30 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
         if (!(contrat.getProduit() instanceof Feve)) {
             return 0;
         }
+        Feve feve = (Feve) contrat.getProduit();
         double prixActuel = contrat.getPrix();
-        return prixActuel <= PRIX_DEFAUT ? prixActuel : prixActuel * 1.05;
+        double prixMinimum = this.prixMinimumAcceptable(feve);
+        // Regle stricte : on coupe la nego si le prix est sous le seuil.
+        if (prixActuel < prixMinimum) {
+            this.journalContratCadre.ajouter("Refus prix CC " + prixActuel + " < seuil " + prixMinimum + " pour " + feve);
+            return 0.0;
+        }
+        return prixActuel;
     }
 
     @Override
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
-        this.contratsEnCours.add(contrat);
+        if (!this.contratsEnCours.contains(contrat)) {
+            this.contratsEnCours.add(contrat);
+        }
+    }
+
+    private double prixMinimumAcceptable(Feve feve) {
+        double cours = feve.isEquitable() ? 0.0
+                : ((abstraction.eqXRomu.bourseCacao.BourseCacao) Filiere.LA_FILIERE.getActeur("BourseCacao"))
+                        .getCours(feve).getValeur();
+        double coutProd = this.cout_unit_t.getOrDefault(feve, 0.0);
+        return Math.max(cours * MARGE_MIN, coutProd * MARGE_MIN);
     }
 
     @Override
@@ -131,15 +155,11 @@ public class Producteur2VendeurCC extends Producteur2Acteur implements IVendeurC
             return 0.0;
         }
         Feve f = (Feve) produit;
+        double livre = this.retirerDuStock(f, quantite);
         Variable stockFeve = stocks.get(f);
-        double stockActuel = stockFeve != null ? stockFeve.getValeur(this.cryptogramme) : 0.0;
-        double livre = Math.min(quantite, stockActuel);
-        if (stockFeve != null) {
-            stockFeve.retirer(this, livre, this.cryptogramme);
-            Variable stockVarFeve = this.stockvar.get(f);
-            if (stockVarFeve != null) {
-                stockVarFeve.retirer(this, livre, this.cryptogramme);
-            }
+        Variable stockVarFeve = this.stockvar.get(f);
+        if (stockFeve != null && stockVarFeve != null) {
+            stockFeve.setValeur(this, stockVarFeve.getValeur());
         }
         this.journalContratCadre.ajouter("Livraison de " + livre + " t de " + f + " pour contrat " + contrat.getNumero());
         return livre;

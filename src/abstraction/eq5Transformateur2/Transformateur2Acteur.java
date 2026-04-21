@@ -15,12 +15,13 @@ import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.IProduit;
+import abstraction.eqXRomu.produits.Feve;
 
 public class Transformateur2Acteur implements IActeur {
 	
 	protected int cryptogramme;
 	private List<Journal> Journaux;
-	public static Double prix_MP;
+	public static Double prix_MP=1000.0;
 	protected SuperviseurVentesAuxEncheres superviseur;
 	protected SuperviseurVentesAO superviseurAO;
 	protected SuperviseurVentesContratCadre superviseurCC;
@@ -34,6 +35,7 @@ public class Transformateur2Acteur implements IActeur {
 		this.Journaux.add(new Journal("Stock Feves", this));
 		this.Journaux.add(new Journal("Stock Chocolat", this));
 		this.Journaux.add(new Journal("Achat Contrat Cadre", this));
+		this.Journaux.add(new Journal("Vente Contrat Cadre", this));
 		this.Journaux.add(new Journal("Achat Enchère", this));
 		this.Journaux.add(new Journal("Achat Bourse", this));
 		this.Journaux.add(new Journal("Vente AO", this));
@@ -65,9 +67,22 @@ public class Transformateur2Acteur implements IActeur {
 	/** @author Pierre
 	 */
 	public void next() {
-		for (int i = 0; i < 8; i++){
+		for (int i = 0; i < 9; i++){
 			this.Journaux.get(i).ajouter("Etape : "+ Integer.toString((Filiere.LA_FILIERE.getEtape()))+ "\n");
 		}
+		/*
+		if achat enchere bien
+		if achat bourse bien
+		if stock feve ok vente enchere
+		if vente AO on propose
+		
+		// Vision plus long terme pour faire baisser les prix
+
+		if CC feve
+		if CC chococlat
+
+		faire du stock de choco
+		*/
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
