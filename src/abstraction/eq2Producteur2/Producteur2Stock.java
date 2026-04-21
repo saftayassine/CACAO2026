@@ -1,10 +1,10 @@
 package abstraction.eq2Producteur2;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import abstraction.eqXRomu.filiere.Filiere;
-import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
@@ -17,7 +17,6 @@ public class Producteur2Stock {
     protected HashMap<Feve, Double> stock_initial;
     protected HashMap<Feve, Variable> stockvar;
     protected HashMap<Feve, Double> seuil_stock;
-    protected HashMap<Feve, Double> prodParStep;
     protected int cryptogramme;
     protected double cout_stockage = 7.5;
 
@@ -26,22 +25,22 @@ public class Producteur2Stock {
         this.stock_initial = new HashMap<Feve, Double>();
         this.stockvar = new HashMap<Feve, Variable>();
         this.seuil_stock = new HashMap<Feve, Double>();
-        this.prodParStep = new HashMap<Feve, Double>();
 
         for (Feve f : Feve.values()) {
             this.stock.put(f, new HashMap<Integer, Double>());
             this.stock_initial.put(f, 0.0);
             this.stockvar.put(f, new Variable("Stock " + f, null, 0.0));
             this.seuil_stock.put(f, 0.0);
-            this.prodParStep.put(f, 0.0);
         }
 
-        this.stock_initial.put(Feve.F_BQ, 1000.0);
-        this.stock_initial.put(Feve.F_MQ, 1000.0);
+        this.stock_initial.put(Feve.F_BQ, 5000.0);
+        this.stock_initial.put(Feve.F_MQ, 4000.0);
         this.stock_initial.put(Feve.F_HQ, 1200.0);
+        this.stock_initial.put(Feve.F_HQ_E, 0.0);
 
         for (Feve f : Feve.values()) {
             this.stockvar.get(f).setValeur(null, this.stock_initial.get(f));
+            this.stock.get(f).put(0, this.stock_initial.get(f));
         }
 
         this.stockTotal = new Variable("Stock Total EQ2", null, 0.0);
@@ -54,7 +53,6 @@ public class Producteur2Stock {
 
     public void next() {
         setStockMin(0.1);
-        prodParStep();
         TaxeStockage();
         setTotalStock();
     }
@@ -93,13 +91,41 @@ public class Producteur2Stock {
 
     }
 
-    public void prodParStep() {
-        for (Feve f : Feve.values()) {
-            double toProduce = this.prodParStep.getOrDefault(f, 0.0);
-            if (toProduce > 0) {
-                addStock(f, Filiere.LA_FILIERE.getEtape(), toProduce);
-            }
+    protected double retirerDuStock(Feve f, double quantite) {
+        if (f == null || quantite <= 0.0 || !this.stock.containsKey(f)) {
+            return 0.0;
         }
+        HashMap<Integer, Double> stockFeve = this.stock.get(f);
+        List<Integer> steps = new ArrayList<Integer>(stockFeve.keySet());
+        Collections.sort(steps);
+
+        double restant = quantite;
+        for (Integer step : steps) {
+            if (restant <= 0.0) {
+                break;
+            }
+            double disponible = stockFeve.getOrDefault(step, 0.0);
+            if (disponible <= 0.0) {
+                continue;
+            }
+            double retire = Math.min(disponible, restant);
+            double nouveauStock = disponible - retire;
+            if (nouveauStock <= 0.0) {
+                stockFeve.remove(step);
+            } else {
+                stockFeve.put(step, nouveauStock);
+            }
+            restant -= retire;
+        }
+        double totalRetire = quantite - restant;
+        if (totalRetire > 0.0) {
+            Variable v = this.stockvar.get(f);
+            if (v != null) {
+                v.retirer(null, totalRetire, this.cryptogramme);
+            }
+            this.stockTotal.retirer(null, totalRetire, this.cryptogramme);
+        }
+        return totalRetire;
     }
 
     public void setStockMin(double pourcentage) {
@@ -123,7 +149,7 @@ public class Producteur2Stock {
 
 
     public void TaxeStockage(){
-        double tonnes = this.stockTotal.getValeur(cryptogramme);
+        this.stockTotal.getValeur(cryptogramme);
     }
 
 }

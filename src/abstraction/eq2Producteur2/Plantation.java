@@ -2,6 +2,7 @@ package abstraction.eq2Producteur2;
 import abstraction.eqXRomu.produits.Feve;
 /** @author Paul */
 public class Plantation {
+    private static final double FEVES_PAR_TONNE = 1_000_000.0;
     private Feve typeFeve;          // Type de fèves cultivées
     private int parcelles;          // Nombre de parcelles de 1 ha
     private int age;                // Âge de la plantation en steps
@@ -69,7 +70,7 @@ public class Plantation {
 
 
     /**
-     * Avance l'âge de la plantation d'un step et renvoie la quantité de fèves produites.
+     * Avance l'âge de la plantation d'un step et renvoie la quantité produite en tonnes.
      */
     public double prodPlantation() {
         if (age == 0) {
@@ -82,10 +83,10 @@ public class Plantation {
             return 0; // Plantation morte, nécessite un remplacement
         }
 
-        // Calcul de la production en fèves sèches
-        double fevesTotales = parcelles * productionParParcelle;
-
-        return fevesTotales;
+        // Calcul de la production convertie en tonnes
+        // Evite le debordement entier : le calcul doit se faire en double
+        double fevesTotales = ((double) this.parcelles) * ((double) this.productionParParcelle);
+        return fevesTotales / FEVES_PAR_TONNE;
     }
 
     public void add_age() {
@@ -156,6 +157,23 @@ public class Plantation {
         }
     }
 
+    public double getcout_amorti() {
+        if ((age == 0) && (replante == false)) {
+            return parcelles*prix_achat / 960;
+        }
+        else if ((age == 0) && (replante == true)) {
+            return parcelles*prix_replantation / 960;
+        }
+        else if ((age <= dureeDeVie) && (replante == false)){
+            return parcelles*salaire_employe + (parcelles*prix_achat / 960);
+        }
+        else if ((age <= dureeDeVie) && (replante == true)){
+            return parcelles*salaire_employe + (parcelles*prix_replantation / 960);
+        }
+        else {
+            return 0;
+        }
+    }
 
     public double get_prix_vente() {
         return prix_vente;

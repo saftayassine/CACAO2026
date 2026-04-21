@@ -9,8 +9,9 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import java.util.List;
 
     /**  
-	 * @author Anass Ouisrani
-     */
+	 * @author Paul ROSSIGNOL
+     * @author Anass OUISRANI 
+    */
 public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAcheteurAO {
 
     //  recherche 
@@ -53,6 +54,20 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
                 OffreVente offreRetenue = superviseurAO.acheterParAO(this, this.cryptogramme, choco, quantiteAO);
                 
                 if (offreRetenue != null) {
+                    // Vérifier la rentabilité du label
+                    Distributeur2Acteur.AnalyseROILabelV1 analyseur = new Distributeur2Acteur.AnalyseROILabelV1();
+                    double prixVente = prix(choco);
+                    double prixAchat = offreRetenue.getPrixT();
+                    double coutCertification = 1000.0; // Coût additionnel de certification (€/T)
+                    double attractivite = 1.15; // Le label améliore légèrement les ventes
+                    
+                    boolean labelRentable = analyseur.acheterLabel(choco, prixAchat, prixVente, coutCertification, attractivite);
+                    
+                    if (!labelRentable) {
+                        this.journal.ajouter("Refus : label non rentable pour " + choco.getNom() + " à " + offreRetenue.getPrixT() + "€/T");
+                        continue;
+                    }
+                    
                     this.journal.ajouter("Achat réussi : " + (quantiteAO/1000) + "t de " + 
                                        choco.getNom() + " à " + offreRetenue.getPrixT() + "€/T chez " + 
                                        offreRetenue.getVendeur().getNom());
@@ -67,7 +82,8 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
     }
 
     /**
-     * Calcul du volume stratégique à acheter en AO selon prix moyen, tendance et capacité
+     * @author Anass OUISRANI 
+     * @author Paul ROSSIGNOL
      */
     protected double calculerQuantiteAchatVolume(ChocolatDeMarque choco, double stockActuel) {
         if (Filiere.LA_FILIERE == null || choco == null) {
@@ -100,10 +116,10 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
     }
 
     //  Le superviseur donne la liste de toutes les propositions de vente
+    @Override
     public OffreVente choisirOV(List<OffreVente> propositions) {
         OffreVente meilleureOffre = null;
         double meilleurScore = Double.MAX_VALUE;
-        double meilleurPrix = Double.MAX_VALUE;
         
         // Prix maximum acceptable selon la qualité du chocolat demandé
         double prixMaxAcceptable = 30000.0; // 30 000 €/T maximum
@@ -118,7 +134,6 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
             if (score < meilleurScore && prixPropose <= prixMaxAcceptable) {
                 meilleurScore = score;
                 meilleureOffre = offre;
-                meilleurPrix = prixPropose;
             }
         }
         
@@ -134,7 +149,7 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
     }
 
     /**
-     * Évalue des conditions de l'offre (retard potentiel, minimum de quantité, etc.)
+     * @author Paul ROSSIGNOL
      */
     protected double evaluerConditionsOffre(OffreVente offre) {
         if (offre == null) {

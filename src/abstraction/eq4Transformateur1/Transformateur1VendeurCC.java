@@ -2,18 +2,23 @@
 
 
 package abstraction.eq4Transformateur1;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
+import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
 import abstraction.eqXRomu.contratsCadres.IVendeurContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
+import abstraction.eqXRomu.contratsCadres.SuperviseurVentesContratCadre;
 
 public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse implements IVendeurContratCadre {
     
     
     public boolean vend(IProduit produit){
-        if (this.getStocksProduit(produit)>0){
+        if (this.getStocksProduit(produit)>0 && !produit.getType().equals("Feve")){
             return true;
         }
         else{
@@ -27,11 +32,11 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     }
 
     public double propositionPrix(ExemplaireContratCadre contrat){
-        return 8000;
+        return 9000;
     }
 
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){
-        return 0;
+        return contrat.getPrix();
     }
 
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
@@ -49,5 +54,18 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
             this.setStocksProduit(produit, 0);
             return alivrer;
         }
+    }
+
+    public void next(){
+        super.next();
+    SuperviseurVentesContratCadre sup =null;
+    sup= (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
+    List<IAcheteurContratCadre> acheteurs= sup.getAcheteurs(ProntellaM);
+    if (this.getStocksProduit(ProntellaM)>0){
+    Echeancier e= new Echeancier(Filiere.LA_FILIERE.getEtape()+1,2,this.getStocksProduit(ProntellaM)/2);
+        if (!acheteurs.isEmpty()) {
+        sup.demandeVendeur(acheteurs.get(0), this, ProntellaM, e, cryptogramme, false);
+        }
+    }
     }
 }

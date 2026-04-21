@@ -1,12 +1,9 @@
 package abstraction.eq1Producteur1;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import abstraction.eqXRomu.bourseCacao.IVendeurBourse;
 import abstraction.eqXRomu.encheres.Enchere;
-import abstraction.eqXRomu.encheres.MiseAuxEncheres;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.Feve;
@@ -59,7 +56,6 @@ public class Producteur1VendeurBourse extends Producteur1AcheteurBourse implemen
 	 * @return la quantite en tonnes de feves de type f rellement livree (retiree du stock) 
 	 */
 	public double notificationVente(Feve f, double quantiteEnT, double coursEnEuroParT){
-		System.out.println("notif vente "+quantiteEnT);
         double vrai_quantite= Math.min(quantiteEnT,getStock(f));
         this.takeFeve(f, vrai_quantite);
         return vrai_quantite;

@@ -8,11 +8,12 @@ import abstraction.eqXRomu.contratsCadres.SuperviseurVentesContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
-import java.util.LinkedList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedList;
 
 /**
- * @author Paul Juhel
+ * @author Paul Juhel et Paul ROSSIGNOL
  */
 
 public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements IAcheteurContratCadre {
@@ -46,6 +47,9 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
     @Override
     public void next() {
         super.next();
+
+        // Ajouter l'appel pour initier des propositions CC
+        this.fairePropositionCC();
 
         List<ExemplaireContratCadre> aRetirer = new LinkedList<ExemplaireContratCadre>();
         for (ExemplaireContratCadre contrat : this.contratsEnCours) {
@@ -214,5 +218,38 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      */
     public List<ExemplaireContratCadre> getContratsTermines() {
         return new LinkedList<ExemplaireContratCadre>(this.contratsTermines);
+    }
+
+    /**
+     * Méthode pour initier des propositions de contrats cadres (V1)
+     */
+    /**
+    * @author Paul JUHEL
+    */
+    public void fairePropositionCC() {
+        List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
+        for (ChocolatDeMarque choco : produits) {
+            double stockActuel = this.stock.getOrDefault(choco, 0.0);
+            double seuilDeSecurite = 10000.0; // 10 tonnes
+            if (stockActuel < seuilDeSecurite) {
+                double quantiteCible = 50000.0; // 50 tonnes
+                double quantiteAcheter = quantiteCible - stockActuel;
+                if (quantiteAcheter < 1000.0) { // Minimum 1 tonne
+                    continue;
+                }
+                List<IVendeurContratCadre> vendeurs = this.superviseurCC.getVendeurs(choco);
+                for (IVendeurContratCadre vendeur : vendeurs) {
+                    int stepDebut = Filiere.LA_FILIERE.getEtape() + 1;
+                    int nbSteps = 6;
+                    double quantiteParStep = quantiteAcheter / nbSteps;
+                    Echeancier echeancierPropose = new Echeancier(stepDebut, nbSteps, quantiteParStep);
+                    ExemplaireContratCadre contrat = this.superviseurCC.demandeAcheteur(this, vendeur, choco, echeancierPropose, this.cryptogramme, false);
+                    if (contrat != null) {
+                        this.journal.ajouter("Proposition CC réussie pour " + (quantiteAcheter/1000) + "t de " + choco.getNom() + " chez " + vendeur.getNom());
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

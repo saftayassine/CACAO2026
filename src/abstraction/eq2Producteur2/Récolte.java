@@ -6,8 +6,6 @@ import java.util.List;
 
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.general.Journal;
-import abstraction.eqXRomu.general.Variable;
-import abstraction.eqXRomu.general.VariableReadOnly;
 import abstraction.eqXRomu.produits.Feve;
 
 public class Récolte extends Producteur2Acteur {
@@ -82,7 +80,7 @@ public class Récolte extends Producteur2Acteur {
         this.cout_recolte.put(Feve.F_MQ,cout_MQ);
         this.cout_recolte.put(Feve.F_HQ,cout_HQ);
         this.cout_recolte.put(Feve.F_HQ_E,cout_HQ_E);
-        JournalRecolte.ajouter(Filiere.LA_FILIERE.getEtape()+" : Recolte de "+Prod_BQ+" feves de BQ, "+Prod_MQ+" feves de MQ, "+Prod_HQ+" feves de HQ et "+Prod_HQ_E+" feves de HQ_E");
+        JournalRecolte.ajouter(Filiere.LA_FILIERE.getEtape()+" : Recolte de "+Prod_BQ+" t de BQ, "+Prod_MQ+" t de MQ, "+Prod_HQ+" t de HQ et "+Prod_HQ_E+" t de HQ_E");
     }
     
     public void cout_plantations() {
@@ -171,7 +169,6 @@ public class Récolte extends Producteur2Acteur {
 		List<Journal> res = super.getJournaux();
 		res.add(JournalRecolte);
         res.add(Journalterrains);
-        res.add(JournalBanque);
 		return res;
 	}
 } 
