@@ -85,11 +85,22 @@ public class Récolte extends Producteur2Acteur {
     
     public void cout_plantations() {
         double cout = 0;
+        HashMap<Feve, Double> coutParFeve = new HashMap<Feve, Double>();
+        for (Feve f : Feve.values()) {
+            coutParFeve.put(f, 0.0);
+        }
         for (Plantation p : plantations) {
-            cout += p.getcout();
+            double coutPlantation = p.getcout();
+            cout += coutPlantation;
+            Feve feve = p.getTypeFeve();
+            coutParFeve.put(feve, coutParFeve.getOrDefault(feve, 0.0) + coutPlantation);
         }
         Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Cout lié aux plantations (main d'oeuvre, achat, replantation) ", cout);
-        JournalBanque.ajouter(Filiere.LA_FILIERE.getEtape()+" : Cout total lié aux plantations : "+cout);
+        JournalBanque.ajouter(Filiere.LA_FILIERE.getEtape()+" : Cout plantations BQ="+coutParFeve.getOrDefault(Feve.F_BQ, 0.0)
+                +" | MQ="+coutParFeve.getOrDefault(Feve.F_MQ, 0.0)
+                +" | HQ="+coutParFeve.getOrDefault(Feve.F_HQ, 0.0)
+                +" | HQ_E="+coutParFeve.getOrDefault(Feve.F_HQ_E, 0.0)
+                +" | Total="+cout);
     }
 
     public boolean seuil_replante(Feve f) {

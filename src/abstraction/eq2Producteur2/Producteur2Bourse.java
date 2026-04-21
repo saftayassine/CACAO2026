@@ -8,6 +8,7 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.Feve;
+import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.produits.IProduit;
 
 /**@author Simon */
@@ -40,6 +41,9 @@ public class Producteur2Bourse extends Sechage implements IVendeurBourse {
 
 	@Override
 	public double offre(Feve f, double cours) {
+		if (f.getGamme() == Gamme.HQ) {
+			return 0.0;
+		}
 		this.setStockMin(0.1);
 
 		double offre = 0;
