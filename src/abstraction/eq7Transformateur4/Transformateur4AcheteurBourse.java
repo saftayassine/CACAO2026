@@ -17,7 +17,7 @@ public class Transformateur4AcheteurBourse extends Transformateur4Acteur impleme
             double min = bourse.getCours(f).getMin();
             if (max > min) {
                 double pourcentage = (max - cours) / (max - min);
-                double maxDemand = 100.0; // Quantité maximale à demander
+                double maxDemand = 20000; // Quantité maximale à demander
                 return maxDemand * pourcentage;
             } else {
                 return 0.0;
