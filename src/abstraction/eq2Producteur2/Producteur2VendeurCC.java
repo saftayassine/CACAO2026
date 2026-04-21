@@ -131,15 +131,11 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
             return 0.0;
         }
         Feve f = (Feve) produit;
+        double livre = this.retirerDuStock(f, quantite);
         Variable stockFeve = stocks.get(f);
-        double stockActuel = stockFeve != null ? stockFeve.getValeur(this.cryptogramme) : 0.0;
-        double livre = Math.min(quantite, stockActuel);
-        if (stockFeve != null) {
-            stockFeve.retirer(this, livre, this.cryptogramme);
-            Variable stockVarFeve = this.stockvar.get(f);
-            if (stockVarFeve != null) {
-                stockVarFeve.retirer(this, livre, this.cryptogramme);
-            }
+        Variable stockVarFeve = this.stockvar.get(f);
+        if (stockFeve != null && stockVarFeve != null) {
+            stockFeve.setValeur(this, stockVarFeve.getValeur());
         }
         this.journalContratCadre.ajouter("Livraison de " + livre + " t de " + f + " pour contrat " + contrat.getNumero());
         return livre;

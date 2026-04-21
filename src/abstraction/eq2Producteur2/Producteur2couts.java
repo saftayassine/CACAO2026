@@ -1,7 +1,6 @@
 package abstraction.eq2Producteur2;
 
 import java.util.HashMap;
-import java.util.List;
 
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
@@ -30,16 +29,17 @@ public class Producteur2couts extends Producteur2Stock {
 
     /** Calcul des couts unitaires de production de chaque tonne de feve */
     public void calcul_cout_unit() {
+        int etape = Filiere.LA_FILIERE.getEtape();
 
         for (Feve f : Feve.values()) {
-            double prod = prodParStep.get(f);
+            double prod = stock.get(f).getOrDefault(etape, 0.0);
             if (prod > 0) {
-                double cout = cout_stockage * stock.get(f).getOrDefault(Filiere.LA_FILIERE.getEtape(), 0.0);
+                double cout = cout_stockage * prod;
                 cout_unit_t.put(f, cout / prod);
-                JournalCout.ajouter("Step " + Filiere.LA_FILIERE.getEtape() + " : Coût unitaire de production pour " + f + " = " + cout_unit_t.get(f) + " €/t");
+                JournalCout.ajouter("Step " + etape + " : Coût unitaire de production pour " + f + " = " + cout_unit_t.get(f) + " €/t");
             } else {
                 cout_unit_t.put(f, 0.0);
-                JournalCout.ajouter("Step " + Filiere.LA_FILIERE.getEtape() + " : Pas de production pour " + f + ", coût unitaire = 0 €/t");
+                JournalCout.ajouter("Step " + etape + " : Pas de production pour " + f + ", coût unitaire = 0 €/t");
             }
         }
     }
