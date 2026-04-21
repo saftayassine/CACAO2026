@@ -42,7 +42,7 @@ public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarch
     **/
     public void notificationAchat(Feve f, double quantiteEnT, double coursEnEuroParT) {
         this.getJournaux().get(1).ajouter("Achat effectué de: "+quantiteEnT+" fèves "+f+" au prix/tonne de "+coursEnEuroParT);
-        this.getJournaux().get(5).ajouter("Achat effectué de: "+quantiteEnT+" fèves "+f+" au prix/tonne de "+coursEnEuroParT);
+        this.getJournaux().get(6).ajouter("Achat effectué de: "+quantiteEnT+" fèves "+f+" au prix/tonne de "+coursEnEuroParT);
 
         this.add_feve(quantiteEnT,f);
     }
@@ -50,7 +50,7 @@ public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarch
     /** @author Maxence
     **/
     public void notificationBlackList(int dureeEnStep) {
-        this.getJournaux().get(5).ajouter("Nous avons été blacklistés pour "+dureeEnStep+" étapes.");
+        this.getJournaux().get(6).ajouter("Nous avons été blacklistés pour "+dureeEnStep+" étapes.");
     }
     
 
