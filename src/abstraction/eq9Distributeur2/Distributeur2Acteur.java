@@ -105,6 +105,9 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
 
 		// Log du stock total
 		journal.ajouter("Stock total : " + (getStockTotal()/1000) + " tonnes");
+		
+		// Payer les frais de stockage
+		payerFraisStockage();
 	}
 		/** @author Anass Ouisrani*/
 	protected double getStockTotal() {
