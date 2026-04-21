@@ -30,7 +30,7 @@ public class Plantation {
                 this.prix_achat = 2000 ;
                 this.prix_vente = 1200 ;
                 this.prix_replantation = 1000 ; // 1 euro par plant
-                this.salaire_employe = 1800 ;
+                this.salaire_employe = 18 ;
                 break;
  
             case F_MQ:
@@ -40,7 +40,7 @@ public class Plantation {
                 this.prix_achat = 2500;
                 this.prix_vente = 1500 ;
                 this.prix_replantation = 1500 ; // 1.5 euro par plant
-                this.salaire_employe = 1800;
+                this.salaire_employe = 18;
                 break;
 
             case F_HQ:
@@ -50,7 +50,7 @@ public class Plantation {
                 this.prix_achat = 3000 ;
                 this.prix_vente = 1800 ;
                 this.prix_replantation = 1750 ; // 1.75 euro par plant
-                this.salaire_employe = 1800 ;
+                this.salaire_employe = 18 ;
                 break;
 
             case F_HQ_E:
@@ -60,7 +60,7 @@ public class Plantation {
                 this.prix_achat = 3000 ;
                 this.prix_vente = 1800 ;
                 this.prix_replantation = 2000 ; // 2 euro par plant
-                this.salaire_employe = 1800 ;
+                this.salaire_employe = 18 ;
                 break;
             
             default:
