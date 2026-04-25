@@ -18,7 +18,7 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     
     
     public boolean vend(IProduit produit){
-        if (this.getStocksProduit(produit)>0 && !produit.getType().equals("Feve")){
+        if (this.getStocksProduit(produit)>200 && !produit.getType().equals("Feve")){
             return true;
         }
         else{
@@ -45,7 +45,10 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
 
 
     public double livrer(IProduit produit, double quantite, ExemplaireContratCadre contrat){
-        if (this.getStocksProduit(produit)>=quantite){
+        if (this.getStocksProduit(produit)<0){
+            return 0;
+        }
+        else if (this.getStocksProduit(produit)>=quantite){
         this.setStocksProduit(produit, this.getStocksProduit(produit)-quantite);
         return quantite;
         }
@@ -61,7 +64,7 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     SuperviseurVentesContratCadre sup =null;
     sup= (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
     List<IAcheteurContratCadre> acheteurs= sup.getAcheteurs(ProntellaM);
-    if (this.getStocksProduit(ProntellaM)>0){
+    if (this.getStocksProduit(ProntellaM)>200){
     Echeancier e= new Echeancier(Filiere.LA_FILIERE.getEtape()+1,2,this.getStocksProduit(ProntellaM)/2);
         if (!acheteurs.isEmpty()) {
         sup.demandeVendeur(acheteurs.get(0), this, ProntellaM, e, cryptogramme, false);

@@ -9,10 +9,12 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
 /**@author Safta Yassine */ 
-public class Transformateur1 extends Transformateur1AcheteurCC  {
+public class Transformateur1 extends Transformateur1AcheteurAppelDOffre  {
 	/** @author Ewan Lefort */
 	VariablePrivee totalstocks= new VariablePrivee("EQ4T Total Stocks", "<html>Quantite totale de produits en stock</html>", this,0);
 	VariablePrivee stockProntellaM= new VariablePrivee("EQ4T Stock ProntellaM", "<html>Quantite totale de ProntellaM en stock</html>", this, 0);
+	VariablePrivee stockFevesM= new VariablePrivee("EQ4T Stock FevesM", "<html>Quantite totale de FevesM en stock</html>", this, 0);
+
 
 	/** @author Safta Yassine */
 	public Transformateur1() {
@@ -32,6 +34,8 @@ public class Transformateur1 extends Transformateur1AcheteurCC  {
 		super.next();
 		this.totalstocks.setValeur(this, this.getTotalStocks(), cryptogramme);
 		this.stockProntellaM.setValeur(this, this.getStocksProduit(ProntellaM), cryptogramme);
+		this.stockFevesM.setValeur(this, this.getStocksProduit(Feve.F_MQ), cryptogramme);
+
 		
 	}
 
@@ -39,6 +43,7 @@ public class Transformateur1 extends Transformateur1AcheteurCC  {
 		List<Variable> res = new ArrayList<Variable>();
 		res.add(totalstocks);
 		res.add(stockProntellaM);
+		res.add(stockFevesM);
 		return res;
 	}
 }
