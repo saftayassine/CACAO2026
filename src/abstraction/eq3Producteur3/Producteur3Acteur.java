@@ -20,7 +20,8 @@ public class Producteur3Acteur implements IActeur {
 	public Plantation3 plantationeq3;
 	protected Journal journal_vente_bouse;
 	private Journal journal_stock;
-	public Gestion_couts3 gestionCouts;
+	protected Journal journal_plantation;
+	public GestionCouts3 gestionCouts;
 	public Journal journal_cout_periode;
 	public Agriculteurs3 agriculteurs;
 
@@ -30,12 +31,13 @@ public class Producteur3Acteur implements IActeur {
 		this.journal_vente_bouse = new Journal("Journal Ventes en bourse EQ3", this);
 		this.journal_stock = new Journal("Journal des Stocks détaillé EQ3", this);
 		this.journal_cout_periode = new Journal("Journal des coûts par période", this);
+		this.journal_plantation = new Journal("Journal plantation EQ3", this);
 
 		/** @author Guillaume Leroy */
 		this.stock = new Producteur3Stock(this.journal_stock);
 		this.StockTotal= new VariableReadOnly(this + " Stock total", this, this.stock.getStockTotal());
-		this.plantationeq3= new Plantation3();
-		this.gestionCouts = new Gestion_couts3();
+		this.plantationeq3= new Plantation3(journal_plantation);
+		this.gestionCouts = new GestionCouts3();
 		this.agriculteurs = new Agriculteurs3(this.plantationeq3);
 	}
 	
@@ -104,6 +106,7 @@ public class Producteur3Acteur implements IActeur {
 		res.add(journal_vente_bouse);
 		res.add(journal_stock);
 		res.add(journal_cout_periode);
+		res.add(journal_plantation);
 		return res;
 	}
 

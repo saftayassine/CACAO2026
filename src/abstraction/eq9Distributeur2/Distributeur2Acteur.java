@@ -105,6 +105,9 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
 
 		// Log du stock total
 		journal.ajouter("Stock total : " + (getStockTotal()/1000) + " tonnes");
+		
+		// Payer les frais de stockage
+		payerFraisStockage();
 	}
 		/** @author Anass Ouisrani*/
 	protected double getStockTotal() {
@@ -267,43 +270,66 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         if (crypto != this.cryptogramme) return;
         this.journal.ajouter("RUPTURE STOCK : " + choco.getNom() + " - Rayon vide ! Augmenter les achats.");
     }
-
     /**
-     * Analyse du retour sur investissement des labels – V1 .
-     * On achète un produit labellisé seulement si la marge couvre
-     * les coûts de certification (avec une petite marge de sécurité).
-     * @author Paul Rossignol
-     */
-    public static class AnalyseROILabelV1 {
-        private static final double MARGE_SECURITE = 1.10; // ex : demander 10% de plus que le coût
+ * Ajuste les prix de vente en fonction du prix moyen du marché
+ * - Si on est moins cher que le marché : on remonte pour augmenter la marge
+ * - Si on est plus cher que le marché : on baisse pour rester compétitif
+ * @author Anass Ouisrani
+ */
+protected void ajusterPrix() {
+    int etape = Filiere.LA_FILIERE.getEtape();
+    if (etape < 1) return; // Pas de référence marché à l'étape 0
 
-        /**
-         * @param produit          produit concerné 
-         * @param prixAchat        prix d'achat du produit labellisé
-         * @param prixVente        prix de vente au client final
-         * @param coutCertification coût additionnel lié au label (par unité)
-         * @param attractivite     facteur d'attractivité (>1 si le label permet de mieux vendre)
-         * @return true si l'achat du label est jugé rentable
-         */
-        public boolean acheterLabel(ChocolatDeMarque produit,
-                                    double prixAchat,
-                                    double prixVente,
-                                    double coutCertification,
-                                    double attractivite) {
-            if (produit == null || Filiere.LA_FILIERE == null) {
-                return false;
-            }
-            if (prixAchat < 0.0 || prixVente <= 0.0 || coutCertification < 0.0) {
-                return false;
-            }
-            if (attractivite <= 0.0) {
-                attractivite = 1.0;
-            }
+    List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
+    for (ChocolatDeMarque choco : produits) {
+        double prixMoyen = Filiere.LA_FILIERE.prixMoyen(choco, etape - 1);
+        if (prixMoyen <= 0) continue; // Pas de référence disponible
 
-            double margeUnitaire = (prixVente - prixAchat) * attractivite;
-            double coutTotal = coutCertification * MARGE_SECURITE;
+        double prixActuel = prix(choco);
+        double ecart = (prixActuel - prixMoyen) / prixMoyen; // écart relatif en %
 
-            return margeUnitaire >= coutTotal;
+        double nouveauPrix;
+        if (ecart < 0) {
+            // On est moins cher que le marché → on remonte de 3% max
+            nouveauPrix = prixActuel * 1.03;
+            // Mais on ne dépasse pas le prix moyen
+            nouveauPrix = Math.min(nouveauPrix, prixMoyen);
+            this.journal.ajouter("Prix " + choco.getNom() + " remonté : "
+                + prixActuel + " → " + nouveauPrix + "€/T");
+        } else if (ecart > 0.05) {
+            // On est plus de 5% plus cher que le marché → on baisse de 3% max
+            nouveauPrix = prixActuel * 0.97;
+            // Mais on ne descend pas en dessous du prix moyen
+            nouveauPrix = Math.max(nouveauPrix, prixMoyen);
+            this.journal.ajouter("Prix " + choco.getNom() + " baissé : "
+                + prixActuel + " → " + nouveauPrix + "€/T");
+        } else {
+            continue; // Ecart inférieur à 5% : on ne touche pas au prix
         }
+
+        this.prix.put(choco, nouveauPrix);
     }
+}
+/**
+ * Paie les frais de stockage à chaque étape
+ * Coût : 120 €/T (16x le coût producteur de 7.5€/T)
+ * @author Anass Ouisrani
+ */
+protected void payerFraisStockage() {
+    double coutParTonne = 120.0; // €/T
+    double stockTotalEnTonnes = getStockTotal() / 1000.0;
+    double coutTotal = stockTotalEnTonnes * coutParTonne;
+
+    if (coutTotal > 0) {
+        Filiere.LA_FILIERE.getBanque().payerCout(
+            this,
+            this.cryptogramme,
+            "Frais de stockage",
+            coutTotal
+        );
+        this.journal.ajouter("Frais de stockage payés : "
+            + coutTotal + "€ pour "
+            + stockTotalEnTonnes + "t stockées");
+    }
+}
 }

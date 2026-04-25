@@ -382,7 +382,7 @@ public class Banque implements IActeur, IAssermente {
 				if (getSolde(acteurADebiter,cryptogrammeActeurADebiter)<this.getSeuilOperationsRefusees()) {
 					faireFaillite(acteurADebiter, this, crypto);
 				}
-				this.journalCouts.ajouter(acteurADebiter.getColor(), Color.white, acteurADebiter+" paye"+Journal.doubleSur(montant, 9, 2)+" sur la ligne budgetaire "+ligneBudgetaire);
+				this.journalCouts.ajouter(acteurADebiter.getColor(), Color.black, acteurADebiter+" paye"+Journal.doubleSur(montant, 9, 2)+" sur la ligne budgetaire "+ligneBudgetaire);
 			}
 		}
 	}

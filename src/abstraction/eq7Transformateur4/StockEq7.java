@@ -128,6 +128,21 @@ public class StockEq7 {
             System.out.println("Stock de fèves HQ insuffisant");
         }
     }
+    public void remove(double valeur, Gamme quality){
+        //Traite la qualité
+        if (quality==Gamme.HQ){
+            this.RemoveHighQ(valeur);
+        }
+        else{
+            if(quality==Gamme.MQ){
+                this.RemoveMedQ(valeur);
+            }
+            else{
+                this.RemoveLowQ(valeur);
+            }
+        }
+    }
+
 
     public void SetLowQ(double valeur){
         this.LowQ.setValeur(this.createur, valeur);

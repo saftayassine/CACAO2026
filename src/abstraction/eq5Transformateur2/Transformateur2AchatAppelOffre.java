@@ -38,7 +38,7 @@ public class Transformateur2AchatAppelOffre extends Transformateur2AcheteurBours
 
 			}
 		}
-		this.getJournaux().get(7).ajouter("Achat fève en AO" + (mp).toString() + "\n");
+		this.getJournaux().get(8).ajouter("Achat fève en AO" + (mp).toString() + "\n");
 		return mp;
 	}
 }

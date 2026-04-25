@@ -8,17 +8,22 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+import abstraction.eqXRomu.produits.Chocolat;
+import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
 public class Transformateur4Acteur implements IActeur {
 	
 	protected int cryptogramme;
-	private Journal journal; //Aymeric
+	protected Journal journal; //Aymeric
 	private StockEq7 stock_Equitable;
 	private StockEq7 stock_PasEquitable;
 	private Variable LQ; //Indicateur LQ Equitable + pas equitable
 	private Variable MQ; //Idem pour MQ
 	private Variable HQ; //Idem pour HQ
+	protected Variable StockChoco_BQ;
+	protected Variable StockChoco_MQ;
+	protected Variable StockChoco_HQ;
 	public Transformateur4Acteur() {
 		//Aymeric
 		this.journal = new Journal("Journal equipe 7 (transformateur)", this);
@@ -29,6 +34,12 @@ public class Transformateur4Acteur implements IActeur {
 		this.LQ=new Variable("LQ", this,0);
 		this.MQ=new Variable("MQ",this,0);
 		this.HQ=new Variable("HQ", this, 0);
+		
+		//Paul
+		this.StockChoco_BQ=new Variable("StockChoco_BQ", this, 0);
+		this.StockChoco_MQ=new Variable("StockChoco_MQ", this, 0);
+		this.StockChoco_HQ=new Variable("StockChoco_HQ", this, 0);	
+
 
 	}
 	
@@ -144,9 +155,45 @@ public class Transformateur4Acteur implements IActeur {
 		return Filiere.LA_FILIERE;
 	}
 
+	//Matteo
+	public Variable get_StockChoco_HQ(){
+		return this.StockChoco_HQ;
+	}
+
+	public Variable get_StockChoco_MQ(){
+		return this.StockChoco_MQ;
+	}
+
+	public Variable get_StockChoco_BQ(){
+		return this.StockChoco_BQ;
+	}
+
+	public Variable get_LQ(){
+		return this.LQ;
+	}
+
+	public Variable get_MQ(){
+		return this.MQ;
+	}
+
+	public Variable get_HQ(){
+		return this.HQ;
+	}
+
 	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
-			return 0; // A modifier
+			if (p == Chocolat.C_BQ) {
+				return this.StockChoco_BQ.getValeur();
+			} else if (p == Chocolat.C_MQ) {
+				return this.StockChoco_MQ.getValeur();
+			} else if (p == Chocolat.C_HQ) {
+				return this.StockChoco_HQ.getValeur();
+			} else if (p instanceof ChocolatDeMarque) {
+				// Pour ChocolatDeMarque, on pourrait avoir des stocks séparés, mais pour l'instant 0
+				return 0;
+			} else {
+				return 0;
+			}
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}

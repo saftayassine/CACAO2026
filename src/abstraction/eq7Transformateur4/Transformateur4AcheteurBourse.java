@@ -11,13 +11,13 @@ public class Transformateur4AcheteurBourse extends Transformateur4Acteur impleme
     //Auteur -> Aymeric
     @Override
     public double demande(Feve f, double cours) {  
-        if (f.getGamme()==Gamme.MQ){
+        if (f.getGamme()==Gamme.MQ || f.getGamme()==Gamme.HQ || f.getGamme()==Gamme.BQ){
             BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
             double max = bourse.getCours(f).getMax();
             double min = bourse.getCours(f).getMin();
             if (max > min) {
                 double pourcentage = (max - cours) / (max - min);
-                double maxDemand = 100.0; // Quantité maximale à demander
+                double maxDemand = 20000; // Quantité maximale à demander
                 return maxDemand * pourcentage;
             } else {
                 return 0.0;

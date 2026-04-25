@@ -18,9 +18,12 @@ public class Sechage extends Récolte {
         this.fileSechage = new HashMap<Feve, List<Double>>();
         this.fileSechageSteps = new HashMap<Feve, List<Integer>>();
         this.journalSechage = new Journal("Journal Sechage Eq2",this);
+        if (this.fevesSeches == null) {
+            this.fevesSeches = new HashMap<Feve, Double>();
+        }
         
         for (Feve f : Feve.values()) {
-            fevesSeches.put(f, 0.0);
+            this.fevesSeches.put(f, 0.0);
             this.fileSechage.put(f, new ArrayList<>());
             this.fileSechageSteps.put(f, new ArrayList<>());
         }
@@ -38,7 +41,7 @@ public class Sechage extends Récolte {
                 int stepFinSechage = stepActuel + 2;
                 fileSechage.get(f).add(quantite);
                 fileSechageSteps.get(f).add(stepFinSechage);
-                journalSechage.ajouter("Step " + stepActuel + " : Ajout au séchage de " + quantite + " fèves " + f + " (fin prévue au step " + stepFinSechage + ")");
+                journalSechage.ajouter("Step " + stepActuel + " : Ajout au séchage de " + quantite + " t de " + f + " (fin prévue au step " + stepFinSechage + ")");
             
             }
         }
@@ -74,7 +77,13 @@ public class Sechage extends Récolte {
                 case F_BQ:
                     fevesSeches.put(f, sechageFini.get(f));
                     break;
+                case F_BQ_E:
+                    fevesSeches.put(f, sechageFini.get(f));
+                    break;
                 case F_MQ:
+                    fevesSeches.put(f, sechageFini.get(f));
+                    break;
+                case F_MQ_E:
                     fevesSeches.put(f, sechageFini.get(f));
                     break;
                 case F_HQ:
@@ -83,7 +92,8 @@ public class Sechage extends Récolte {
                 case F_HQ_E:
                     fevesSeches.put(f, sechageFini.get(f));
                     break;
-
+                default:
+                    break;
             }
         }
 
@@ -99,6 +109,14 @@ public class Sechage extends Récolte {
         super.next();
         ajouterAuSechage();
         mettreAJourSechage();
+        int stepActuel = Filiere.LA_FILIERE.getEtape();
+        for (Feve f : Feve.values()) {
+            double quantiteSechee = fevesSeches.getOrDefault(f, 0.0);
+            if (quantiteSechee > 0.0) {
+                addStock(f, stepActuel, quantiteSechee);
+            }
+        }
+        setTotalStock();
     }
 
     public List<Journal> getJournaux() {

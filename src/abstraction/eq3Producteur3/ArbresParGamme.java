@@ -8,17 +8,17 @@ import java.util.List;
 import java.util.Map;
 
 
-public class Arbres_par_gamme {
+public class ArbresParGamme {
     /** @author Victor Vannier-Moreau*/
-    private Feve feve;
+    private Gamme gamme; // Changé de Feve à Gamme
     // Liste de 961 éléments (de l'indice 0 à 960) qui indique le nombre d'hectares pour chaque age.
     private List<Integer> distributionAge; 
     public int nbHectareTotal;
 
     
-    public Arbres_par_gamme(Feve feve) {
+    public ArbresParGamme(Gamme gamme) { // Constructeur mis à jour
         /** @author Victor Vannier-Moreau*/
-        this.feve = feve;
+        this.gamme = gamme;
         this.distributionAge = new ArrayList<>(961);
         this.nbHectareTotal = 961*350; // plus facile à manipluer car multiple de 961 et proche de 330 000.
         
@@ -68,7 +68,7 @@ public class Arbres_par_gamme {
     /**
      * Calcule la production de fèves selon les paliers d'âge.
      */
-    public double getProductionFeve() { // On mesure la quantité de fève en tonne de fève (en considérant qu'une fève pèse 1g)
+    public double getProductionTotale() { // On mesure la quantité de fève en tonne de fève (en considérant qu'une fève pèse 1g)
     /** @author Guillaume Leroy*/
     Map<String, Integer> recap = this.getTranches();
     
@@ -83,15 +83,13 @@ public class Arbres_par_gamme {
     totalCabosses = totalCabosses + (nbVieux * 25L);
 
     long coeffGamme;
-    Gamme g = this.feve.getGamme();
-    
-    if (g == Gamme.BQ) {
-        coeffGamme = 50;
-    } else if (g == Gamme.MQ) {
-        coeffGamme = 40;
-    } else {
-        coeffGamme = 30; 
-    }
+        if (this.gamme == Gamme.BQ) {
+            coeffGamme = 50;
+        } else if (this.gamme == Gamme.MQ) {
+            coeffGamme = 40;
+        } else {
+            coeffGamme = 30; 
+        }
     
     // 1. Calcul de la production annuelle totale en grammes (fèves)
     long prodAnnuelleGrammes = totalCabosses * coeffGamme * 1000L;
@@ -107,13 +105,24 @@ public class Arbres_par_gamme {
     /**
      * Fait vieillir la plantation d'une période
      */
-    public void ageIncr() {
-        /** @author Victor Vannier-Moreau*/
-        // 1. On retire les arbres qui ont fini leur 960ème période (40 ans)
-        int arbresSortants = distributionAge.remove(960); 
-        
-        // 2. On les replante immédiatement à l'âge 0 (indice 0)
-        // La liste se décale automatiquement vers la droite
-        distributionAge.add(0, arbresSortants);
+    public int ageIncr() {
+    /** @author Victor Vannier-Moreau */
+    // 1. On retire les arbres qui ont fini leur 960ème période (40 ans)
+    int arbresMorts = distributionAge.remove(960); 
+    
+    // 2. On ajoute une case vide au début (âge 0) 
+    // On ne replante pas encore, on met 0 pour l'instant
+    distributionAge.add(0, 0);
+    
+    // On met à jour le total d'hectares vivants de cette gamme
+    this.nbHectareTotal -= arbresMorts;
+    
+    return arbresMorts;
+    }
+
+    public void replanter(int nbHectares) {
+    int actuel = distributionAge.get(0);
+    distributionAge.set(0, actuel + nbHectares);
+    this.nbHectareTotal += nbHectares;
     }
 }

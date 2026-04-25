@@ -46,23 +46,35 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
 
     @Override
     public void next() {
-        super.next();
+        int etape = Filiere.LA_FILIERE.getEtape();
+        this.journal.ajouter("=== ETAPE " + etape + " ===");
 
-        // Ajouter l'appel pour initier des propositions CC
-        this.fairePropositionCC();
+        List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
 
-        List<ExemplaireContratCadre> aRetirer = new LinkedList<ExemplaireContratCadre>();
-        for (ExemplaireContratCadre contrat : this.contratsEnCours) {
-            if (contrat.getQuantiteRestantALivrer() <= 0.0) {
-                aRetirer.add(contrat);
-                this.contratsTermines.add(contrat);
-        this.journal.ajouter("Contrat terminé : " + contrat.getProduit());
+        if (produits != null && !produits.isEmpty()) {
+            for (ChocolatDeMarque choco : produits) {
+                double quantiteActuelle = this.stock.getOrDefault(choco, 0.0);
+                double seuilMin = 10000.0;  // 10 tonnes : seuil déclenchant réappro
+                double stockCible = 50000.0; // 50 tonnes : stock visé
+
+                // On ne réapprovisionne que si on est en dessous du seuil
+                if (quantiteActuelle < seuilMin) {
+                    double ajout = stockCible - quantiteActuelle;
+                    this.stock.put(choco, quantiteActuelle + ajout);
+                    journal.ajouter("Réapprovisionnement " + choco.getNom() 
+                        + " : +" + (ajout/1000) + "t (stock était " 
+                        + (quantiteActuelle/1000) + "t)");
+                }
+                
             }
+            // Frais de stockage : 120 €/T par étape (16x le coût producteur de 7.5€/T)
+            payerFraisStockage();
+            // Ajustement dynamique des prix de vente
+            ajusterPrix();
         }
-        this.contratsEnCours.removeAll(aRetirer);
 
-        this.evaluerFideliteContrats();
-        this.journal.ajouter("Contrats en cours : " + this.contratsEnCours.size());
+        this.indicateurStockTotal.setValeur(this, getStockTotal());
+        journal.ajouter("Stock total : " + (getStockTotal()/1000) + " tonnes");
     }
 
 
@@ -117,15 +129,68 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      * @return le prix proposé, négatif pour abandonner, ou le même pour accepter
      */
     @Override
-    public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
-        double prixPropose = contrat.getPrix();
+    /** @author Anass Ouisrani*/
+public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
+    // On récupère le prix que le vendeur propose
+    double prixPropose = contrat.getPrix();
+    
+    // On récupère le chocolat concerné par le contrat
+    ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
+    
+    // On récupère l'étape actuelle pour consulter le prix moyen du marché
+    int etape = Filiere.LA_FILIERE.getEtape();
 
-        // Accepter le prix tel quel
-        // A MODIFIER EN V2
+    // On définit notre prix maximum acceptable selon la qualité du chocolat
+    double prixMax = getPrixMaxAcceptable(choco);
 
-        this.journal.ajouter("Acceptation du prix " + prixPropose + "€/t pour " + contrat.getProduit());
-        return prixPropose;
+    // Si le vendeur demande plus que notre maximum → on abandonne la négociation
+    // -1.0 signifie "je me retire" dans le protocole
+    if (prixPropose > prixMax) {
+        this.journal.ajouter("Abandon négociation CC : prix " + prixPropose 
+            + "€/T trop élevé (max=" + prixMax + "€/T)");
+        return -1.0;
     }
+
+    // On consulte le prix moyen du marché à l'étape précédente
+    // Si etape=0 on n'a pas de référence donc on met NaN (Not a Number = pas de valeur)
+    double prixMoyen = (etape >= 1) ? Filiere.LA_FILIERE.prixMoyen(choco, etape - 1) : Double.NaN;
+
+    // Si on a une référence marché valide
+    if (!Double.isNaN(prixMoyen) && prixMoyen > 0) {
+        
+        // On propose 5% moins cher que ce que demande le vendeur
+        double contreProposition = prixPropose * 0.95;
+        
+        // Mais jamais en dessous de 98% du prix moyen marché
+        // sinon le vendeur refusera forcément
+        contreProposition = Math.max(contreProposition, prixMoyen * 0.98);
+        
+        // Si après calcul notre contre-proposition est >= au prix du vendeur
+        // ça ne sert à rien de négocier, on accepte directement
+        if (contreProposition >= prixPropose) {
+            this.journal.ajouter("Acceptation CC : " + prixPropose + "€/T pour " + choco.getNom());
+            return prixPropose;
+        }
+        
+        // On envoie notre contre-proposition
+        this.journal.ajouter("Contre-proposition CC : " + contreProposition 
+            + "€/T (proposé=" + prixPropose + ", marché=" + prixMoyen + ")");
+        return contreProposition;
+    }
+
+    // Pas de référence marché disponible → on accepte le prix
+    // tant qu'il est dans nos limites (déjà vérifié au dessus)
+    this.journal.ajouter("Acceptation CC (pas de ref marché) : " + prixPropose + "€/T");
+    return prixPropose;
+}
+
+// Méthode utilitaire qui définit le prix maximum qu'on accepte
+// selon la qualité du chocolat (en €/T)
+// Ces valeurs sont nos prix d'achat maximum pour garder une marge rentable
+/** @author Anass Ouisrani*/
+private double getPrixMaxAcceptable(ChocolatDeMarque choco) {
+    return prix(choco) * 0.75; // 25% de marge systématique
+}
 
     /**
      * Notification de la réussite des négociations

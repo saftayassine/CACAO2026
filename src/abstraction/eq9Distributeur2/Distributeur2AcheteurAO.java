@@ -14,6 +14,16 @@ import java.util.List;
     */
 public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAcheteurAO {
 
+    // Variables pour V2 : optimisation des volumes d'achat
+    protected java.util.Map<ChocolatDeMarque, java.util.List<Double>> historiqueVentes = new java.util.HashMap<>();
+    protected double coutStockageParTonne = 500.0; // €/t/étape
+    protected double coutPenurieParTonne = 2000.0; // €/t pour rupture
+    protected java.util.Map<abstraction.eqXRomu.produits.Gamme, Integer> dureeVieProduits = java.util.Map.of(
+        abstraction.eqXRomu.produits.Gamme.HQ, 12,
+        abstraction.eqXRomu.produits.Gamme.MQ, 8,
+        abstraction.eqXRomu.produits.Gamme.BQ, 6
+    ); // Étapes avant péremption
+
     //  recherche 
     public void faireUnAppelDOffre() {
         // On récupère le superviseur des appels d'offres
@@ -54,24 +64,20 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
                 OffreVente offreRetenue = superviseurAO.acheterParAO(this, this.cryptogramme, choco, quantiteAO);
                 
                 if (offreRetenue != null) {
-                    // Vérifier la rentabilité du label
-                    Distributeur2Acteur.AnalyseROILabelV1 analyseur = new Distributeur2Acteur.AnalyseROILabelV1();
-                    double prixVente = prix(choco);
                     double prixAchat = offreRetenue.getPrixT();
-                    double coutCertification = 1000.0; // Coût additionnel de certification (€/T)
-                    double attractivite = 1.15; // Le label améliore légèrement les ventes
-                    
-                    boolean labelRentable = analyseur.acheterLabel(choco, prixAchat, prixVente, coutCertification, attractivite);
-                    
-                    if (!labelRentable) {
-                        this.journal.ajouter("Refus : label non rentable pour " + choco.getNom() + " à " + offreRetenue.getPrixT() + "€/T");
+                    double prixVente = prix(choco);
+
+                    // On vérifie juste que le prix d'achat est inférieur au prix de vente
+                    if (prixAchat >= prixVente) {
+                        this.journal.ajouter("Refus : achat à " + prixAchat 
+                            + "€/T non rentable (vente à " + prixVente + "€/T)");
                         continue;
                     }
-                    
-                    this.journal.ajouter("Achat réussi : " + (quantiteAO/1000) + "t de " + 
-                                       choco.getNom() + " à " + offreRetenue.getPrixT() + "€/T chez " + 
+
+                    this.journal.ajouter("Achat réussi : " + (quantiteAO/1000) + "t de " +
+                                       choco.getNom() + " à " + prixAchat + "€/T chez " +
                                        offreRetenue.getVendeur().getNom());
-                    
+
                     this.stock.put(choco, stockActuel + quantiteAO);
                     this.indicateurStockTotal.setValeur(this, getStockTotal());
                 } else {
@@ -86,6 +92,8 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
      * @author Paul ROSSIGNOL
      */
     protected double calculerQuantiteAchatVolume(ChocolatDeMarque choco, double stockActuel) {
+        // V1 - Version originale (commentée)
+        /*
         if (Filiere.LA_FILIERE == null || choco == null) {
             return 0.0;
         }
@@ -108,6 +116,77 @@ public class Distributeur2AcheteurAO extends Distributeur2Acteur implements IAch
         }
 
         double stockMax = capaciteStock * 0.95;
+        if (stockActuel >= stockMax) {
+            return 0.0;
+        }
+
+        return Math.max(0.0, quantite);
+        */
+
+        // V2 - Optimisation des volumes d'achat
+        // Intègre : prévision ventes, risque péremption, coûts stockage, fidélisation, valorisation marque
+        if (Filiere.LA_FILIERE == null || choco == null) {
+            return 0.0;
+        }
+
+        final double capaciteStock = 100000.0;
+        int etape = Filiere.LA_FILIERE.getEtape();
+
+        // Mise à jour historique ventes (garder 5 dernières étapes)
+        historiqueVentes.computeIfAbsent(choco, k -> new java.util.ArrayList<>());
+        if (etape >= 1) {
+            double ventesEtapePrecedente = Filiere.LA_FILIERE.getVentes(choco, etape - 1);
+            historiqueVentes.get(choco).add(ventesEtapePrecedente);
+            if (historiqueVentes.get(choco).size() > 5) {
+                historiqueVentes.get(choco).remove(0);
+            }
+        }
+
+        // Prévision ventes : moyenne des ventes passées + tendance
+        double ventesPrevues = historiqueVentes.get(choco).stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        if (historiqueVentes.get(choco).size() >= 2) {
+            double tendance = (historiqueVentes.get(choco).get(historiqueVentes.get(choco).size() - 1) - 
+                              historiqueVentes.get(choco).get(0)) / historiqueVentes.get(choco).size();
+            ventesPrevues += tendance;
+        }
+
+        // Risque péremption : durée de vie par gamme, réduire quantité si proche péremption
+        int dureeVieRestante = dureeVieProduits.getOrDefault(choco.getGamme(), 6);
+        double facteurPeremption = Math.max(0.3, dureeVieRestante / 12.0); // Réduire si < 6 étapes
+
+        // Valorisation marque : ajuster selon qualité perçue (produits premium = plus de stock)
+        double facteurMarque = 1.0 + (choco.qualitePercue() - 0.5) * 0.5; // Bonus pour marques fortes
+
+        // Fidélisation : bonus pour vendeurs connus (via score fidélité de CC)
+        // Ici on suppose un bonus global, à affiner par vendeur dans choisirOV
+        double facteurFidelite = 1.1; // Exemple : 10% bonus si fidélisé
+
+        // Calcul EOQ simplifié : sqrt(2 * demande * coût commande / coût stockage)
+        double demandeAnnuelle = ventesPrevues * 24; // Approximation sur 24 étapes
+        double quantiteEOQ = Math.sqrt(2 * demandeAnnuelle * coutPenurieParTonne / coutStockageParTonne);
+
+        // Stock cible : couverture 4 étapes, ajustée pour facteurs
+        double stockCible = ventesPrevues * 4 * facteurPeremption * facteurMarque * facteurFidelite;
+        double besoin = Math.max(0.0, stockCible - stockActuel);
+
+        // Prix intéressants si volume important : encourager gros volumes
+        double prixMoyen = (etape >= 1) ? Filiere.LA_FILIERE.prixMoyen(choco, etape - 1) : Double.NaN;
+        double prixActuel = prix(choco);
+        double facteurPrix = (!Double.isNaN(prixMoyen) && prixActuel < prixMoyen) ? 1.3 : 1.0;
+
+        // Quantité finale : min(EOQ, besoin) * facteurs, dans limites capacité
+        double marge = Math.max(0.0, capaciteStock - stockActuel);
+        double quantite = Math.min(Math.min(quantiteEOQ, besoin) * facteurPrix, marge);
+
+        // Pas de vente à perte : vérifier rentabilité (prix achat estimé < prix vente)
+        double prixVenteEstime = prix(choco);
+        double prixAchatEstime = prixMoyen; // Approximation
+        if (!Double.isNaN(prixAchatEstime) && prixAchatEstime >= prixVenteEstime) {
+            quantite *= 0.5; // Réduire si risque vente à perte
+        }
+
+        // Éviter surstock près capacité max
+        double stockMax = capaciteStock * 0.9;
         if (stockActuel >= stockMax) {
             return 0.0;
         }

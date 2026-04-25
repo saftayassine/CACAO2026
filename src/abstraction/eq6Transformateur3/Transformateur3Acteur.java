@@ -10,17 +10,20 @@ import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.bourseCacao.IAcheteurBourse;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+
 import abstraction.eqXRomu.general.VariablePrivee;
+
 import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 import abstraction.eq6Transformateur3.StockFeve;
 import abstraction.eq6Transformateur3.StockChocolat;
-public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
+public class Transformateur3Acteur implements IActeur {
 	
 	protected Journal journal = new Journal("Journal Eq6", this);
 	protected int cryptogramme;
+
 	protected StockFeve stockFeve;
 	protected Variable Eq6TotalStock;
 	protected StockChocolat stockChocolat;
@@ -29,10 +32,11 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 		this.stockFeve = new StockFeve();
 		this.stockChocolat = new StockChocolat();
 		this.Eq6TotalStock = new VariablePrivee("Eq6TotalStock", "<html>Stock total de fèves+chocolats+chocolats de marque</html>", this, 0.0, 1000000.0, 0.0);
-	}
 
-	/** @author : Pol Bailleul */
+	}
+	
 	public void initialiser() {
+		//* @author : Pol Bailleul */
 		for (Feve feve : stockFeve.getFeves()) {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(feve+"", 15)+" = "+this.stockFeve.getQuantite(feve));
 			this.Eq6TotalStock.ajouter(this, this.stockFeve.getQuantite(feve),this.cryptogramme);
@@ -41,6 +45,7 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(choco+"", 15)+" = "+this.stockChocolat.getQuantite(choco));
 			this.Eq6TotalStock.ajouter(this, this.stockChocolat.getQuantite(choco),this.cryptogramme);
 		}
+
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -55,8 +60,9 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 	//         En lien avec l'interface graphique         //
 	////////////////////////////////////////////////////////
 
-	/** @author : Pol Bailleul */
+
 	public void next() {
+		//* @author : Pol Bailleul */
 		this.journal.ajouter("=== STOCKS === ");
 		for (Feve feve : stockFeve.getFeves()) {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(feve+"", 15)+" = "+this.stockFeve.getQuantite(feve));
@@ -69,6 +75,8 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 
 		int etape = Filiere.LA_FILIERE.getEtape();
 		journal.ajouter("Étape " + etape);
+		
+
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -82,8 +90,12 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+
+//		res.add(this.stocks.getTotalStockVolume());
+
 		 //* @author : Pol Bailleul */
 		res.add(this.Eq6TotalStock);
+
 		return res;
 	}
 
@@ -142,7 +154,22 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 		return Filiere.LA_FILIERE;
 	}
 
+/*<<<<<<< HEAD
+	public Transformateur3Stocks getStocks() {
+		return this.stocks;
+	}
 
+	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
+		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
+			if (this.stocks != null) {
+				return this.stocks.getQuantiteEnStock(p);
+			} else {
+				return 0.0;
+			}
+		} else {
+			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
+
+*/
 	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
 		if (this.cryptogramme!=cryptogramme) { // Les acteurs non assermentes n'ont pas a connaitre notre stock
 			return 0;
@@ -161,34 +188,6 @@ public class Transformateur3Acteur implements IActeur, IAcheteurBourse {
 	/* =============================================================== */
 
 	
-	@Override
-	//Defi 3 : demande de 80 tonnes de fèves MQ à la bourse à chaque étape	
-	/** @author : Pol Bailleul */
-	public double demande(Feve f, double cours) {
-		if (Feve.F_MQ.equals(f)) {
-			return 80.0;
-		}
-		return 0.0;
-	}
 
 
-	@Override
-
-	/** @author : Pol Bailleul */
-	public void notificationAchat(Feve f, double quantiteEnT, double coursEnEuroParT) {
-		int q = (int) Math.round(quantiteEnT);
-		this.stockFeve.ajouterQuantite(f, q);
-		this.journal.ajouter("Achat bourse : " + q + " T de " + f + " au prix " + coursEnEuroParT + " €/T");
-		this.Eq6TotalStock.ajouter(this, quantiteEnT, this.cryptogramme);
-	}
-
-	/**
-	 * Notification de blacklistage par la bourse.
-	 */
-	@Override
-
-	/** @author : Pol Bailleul */
-	public void notificationBlackList(int dureeEnStep) {
-		this.journal.ajouter("Blacklisté par la bourse pendant " + dureeEnStep + " étapes");
-	}
 }

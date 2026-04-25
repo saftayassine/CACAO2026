@@ -1,47 +1,60 @@
 package abstraction.eq3Producteur3;
 
+import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.Gamme;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
 public class Plantation3 {
-    // On stocke un objet Arbres_par_gamme pour chaque type de fève précis
+    // On stocke désormais par Gamme et non plus par Feve précise
     /** @author Vassili Spiridonov*/
-    private Map<Feve, Arbres_par_gamme> plantation;
+    public Map<Gamme, ArbresParGamme> plantation;
+    private Journal journal;
     
-    public Plantation3() {
+    public Plantation3(Journal journal) {
         /** @author Vassili Spiridonov*/
         this.plantation = new HashMap<>();
 
-        // Initialisation pour chaque type de fève disponible
-        for (Feve f : List.of(Feve.F_BQ, Feve.F_MQ, Feve.F_HQ)) {
-        Arbres_par_gamme arbres = new Arbres_par_gamme(f);
-        this.plantation.put(f, arbres);
+        this.journal = journal;
+        // Initialisation pour chaque Gamme (BQ, MQ, HQ)
+        for (Gamme g : List.of(Gamme.BQ, Gamme.MQ, Gamme.HQ)) {
+            // On passe la Gamme au constructeur de ArbresParGamme
+            ArbresParGamme arbres = new ArbresParGamme(g);
+            this.plantation.put(g, arbres);
+        }
     }
-    }
+
 
     /**
      * Retourne la production totale de fèves, toutes gammes confondues
      */
     public double getProductionTotale() {
-    /** @author Vassili Spiridonov*/
+        /** @author Vassili Spiridonov*/
         double total = 0;
-        for (Arbres_par_gamme g : plantation.values()) {
-            total = total + g.getProductionFeve();
+        for (ArbresParGamme g : plantation.values()) {
+            total = total + g.getProductionTotale();
         }
         return total;
     }
 
     /**
-     * Retourne la production pour une fève précise
+     * Retourne la production pour une gamme précise
      */
+    public double getProductionGamme(Gamme g) {
+        /** @author Vassili Spiridonov*/
+        return this.plantation.get(g).getProductionTotale();
+    }
+
     public double getProductionFeve(Feve f) {
         /** @author Vassili Spiridonov*/
-        return this.plantation.get(f).getProductionFeve();
+        Gamme g = f.getGamme();
+        if (plantation.containsKey(g)) {
+            return plantation.get(g).getProductionTotale();
+        }
+        return 0.0;
     }
 
     /**
@@ -50,27 +63,26 @@ public class Plantation3 {
     public int getNbHectareTotal() {
         /** @author Guillaume Leroy*/
         int totalHa = 0;
-        // Chaque Arbres_par_gamme a son propre nbHectareTotal 
-        for (Arbres_par_gamme g : plantation.values()) {
+        for (ArbresParGamme g : plantation.values()) {
             totalHa = totalHa + g.nbHectareTotal; 
         }
         return totalHa;
     }
 
     /**
-     * Retourne la répartition du terrain en pourcentage pour chaque type de fève
+     * Retourne la répartition du terrain en pourcentage pour chaque gamme de fève
      */
-    public Map<Feve, Double> getRepartitionTerrain() {
+    public Map<Gamme, Double> getRepartitionTerrain() {
         /** @author Victor Vannier-Moreau*/
-        Map<Feve, Double> repartition = new HashMap<>();
+        Map<Gamme, Double> repartition = new HashMap<>();
         double surfaceTotale = this.getNbHectareTotal();
 
         // Calculer la part de plantation en hectare de terrain de chaque gamme
-        if (surfaceTotale > 0) { // Sécurité pour éviter la division par zéro
-            for (Feve f : plantation.keySet()) {
-                int surfaceGamme = plantation.get(f).getNbHectare();
+        if (surfaceTotale > 0) {
+            for (Gamme g : plantation.keySet()) {
+                int surfaceGamme = plantation.get(g).getNbHectare();
                 double pourcentage = (surfaceGamme / surfaceTotale) * 100.0;
-                repartition.put(f, pourcentage);
+                repartition.put(g, pourcentage);
             }
         }
         return repartition;
@@ -80,35 +92,45 @@ public class Plantation3 {
     /**
      * Fait avancer le temps d'une période pour tous les arbres
      */
+    
     public void nextStep() {
-        /** @author Guillaume Leroy*/
-        for (Arbres_par_gamme g : plantation.values()) {
-            g.ageIncr();
+        /** @author Guillaume Leroy / Victor Vannier-Moreau */
+        int totalAReplanter = 0;
+
+        // 1. Faire vieillir chaque gamme et collecter les hectares morts
+        for (ArbresParGamme g : plantation.values()) {
+            totalAReplanter += g.ageIncr(); 
         }
+
+        // Stratégie 20/50/30
+        int repartitionBQ = (int) (totalAReplanter * 0.20);
+        int repartitionHQ = (int) (totalAReplanter * 0.30);
+        int repartitionMQ = totalAReplanter - repartitionBQ - repartitionHQ; // Le reste en MQ (50%)
+
+  
+        plantation.get(Gamme.BQ).replanter(repartitionBQ);
+        plantation.get(Gamme.MQ).replanter(repartitionMQ);
+        plantation.get(Gamme.HQ).replanter(repartitionHQ);
+
+        this.actualiserJournal();
     }
 
     /**
      * Affiche un récapitulatif complet
      */
-    public void afficherRecap() {
-    System.out.println("=== RÉCAPITULATIF DE LA PLANTATION ===");
-    Map<Feve, Double> parts = this.getRepartitionTerrain();
-    
-    for (Feve f : plantation.keySet()) {
-        double prod = plantation.get(f).getProductionFeve();
-        double partTerrain = parts.get(f);
+    public void actualiserJournal() {
+        this.journal.ajouter("--- ÉTAPE " + Filiere.LA_FILIERE.getEtape() + " ---");
+        Map<Gamme, Double> parts = this.getRepartitionTerrain();
         
-        System.out.printf("Fève %s : %.2f tonnes | Part du terrain : %.1f%%\n", 
-                          f, prod, partTerrain);
-    }
-    System.out.println("---------------------------------------");
-    System.out.println("PRODUCTION TOTALE : " + getProductionTotale() + " tonnes ");
-    System.out.printf("Surface totale : %d hectares\n", getNbHectareTotal());
-    
-}
-
-    public static void main(String[] args) {
-        Plantation3 maPlantation = new Plantation3();
-        maPlantation.afficherRecap();
+        for (Gamme g : plantation.keySet()) {
+            double prod = plantation.get(g).getProductionTotale();
+            double partTerrain = parts.get(g);
+            int hectares = plantation.get(g).getNbHectare();
+            
+            this.journal.ajouter(String.format("Gamme %s : %.2f tonnes | %d hectares (%.1f%% du terrain)", 
+                              g, prod, hectares, partTerrain));
+        }
+        this.journal.ajouter("Production Totale Plantation : " + String.format("%.2f", getProductionTotale()) + " tonnes");
+        this.journal.ajouter("---------------------------------------");
     }
 }
