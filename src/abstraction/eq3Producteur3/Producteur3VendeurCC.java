@@ -39,6 +39,8 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
     List<Feve> mesFeves = new LinkedList<Feve>();
     mesFeves.add(Feve.F_MQ);
     mesFeves.add(Feve.F_HQ);
+    mesFeves.add(Feve.F_MQ_E);
+    mesFeves.add(Feve.F_HQ_E);
 
     for (Feve f : mesFeves) {
         //On identifie tous les acheteurs potentiels pour ce produit 
