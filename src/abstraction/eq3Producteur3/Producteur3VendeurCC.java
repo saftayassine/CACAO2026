@@ -34,41 +34,56 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
 	}
 
     public void next() {
-    super.next(); 
-    SuperviseurVentesContratCadre supCC = (SuperviseurVentesContratCadre)Filiere.LA_FILIERE.getActeur("Sup.CCadre");
-    List<Feve> mesFeves = new LinkedList<Feve>();
-    mesFeves.add(Feve.F_MQ);
-    mesFeves.add(Feve.F_HQ);
+        super.next(); 
+        SuperviseurVentesContratCadre supCC = (SuperviseurVentesContratCadre)Filiere.LA_FILIERE.getActeur("Sup.CCadre");
+        List<Feve> mesFeves = new LinkedList<Feve>();
+        mesFeves.add(Feve.F_MQ);
+        mesFeves.add(Feve.F_HQ);
+        mesFeves.add(Feve.F_MQ_E);
+        mesFeves.add(Feve.F_HQ_E);
 
-    for (Feve f : mesFeves) {
-        //On identifie tous les acheteurs potentiels pour ce produit 
-        List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
-        
-        // On calcule une quantité à proposer (ex: 30% du stock par acheteur)
-        double quantiteTotaleVoulue = this.stock.getStock(f) * 0.3;
-        double quantiteParStep = quantiteTotaleVoulue / 12; // Étallé sur 6 mois
+        for (Feve f : mesFeves) {
+            //On identifie tous les acheteurs potentiels pour ce produit 
+            List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
+            double stockReel = this.stock.getStock(f);
+                
+                // Calculer tout ce qu'on a déjà promis de livrer dans le futur pour cette fève
+                double resteALivrerTotal = 0;
+                for (ExemplaireContratCadre c : contratsEnCours) {
+                    if (c.getProduit().equals(f)) {
+                        resteALivrerTotal += c.getQuantiteRestantALivrer();
+                    }
+                }
 
-        if (quantiteParStep >= 100.0) {
-            Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, quantiteParStep);
+                // On ne propose un contrat que si le stock dépasse nos engagements totaux
+                double surplusReel = stockReel - resteALivrerTotal;
+                
+                if (surplusReel > 200.0) { // Seuil de sécurité de 200 tonnes
+                    double quantiteTotaleVoulue = surplusReel * 0.3; // On ne propose que 30% du surplus
+                    double quantiteParStep = quantiteTotaleVoulue / 12;
 
-            // Boucle sur tous les acheteurs
-            for (IAcheteurContratCadre acheteur : acheteurs) {
-                double prixPropose = this.propositionPrix(null); 
-                int dureeEcheancier = ech.getNbEcheances();
+                    if (quantiteParStep >= 100.0) {
+                        Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, quantiteParStep);
 
-                // 2. On construit le message détaillé
-                String msg = "S" + Filiere.LA_FILIERE.getEtape();
-                msg = msg + " : Tentative de vente de " + f;
-                msg = msg + " à " + acheteur.getNom();
-                msg = msg + " | Prix: " + prixPropose + "€/t";
-                msg = msg + " | Durée: " + dureeEcheancier + " steps";
+                        // Boucle sur tous les acheteurs
+                        for (IAcheteurContratCadre acheteur : acheteurs) {
+                            double prixPropose = this.calculerPrixVente(f);
+                            int dureeEcheancier = ech.getNbEcheances();
 
-                this.journalCC.ajouter(msg);
-                supCC.demandeVendeur(acheteur, this, f, ech, cryptogramme, false);
-            }
+                            // 2. On construit le message détaillé
+                            String msg = "S" + Filiere.LA_FILIERE.getEtape();
+                            msg = msg + " : Tentative de vente de " + f;
+                            msg = msg + " à " + acheteur.getNom();
+                            msg = msg + " | Prix: " + prixPropose + "€/t";
+                            msg = msg + " | Durée: " + dureeEcheancier + " steps";
+
+                            this.journalCC.ajouter(msg);
+                            supCC.demandeVendeur(acheteur, this, f, ech, cryptogramme, false);
+                        }
+                    }
         }
     }
-}
+    }
 
     // On ne vend que les gammes MQ et HQ par contrat cadre
     public boolean vend(IProduit produit) {
@@ -135,39 +150,49 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
         return aLivre;
     }
 
-    public double propositionPrix(ExemplaireContratCadre contrat) {
-    double coutTotalCacao = this.gestionCouts.getCoutTot(this);
-    double productionTotale = this.plantationeq3.getProductionTotale();
-    double coutParTonne = coutTotalCacao / productionTotale;
 
-    //Fixer le prix avec 35% de marge 
-    double prixVente = coutParTonne * 1.35;
+    public double calculerPrixVente(Feve f) {
+        double coutFeve = this.gestionCouts.getCoutFeve(f, this); 
+        double productionFeve = this.plantationeq3.getProductionFeve(f); 
 
-    return prixVente;
+        if (productionFeve <= 0) {
+            return 2000.0; 
+        }
+
+        double coutParTonne = coutFeve / productionFeve;
+        return coutParTonne * 1.35;
 }
+
+    public double propositionPrix(ExemplaireContratCadre contrat) {
+        return calculerPrixVente((Feve) contrat.getProduit());
+    }
 
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat) {
-    double coutTotalCacao = this.gestionCouts.getCoutTot(this);
-    double productionTotale = this.plantationeq3.getProductionTotale();
+        Feve f = (Feve) contrat.getProduit();
+        
+        //Calcul du prix plancher spécifique (Coût de production fève + 10%)
+        double coutFeve = this.gestionCouts.getCoutFeve(f,this);
+        double productionFeve = this.plantationeq3.getProductionFeve(f);
+        
+        if (productionFeve <= 0) {
+            return contrat.getPrix(); // On accepte si on n'a pas de données de prod
+        }
 
-    // La marge minimum est de 10%, on ne vend pas en dessous.
-    double prixPlancher = (coutTotalCacao / productionTotale) * 1.10;
+        double prixPlancher = (coutFeve / productionFeve) * 1.10;
+        double prixAcheteur = contrat.getPrix();
 
-    double prixAcheteur = contrat.getPrix();
+        if (prixAcheteur >= prixPlancher) {
+            // Si l'acheteur propose plus que notre minimum spécifique, on accepte
+            return prixAcheteur;
+        } else {
+            // Sinon, contre-proposition entre notre prix initial (35%) et notre plancher (10%)
+            double prixInitial = this.propositionPrix(contrat);
+            double contreProposition = (prixInitial + prixPlancher) / 2.0;
 
-    //Logique de négociation
-    if (prixAcheteur >= prixPlancher) {
-        // Si l'acheteur propose plus que notre minimum, on accepte
-        return prixAcheteur;
-    } else {
-        // Sinon, on propose une contre-proposition à mi-chemin 
-        // entre notre prix initial et notre prix plancher
-        double prixInitial = this.propositionPrix(contrat);
-        double contreProposition = (prixInitial + prixPlancher) / 2.0;
-
-        return contreProposition;
+            // On ne propose jamais en dessous du plancher
+            return Math.max(contreProposition, prixPlancher);
+        }
     }
-}
     
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
     String client = contrat.getAcheteur().getNom();
