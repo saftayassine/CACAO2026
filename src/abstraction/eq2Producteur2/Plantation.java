@@ -14,6 +14,7 @@ public class Plantation {
     private double prix_replantation; // Prix de replantation de la plantation
     private double salaire_employe; // Prix que coûtent les employés par step par parcelle
     private double cout_cooperative = 0 ; // Prix que coûtent les infrastructures communes à la coopérative par step
+    private double stock_max;       // Stock maximum de fèves avant de ne pas replanter
     private boolean replante = false;
     
     // Champs pour la certification équitable
@@ -40,7 +41,7 @@ public class Plantation {
                 this.prix_vente = 1200 ;
                 this.prix_replantation = 1000 ; // 1 euro par plant
                 this.salaire_employe = 150 ;
-
+                this.stock_max = 0 ; // Stock maximum en tonnes pour F_BQ
                 break;
  
             case F_MQ:
@@ -51,6 +52,7 @@ public class Plantation {
                 this.prix_vente = 1500 ;
                 this.prix_replantation = 1500 ; // 1.5 euro par plant
                 this.salaire_employe = 150 ;
+                this.stock_max = 0 ; // Stock maximum en tonnes pour F_MQ
                 break;
 
             case F_HQ:
@@ -61,6 +63,7 @@ public class Plantation {
                 this.prix_vente = 1800 ;
                 this.prix_replantation = 1750 ; // 1.75 euro par plant
                 this.salaire_employe = 150 ;
+                this.stock_max = 0 ; // Stock maximum en tonnes pour F_HQ
                 break;
 
             case F_HQ_E:
@@ -71,6 +74,7 @@ public class Plantation {
                 this.prix_vente = 1800 ;
                 this.prix_replantation = 2000 ; // 2 euro par plant
                 this.salaire_employe = 300 ;
+                this.stock_max = 0 ; // Stock maximum en tonnes pour F_HQ_E
                 break;
             
             default:
@@ -134,10 +138,6 @@ public class Plantation {
         return age >= dureeDeVie;
     }
 
-    public void Replante() {
-        age = 0;
-        replante = true;
-    }
 
     public boolean getReplante() {
         return replante;
@@ -147,6 +147,28 @@ public class Plantation {
         return age >= tempsAvantProduction && age < dureeDeVie;
     }
 
+    /**
+     * Replante l'arbre si les conditions sont remplies:
+     * 1. Le stock de fève de la gamme ne dépasse pas le seuil stock_max
+     * 2. L'arbre vient de dépasser l'âge limite 
+     */
+    public boolean Replante(double stockFeve) {
+        // Vérifier que l'arbre est effectivement mort
+        if (age < dureeDeVie) {
+            return false;
+        }
+        
+        // Vérifier que le stock ne dépasse pas le seuil maximum
+        if (stockFeve > stock_max) {
+            return false;
+        }
+        
+        // Les conditions sont remplies, replanter l'arbre
+        age = 0;
+        replante = true;
+        return true;
+    }
+    
     public double getprix_achat() {
         return prix_achat;
     }
@@ -196,7 +218,6 @@ public class Plantation {
     
     /**
      * Active le mode équitable avec les paramètres nécessaires
-     * @param pourcentageCertifie : pourcentage de cette plantation à certifier (0-100)
      */
     public void activerCertificationEquitable(int nombreOuvriers, double salaireMiniJournalier, double coutLabelMensuel, double pourcentageCertifie) {
         if (this.typeFeve != Feve.F_HQ && this.typeFeve != Feve.F_HQ_E) {
@@ -221,8 +242,6 @@ public class Plantation {
     /**
      * Crée une copie de cette plantation avec un pourcentage non-certifié
      * Utile pour diviser une plantation en partie certifiée + non-certifiée
-     * @param pourcentageACertifier : pourcentage à certifier (ex: 10 pour 10%)
-     * @return Plantation contenant les parcelles non-certifiées
      */
     public Plantation diviserPlantation(double pourcentageACertifier) {
         if (this.typeFeve != Feve.F_HQ) {
@@ -319,5 +338,13 @@ public class Plantation {
     
     public void setSalaireMiniJournalier(double salaire) {
         this.salaireMiniJournalier = salaire;
+    }
+    
+    public double getStock_max() {
+        return stock_max;
+    }
+    
+    public void setStock_max(double stock_max) {
+        this.stock_max = stock_max;
     }
 }

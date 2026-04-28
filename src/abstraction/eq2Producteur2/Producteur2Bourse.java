@@ -11,7 +11,7 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.produits.IProduit;
 
-/**@author Simon */
+/** @author Simon */
 
 public class Producteur2Bourse extends Sechage implements IVendeurBourse {
 	protected HashMap<Feve, Variable> stocks;
@@ -41,24 +41,25 @@ public class Producteur2Bourse extends Sechage implements IVendeurBourse {
 
 	@Override
 	public double offre(Feve f, double cours) {
-		if (f.getGamme() == Gamme.HQ) {
+		// Seules les fèves équitables ne se vendent pas en bourse
+		if (f.isEquitable()) {
 			return 0.0;
 		}
-		this.setStockMin(0.1);
+		this.setStockMin(0.05); // Ne garder que 5% de marge de sécurité
 
 		double offre = 0;
 
 		if (this.stockvar.containsKey(f) && this.cout_unit_t.containsKey(f) && this.seuil_stock.containsKey(f)) {
-			
+
 			double stockActuel = this.stockvar.get(f).getValeur();
 			double quantiteAGarder = this.restantDu(f);
-			
-			// Calcul du prix minimal voulu : marge de 20% (x1.2) par défaut
-			double marge = 1.2;
-			
+
+			double marge = 1.1;
+
 			double prixMinimal = this.cout_unit_t.get(f) * marge;
 
-			this.journalBourse.ajouter("Valeur du cours de la feve " + f + " : " + cours + "\nValeur du prix minimal voulu : " + prixMinimal);
+			this.journalBourse.ajouter("Valeur du cours de la feve " + f + " : " + cours
+					+ "\nValeur du prix minimal voulu : " + prixMinimal);
 
 			if ((stockActuel - quantiteAGarder > this.seuil_stock.get(f)) && (prixMinimal < cours)) {
 				offre = stockActuel - quantiteAGarder - this.seuil_stock.get(f);
@@ -82,7 +83,8 @@ public class Producteur2Bourse extends Sechage implements IVendeurBourse {
 			stockBourse.setValeur(this, stockInterne.getValeur());
 		}
 		this.journalBourse.ajouter(
-				Filiere.LA_FILIERE.getEtape() + " : vente de " + quantiteEnT + " T de " + f + " -> retrait effectif " + retire);
+				Filiere.LA_FILIERE.getEtape() + " : vente de " + quantiteEnT + " T de " + f + " -> retrait effectif "
+						+ retire);
 		return retire;
 	}
 
