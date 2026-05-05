@@ -4,6 +4,7 @@ import java.util.List;
 
 import abstraction.eqXRomu.encheres.Enchere;
 import abstraction.eqXRomu.encheres.IVendeurAuxEncheres;
+import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 /**
  * @author Maxence
@@ -22,7 +23,7 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AchatEnche
             Double quantiteEnStock = this.getStock_chocolatDeMarque(choco);
             
             // On ne lance une enchère que si on a du stock
-            if (quantiteEnStock > 0) {
+            if (quantiteEnStock > 0 && Filiere.LA_FILIERE.getEtape() % 10 == 0) {
                 superviseur.vendreAuxEncheres(this, cryptogramme, choco, quantiteEnStock);
             }
         }

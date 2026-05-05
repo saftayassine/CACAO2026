@@ -41,23 +41,21 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AchatAppelO
         double prixTonne;
         switch (cdm.getChocolat()) {
             case C_HQ: 
-                prixTonne = 2000.0; // Le HQ se vend cher
+                prixTonne = 10000.0; // Le HQ se vend cher
                 break;
             case C_MQ: 
-                prixTonne = 1500.0; // Prix standard pour du MQ
+                prixTonne = 7500.0; // Prix standard pour du MQ
                 break;
             case C_BQ: 
-                prixTonne = 1000.0; // Prix bas pour du BQ pour s'assurer de remporter l'offre
+                prixTonne = 5000.0; // Prix bas pour du BQ pour s'assurer de remporter l'offre
                 break;
             default:   
-                prixTonne = 500.0;
+                prixTonne = 3000.0;
                 break;
         }
 
-        // 5. On multiplie par la quantité pour avoir le prix TOTAL de la transaction
-        double prixVenteTotal = prixTonne * offre.getQuantiteT();
 
-        return new OffreVente(offre, this, cdm, prixVenteTotal);
+        return new OffreVente(offre, this, cdm, prixTonne);
     }
 
 	public void notifierVenteAO(OffreVente propositionRetenue){
