@@ -12,9 +12,9 @@ import abstraction.eqXRomu.produits.Feve;
 public class Producteur1Planteur extends Producteur1Stock{
 
     private List<Plantation> plantations = new ArrayList<Plantation>();
-    private double taille_totale=10000;
-    private double tailleEq;
-    private double tailleNonEq;
+    private double taille_totale=1000000;
+    private double tailleEq = 850000;
+    private double tailleNonEq = 150000;
 
     /**
      * @author Théophile Trillat

@@ -86,6 +86,32 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         return this.stockPrévu;
     }
 
+    public IProduit getChoco(IProduit f){
+        if (f instanceof Feve){
+        if (f==Feve.F_BQ){
+            return ProntellaB;
+        }
+        else if (f==Feve.F_MQ){
+            return ProntellaM;
+        }
+        else if (f==Feve.F_HQ){
+            return ProntellaH;
+        }
+        else if (f==Feve.F_BQ_E){
+            return ProntellaBE;
+        }
+        else if (f==Feve.F_HQ_E){
+            return ProntellaHE;
+        }
+        else{
+            return null;
+        }}
+        else{
+            return null;
+        }
+    }
+
+
     public double getStocksProduit(IProduit produit){
         if (this.getStock().keySet().contains(produit)){
         return this.getStock().get(produit);

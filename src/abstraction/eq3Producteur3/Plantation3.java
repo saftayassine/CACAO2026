@@ -13,6 +13,7 @@ public class Plantation3 {
     /** @author Vassili Spiridonov*/
     public Map<Gamme, ArbresParGamme> plantation;
     private Journal journal;
+    private HashMap<Gamme,Double> pourcentagesEquitables;
     
     public Plantation3(Journal journal) {
         /** @author Vassili Spiridonov*/
@@ -25,6 +26,16 @@ public class Plantation3 {
             ArbresParGamme arbres = new ArbresParGamme(g);
             this.plantation.put(g, arbres);
         }
+
+        this.pourcentagesEquitables = new HashMap<Gamme, Double>();
+        this.pourcentagesEquitables.put(Gamme.BQ, 0.0);
+        this.pourcentagesEquitables.put(Gamme.MQ, 0.6);
+        this.pourcentagesEquitables.put(Gamme.HQ, 0.6);
+        
+    }
+
+    public HashMap<Gamme, Double> getPourcentageEquitable(){
+        return pourcentagesEquitables;
     }
 
 
@@ -51,8 +62,12 @@ public class Plantation3 {
     public double getProductionFeve(Feve f) {
         /** @author Vassili Spiridonov*/
         Gamme g = f.getGamme();
+        double c= this.pourcentagesEquitables.get(g);
         if (plantation.containsKey(g)) {
-            return plantation.get(g).getProductionTotale();
+            if (f==Feve.F_HQ_E || f==Feve.F_MQ_E|| f==Feve.F_BQ_E){
+                return c*plantation.get(g).getProductionTotale();
+            }
+            else {return (1-c)*plantation.get(g).getProductionTotale();}
         }
         return 0.0;
     }
@@ -86,14 +101,31 @@ public class Plantation3 {
             }
         }
         return repartition;
-}
+    }
+    
+    public double getRepartitionTerrainFeve(Feve f) {
+        Map<Gamme, Double> repartitionGamme = this.getRepartitionTerrain();
+        Gamme g = f.getGamme();
+
+        double pourcentageGamme = repartitionGamme.getOrDefault(g, 0.0);
+
+        double quotaEquitable = this.pourcentagesEquitables.getOrDefault(g, 0.0);
+        
+        if (f == Feve.F_HQ_E || f == Feve.F_MQ_E || f == Feve.F_BQ_E) {
+            return pourcentageGamme * quotaEquitable / 100.0; 
+        } else {
+            return pourcentageGamme * (1 - quotaEquitable) / 100.0;
+        }
+    }
+  
 
 
     /**
      * Fait avancer le temps d'une période pour tous les arbres
      */
     
-    public void nextStep() {
+    public void nextStep(HashMap<Gamme,Double> new_pourcentage) {
+        this.pourcentagesEquitables= new_pourcentage;
         /** @author Guillaume Leroy / Victor Vannier-Moreau */
         int totalAReplanter = 0;
 
@@ -104,8 +136,8 @@ public class Plantation3 {
 
         // Stratégie 20/50/30
         int repartitionBQ = (int) (totalAReplanter * 0.20);
-        int repartitionHQ = (int) (totalAReplanter * 0.30);
-        int repartitionMQ = totalAReplanter - repartitionBQ - repartitionHQ; // Le reste en MQ (50%)
+        int repartitionHQ = (int) (totalAReplanter * 0.45);
+        int repartitionMQ = totalAReplanter - repartitionBQ - repartitionHQ; // Le reste en MQ (35%)
 
   
         plantation.get(Gamme.BQ).replanter(repartitionBQ);

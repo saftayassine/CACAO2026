@@ -22,13 +22,16 @@ import abstraction.eq6Transformateur3.StockChocolat;
 
 public class Transformateur3AcheteurBourse extends Transformateur3Acteur implements IAcheteurBourse {
 
+    Journal journalBourse;
+
     public Transformateur3AcheteurBourse() {
         super();
+        this.journalBourse = new Journal(" journal Achat Bourse EQ6", this);
     }
 
     public double demande(Feve f, double cours) {
 
-        journal.ajouter("Demande appelée pour " + f + " au cours " + cours);
+        journalBourse.ajouter("Demande appelée pour " + f + " au cours " + cours);
         if (f == Feve.F_HQ) {
             return 80;
         }
@@ -48,10 +51,17 @@ public class Transformateur3AcheteurBourse extends Transformateur3Acteur impleme
     public void notificationAchat(Feve f, double quantiteEnT, double coursEnEuroParT) {
         stockFeve.ajouterQuantite(f, quantiteEnT);
 
-        journal.ajouter("Achat : " + quantiteEnT + " T de " + f);
+        journalBourse.ajouter("Achat : " + quantiteEnT + " T de " + f);
     }
 
     public void notificationBlackList(int dureeEnStep) {
-        journal.ajouter("Blacklist : " + dureeEnStep);
+        journalBourse.ajouter("Blacklist : " + dureeEnStep);
     }
+
+    @Override
+    public List<Journal> getJournaux() {
+        List<Journal> res = new ArrayList<Journal>(super.getJournaux());
+        res.add(this.journalBourse);
+        return res;
+}
 }

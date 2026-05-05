@@ -24,6 +24,10 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	/** @author Thomas */
 	public Producteur2Acteur() {
 		for (Feve f : Feve.values()) {
+			double stockInitial = this.stock_initial.getOrDefault(f, 0.0);
+			this.stockvar.put(f, new Variable("Stock " + f, this, stockInitial));
+		}
+		for (Feve f : Feve.values()) {
 			this.fevesSeches.put(f, 0.0);
 		}
 		this.stockTotal = new Variable("Stock Total EQ2", this, 0.0);
@@ -71,11 +75,23 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
+		
+		// Stock total général
 		res.add(this.stockTotal);
 		
+		// Stocks détaillés par type de fève
+		for (Feve feve : new Feve[] {Feve.F_HQ, Feve.F_BQ, Feve.F_MQ, Feve.F_HQ_E}) {
+			Variable stockFeve = this.stockvar.get(feve);
+			if (stockFeve != null) {
+				res.add(stockFeve);
+			}
+		}
+		
 		// Ajouter les indicateurs pour chaque type de plantation
-		for (Plantation p : this.plantations) {
-			res.add(new Variable("Hectares " + p.getTypeFeve(), this, p.getParcelles()));
+		if (this.plantations != null) {
+			for (Plantation p : this.plantations) {
+				res.add(new Variable("Hectares " + p.getTypeFeve(), this, p.getParcelles()));
+			}
 		}
 		
 		return res;

@@ -2,6 +2,7 @@ package abstraction.eq3Producteur3;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import abstraction.eqXRomu.filiere.Filiere;
@@ -10,6 +11,7 @@ import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.general.VariableReadOnly;
 import abstraction.eqXRomu.produits.Feve;
+import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.produits.IProduit;
 
 public class Producteur3Acteur implements IActeur {
@@ -36,9 +38,11 @@ public class Producteur3Acteur implements IActeur {
 		/** @author Guillaume Leroy */
 		this.stock = new Producteur3Stock(this.journal_stock);
 		this.StockTotal= new VariableReadOnly(this + " Stock total", this, this.stock.getStockTotal());
-		this.plantationeq3= new Plantation3(journal_plantation);
 		this.gestionCouts = new GestionCouts3();
+
+		this.plantationeq3= new Plantation3(journal_plantation);
 		this.agriculteurs = new Agriculteurs3(this.plantationeq3);
+
 	}
 	
 	public void initialiser() {
@@ -60,14 +64,13 @@ public class Producteur3Acteur implements IActeur {
 		// défi 1 
 		this.journal_periode.ajouter("période : "+ Filiere.LA_FILIERE.getEtape()); /** @author Vassili Spiridonov */
 		/** @author Guillaume Leroy */
-		for (Feve f : List.of(Feve.F_BQ, Feve.F_MQ, Feve.F_HQ)){
+		HashMap <Gamme, Double> pourcentage_eq = this.plantationeq3.getPourcentageEquitable();
+		this.plantationeq3.nextStep(pourcentage_eq); // permet de gérer nos hectares de plantation
+		for (Feve f : List.of(Feve.F_BQ, Feve.F_MQ, Feve.F_HQ, Feve.F_BQ_E, Feve.F_MQ_E, Feve.F_HQ_E)){
 			this.stock.addStock(f, this.plantationeq3.getProductionFeve(f)); // ajoute le nouveau stock de fève et fait vieillir le restant
-			// vente des feves par contrat, en bourse .... (à faire après avoir implémenter la classe)
 		}
-		// défi 2
 		this.mettreAJourIndicateurStock(); /** @author Guillaume Leroy */
-		this.gestionCouts.nextCout(this);//fait payer le coût de stockage final des feves et impôt sur le nombre d'hectare de plantation
-		this.plantationeq3.nextStep(); // permet de gérer nos hectares de plantation pour la V1
+		this.gestionCouts.nextCout(this);//fait payer le coût de stockage final des feves et impôt sur le nombre d'hectare de plantation 
 		this.stock.recapJournal();
 	}
 

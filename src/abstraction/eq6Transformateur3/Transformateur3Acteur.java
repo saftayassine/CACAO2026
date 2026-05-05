@@ -28,15 +28,20 @@ public class Transformateur3Acteur implements IActeur {
 	protected Variable Eq6TotalStock;
 	protected StockChocolat stockChocolat;
 
+
+	protected HashMap<ChocolatDeMarque, Double> stockchocomarque;
+    public ChocolatDeMarque LamborghiniduCacao = new ChocolatDeMarque(Chocolat.C_MQ, "LamborghiniduCacao", 70);
+
 	public Transformateur3Acteur() {
 		this.stockFeve = new StockFeve();
 		this.stockChocolat = new StockChocolat();
 		this.Eq6TotalStock = new VariablePrivee("Eq6TotalStock", "<html>Stock total de fèves+chocolats+chocolats de marque</html>", this, 0.0, 1000000.0, 0.0);
-
+		this.stockchocomarque = new HashMap<>();
 	}
 	
 	public void initialiser() {
 		//* @author : Pol Bailleul */
+		this.stockchocomarque.put(LamborghiniduCacao,100.0);
 		for (Feve feve : stockFeve.getFeves()) {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(feve+"", 15)+" = "+this.stockFeve.getQuantite(feve));
 			this.Eq6TotalStock.ajouter(this, this.stockFeve.getQuantite(feve),this.cryptogramme);
@@ -44,6 +49,11 @@ public class Transformateur3Acteur implements IActeur {
 		for (Chocolat choco : stockChocolat.getChocolat()) {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(choco+"", 15)+" = "+this.stockChocolat.getQuantite(choco));
 			this.Eq6TotalStock.ajouter(this, this.stockChocolat.getQuantite(choco),this.cryptogramme);
+		}
+		for (ChocolatDeMarque chocoMarque : this.stockchocomarque.keySet()) {
+			double quantite = this.stockchocomarque.get(chocoMarque);
+			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(chocoMarque+"", 15)+" = "+quantite);
+			this.Eq6TotalStock.ajouter(this, quantite,this.cryptogramme);
 		}
 
 	}
@@ -70,6 +80,11 @@ public class Transformateur3Acteur implements IActeur {
 
 		for (Chocolat chocolat : stockChocolat.getChocolat()) {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(chocolat+"", 15)+" = "+this.stockChocolat.getQuantite(chocolat));
+		}
+
+		for (ChocolatDeMarque chocoMarque : this.stockchocomarque.keySet()) {
+			double quantite = this.stockchocomarque.get(chocoMarque);
+			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(chocoMarque+"", 15)+" = "+quantite);
 		}
 
 
@@ -113,6 +128,10 @@ public class Transformateur3Acteur implements IActeur {
 		return res;
 	}
 
+	public HashMap<ChocolatDeMarque, Double> getStock(){
+        return this.stockchocomarque;
+    }
+
 	////////////////////////////////////////////////////////
 	//               En lien avec la Banque               //
 	////////////////////////////////////////////////////////
@@ -154,22 +173,6 @@ public class Transformateur3Acteur implements IActeur {
 		return Filiere.LA_FILIERE;
 	}
 
-/*<<<<<<< HEAD
-	public Transformateur3Stocks getStocks() {
-		return this.stocks;
-	}
-
-	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
-		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
-			if (this.stocks != null) {
-				return this.stocks.getQuantiteEnStock(p);
-			} else {
-				return 0.0;
-			}
-		} else {
-			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
-
-*/
 	public double getQuantiteEnStock(IProduit p, int cryptogramme) {
 		if (this.cryptogramme!=cryptogramme) { // Les acteurs non assermentes n'ont pas a connaitre notre stock
 			return 0;
@@ -180,8 +183,30 @@ public class Transformateur3Acteur implements IActeur {
 		if (p instanceof Chocolat) {
 			return this.stockChocolat.getQuantite((Chocolat)p);
 		}
+		if (p instanceof ChocolatDeMarque) {
+			return this.stockchocomarque.get((ChocolatDeMarque)p);
+		}
 		return 0;
 	}
+
+	public List<ChocolatDeMarque> getChocolatsProduits(){
+		List<ChocolatDeMarque> ListeChoco=new ArrayList<ChocolatDeMarque>();
+		ListeChoco.add(LamborghiniduCacao);
+		return ListeChoco;
+    }
+
+	public List<String> getMarquesChocolat(){
+		List<String> ListeNoms= new ArrayList<String>();
+		ListeNoms.add("LamborghiniduCacao");
+		return ListeNoms;
+    }
+
+    public double getChocolatDeMarque(ChocolatDeMarque chocoMarque) {
+        double quantite = this.getStock().get(chocoMarque);
+        return quantite;
+    }
+
+
 
 	/* =============================================================== */
 	/*                  IAcheteurBourse implementation                 */

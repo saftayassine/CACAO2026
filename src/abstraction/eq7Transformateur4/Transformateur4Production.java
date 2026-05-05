@@ -7,8 +7,8 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IFabricantChocolatDeMarque;
-//Matteo
-public class Transformateur4Production extends Transformateur4AcheteurBourse implements IFabricantChocolatDeMarque{
+//Auteur : Matteo
+public class Transformateur4Production extends Transformateur4Marques implements IFabricantChocolatDeMarque{
 
     public Transformateur4Production(){
         super();
@@ -57,9 +57,9 @@ public class Transformateur4Production extends Transformateur4AcheteurBourse imp
     }
 
     public List<ChocolatDeMarque> getChocolatsProduits() {
-        //ChocolatDeMarque marque1 = new ChocolatDeMarque(Chocolat.C_BQ, "CACAO+", 45);
+        ChocolatDeMarque cacao_plus = new ChocolatDeMarque(Chocolat.C_BQ, "CACAO+", 45);
         List<ChocolatDeMarque> liste= new ArrayList<>();
-        //liste.add(marque1);
+        liste.add(cacao_plus);
         return liste;
     }
 

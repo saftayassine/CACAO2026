@@ -21,7 +21,6 @@ public class Producteur2couts extends Producteur2Stock {
         }
     }
 
-
     public void next() {
         calcul_cout_unit();
         super.next();
@@ -32,17 +31,25 @@ public class Producteur2couts extends Producteur2Stock {
         int etape = Filiere.LA_FILIERE.getEtape();
 
         for (Feve f : Feve.values()) {
-            double prod = stock.get(f).getOrDefault(etape, 0.0);
-            if (prod > 0) {
-                double cout = cout_stockage * prod;
-                cout_unit_t.put(f, cout / prod);
-                JournalCout.ajouter("Step " + etape + " : Coût unitaire de production pour " + f + " = " + cout_unit_t.get(f) + " €/t");
-            } else {
-                cout_unit_t.put(f, 0.0);
-                JournalCout.ajouter("Step " + etape + " : Pas de production pour " + f + ", coût unitaire = 0 €/t");
-            }
+            double coutUnitaire = 0.0;
+
+            if (f == Feve.F_BQ)
+                coutUnitaire = 300.0;
+            else if (f == Feve.F_MQ)
+                coutUnitaire = 370.0;
+            else if (f == Feve.F_HQ)
+                coutUnitaire = 500.0;
+            else if (f == Feve.F_HQ_E)
+                coutUnitaire = 1000.0;
+
+            cout_unit_t.put(f, coutUnitaire);
+            JournalCout.ajouter("Step " + etape + " : Coût unitaire de production estimé pour " + f + " = "
+                    + coutUnitaire + " €/t");
         }
     }
 
+    public double getCoutUnitaire(Feve f) {
+        return this.cout_unit_t.getOrDefault(f, 0.0);
+    }
 
 }
