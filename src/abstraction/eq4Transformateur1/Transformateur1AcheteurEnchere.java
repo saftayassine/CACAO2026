@@ -59,7 +59,7 @@ public class Transformateur1AcheteurEnchere extends Transformateur1VendeurEncher
 			journalAchatEncheres.ajouter(" pour "+miseAuxEncheres.getProduit()+" prix propose = 0.0");
 			return 0.0; // on ne fait des propositions que pour les feves
 		}
-		if (this.getStocksPrevuProduit(miseAuxEncheres.getProduit())<50000) {
+		if (this.getStocksPrevuProduit(this.getChoco(miseAuxEncheres.getProduit()))<50000) {
 			
 		journalAchatEncheres.ajouter(" pour "+miseAuxEncheres.getProduit()+" prix propose = "+this.prix.get((Feve)(miseAuxEncheres.getProduit())));
 		return this.prix.get((Feve)(miseAuxEncheres.getProduit()));

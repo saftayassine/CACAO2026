@@ -18,7 +18,7 @@ public Transformateur1AcheteurCC() {
 	}
     
     public boolean achete(IProduit produit){
-        if (produit instanceof Feve && this.getStocksPrevuProduit(produit)<50000 && produit!=Feve.F_MQ_E){
+        if (produit instanceof Feve && this.getStocksPrevuProduit(this.getChoco(produit))<50000 && produit!=Feve.F_MQ_E){
             return true;
         }
         else{
