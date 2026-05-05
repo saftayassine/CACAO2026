@@ -195,16 +195,16 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
     }
     
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
-    String client = contrat.getAcheteur().getNom();
-    Echeancier ech = contrat.getEcheancier();
-    
-    String info = "Nouveau contrat avec " + client;
-    info = info + " | Durée: " + ech.getNbEcheances() + " steps";
-    info = info + " | Fin: " + ech.getStepFin();
-    info = info + " | Total: " + ech.getQuantiteTotale() + "t";
-    info = info + " | Prix: " + contrat.getPrix() + "€/t";
+        String client = contrat.getAcheteur().getNom();
+        Echeancier ech = contrat.getEcheancier();
+        
+        String info = "Nouveau contrat avec " + client;
+        info = info + " | Durée: " + ech.getNbEcheances() + " steps";
+        info = info + " | Fin: " + ech.getStepFin();
+        info = info + " | Total: " + ech.getQuantiteTotale() + "t";
+        info = info + " | Prix: " + contrat.getPrix() + "€/t";
 
-    this.journalCC.ajouter(info);
-    this.contratsEnCours.add(contrat);
-}
+        this.journalCC.ajouter(info);
+        this.contratsEnCours.add(contrat);
+    }
 }

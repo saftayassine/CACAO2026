@@ -83,6 +83,20 @@ public class Producteur3Stock {
         }
     }
 
+    public void donnerAuxEnfantsMalades(double seuil) {
+        for (Feve f : Feve.values()) {
+            double stockActuel = this.getStock(f);
+            if (stockActuel > seuil) {
+                double quantiteADonner = stockActuel - seuil;
+                this.retireStock(f, quantiteADonner);
+                
+                // On consigne l'action dans le journal pour la transparence
+                this.journalStock.ajouter("Don caritatif : " + quantiteADonner + 
+                                        " tonnes de " + f + " données pour réduire les coûts.");
+            }
+        }
+    }
+
     public void recapJournal() {
         this.journalStock.ajouter("--- RÉCAPITULATIF DES STOCKS ---");
         for (Feve f : Feve.values()) {
