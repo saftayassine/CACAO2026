@@ -13,7 +13,7 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
 /** @author Ewen Landron */
-public class ContratCadre2 extends Approvisionnement2 implements IAcheteurContratCadre {
+public class ContratCadre2 extends Approvisionnement implements IAcheteurContratCadre {
     
     // Variables de session (redéfinies à chaque contrat)
     private double besoinCourant;
@@ -47,35 +47,23 @@ public class ContratCadre2 extends Approvisionnement2 implements IAcheteurContra
         }
     }
 
+
     @Override
     protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax) {
         this.besoinCourant = besoinParEtape;
         this.prixCibleCourant = prixCible;
         this.prixMaxCourant = prixMax;
+        this.lancement_CC = true; // On marque qu'on est à l'initiative
 
         SuperviseurVentesContratCadre sup = (SuperviseurVentesContratCadre) (Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
         List<IVendeurContratCadre> vendeurs = sup.getVendeurs(cdm);
 
         if (vendeurs.size() > 0) {
-            // Échéancier de 12 étapes
             Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, besoinParEtape);
-    
-            ExemplaireContratCadre c = sup.demandeAcheteur(this, vendeurs.get(0), cdm, ech, this.cryptogramme, false);
-    
-            if (c != null) {
-                this.mesContrats.add(c);
-            
-                // 1. Mise à jour du stock prédit (flux physique)
-                this.actualiserStockPredit(c);
-            
-                // 2. Mise à jour du prix d'achat (flux financier)
-                // On mémorise le prix unitaire obtenu pour affiner les prochaines négociations
-                this.prixDAchat.put(cdm, c.getPrix());
-            
-                // Petit ajout pour le suivi
-                this.journal5.ajouter(Color.CYAN, Color.BLACK, "Prix d'achat actualisé pour " + cdm + " : " + c.getPrix());
-            }
+            // On lance la négociation
+            sup.demandeAcheteur(this, vendeurs.get(0), cdm, ech, this.cryptogramme, false);
         }
+        this.lancement_CC = false; // Reset après la négociation
     }
 
     public boolean achete(IProduit produit) {
@@ -133,10 +121,32 @@ public class ContratCadre2 extends Approvisionnement2 implements IAcheteurContra
     }
 
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
-        this.journal5.ajouter(Color.GREEN, Color.BLACK, "CC conclu : " + contrat.toString());
-        if (!this.mesContrats.contains(contrat)) {
-            this.mesContrats.add(contrat);
-        }
+        IProduit p = (IProduit) contrat.getProduit();
+        if (p instanceof ChocolatDeMarque) {
+            ChocolatDeMarque cdm = (ChocolatDeMarque) p;
+        
+            // Ajout du contrat à la liste si pas déjà présent
+            if (!this.mesContrats.contains(contrat)) {
+                this.mesContrats.add(contrat);
+            }
+
+            // MISE À JOUR DU PRIX MOYEN PONDÉRÉ
+            // On utilise la logique de ChocolatsAchetes (quantité du tour) 
+            // combinée au stock existant pour pondérer le nouveau prix
+            double qteDejaAchetee = this.ChocolatsAchetes.getOrDefault(cdm, 0.0);
+            double ancienPrixMoyen = this.prixDAchat.getOrDefault(cdm, contrat.getPrix());
+        
+            double qteNouveauContrat = contrat.getQuantiteTotale();
+            double nouveauPrixMoyen = ((ancienPrixMoyen * qteDejaAchetee) + (contrat.getPrix() * qteNouveauContrat)) / (qteDejaAchetee + qteNouveauContrat);
+
+            this.prixDAchat.put(cdm, nouveauPrixMoyen);
+        
+            // Actualisation du flux physique pour le tour en cours
+            this.actualiserStockPredit(contrat);
+
+            this.journal5.ajouter(Color.GREEN, Color.BLACK, "CC conclu (" + cdm + ") au prix unitaire de " + contrat.getPrix());
+            this.journal5.ajouter(Color.CYAN, Color.BLACK, "Nouveau PMP pour " + cdm + " : " + nouveauPrixMoyen);
+    }
     }
 
     public void receptionner(IProduit p, double quantiteEnTonnes, ExemplaireContratCadre contrat) {

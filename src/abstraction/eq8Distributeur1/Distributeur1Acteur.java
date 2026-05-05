@@ -12,6 +12,7 @@ import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.filiere.IDistributeurChocolatDeMarque;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
+import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
@@ -53,7 +54,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.Stock = new HashMap<IProduit, Double>();
 		this.Prix = new HashMap<IProduit, Double>();
 		this.ChocolatsAchetes = new HashMap<ChocolatDeMarque, Double>();
-		this.TailleRayon = 1000.0;
+		this.TailleRayon = 1000000.0;
 		this.volumerayon = 0.0;
 		this.CoutParArticle = 0.0;
 		this.prixDAchat = new HashMap<ChocolatDeMarque, Double>();
@@ -61,12 +62,56 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	/** @author Alexandre Cornet */
 	public void initialiser() {
 		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
+		ChocolatDeMarque C_MQ_ProntellaM = p.get(0);
+		this.Prix.put(C_MQ_ProntellaM, 14000.0);
+		ChocolatDeMarque C_HQ_Ferrara = p.get(1);
+		this.Prix.put(C_HQ_Ferrara, 27000.0);
+		ChocolatDeMarque C_MQ_Ferrara = p.get(2);
+		this.Prix.put(C_MQ_Ferrara, 14000.0);
+		ChocolatDeMarque C_BQ_Ferrara = p.get(3);
+		this.Prix.put(C_BQ_Ferrara, 22000.0);
+		ChocolatDeMarque C_HQ_E_Villors = p.get(4);
+		this.Prix.put(C_HQ_E_Villors, 30000.0);
+		ChocolatDeMarque C_HQ_Villors = p.get(5);
+		this.Prix.put(C_HQ_Villors, 27000.0);
+		ChocolatDeMarque C_MQ_E_Villors = p.get(6);
+		this.Prix.put(C_MQ_E_Villors, 14000.0);
+		ChocolatDeMarque C_MQ_Villors = p.get(7);
+		this.Prix.put(C_MQ_Villors, 14000.0);
+		ChocolatDeMarque C_BQ_E_Villors = p.get(8);
+		this.Prix.put(C_BQ_E_Villors, 25000.0);
+		ChocolatDeMarque C_BQ_Villors = p.get(9);
+		this.Prix.put(C_BQ_Villors, 22000.0);
+
 		for (int i=0; i<p.size(); i++){
-			this.Stock.put((IProduit)(p.get(i)),500.0);
+			this.Stock.put((IProduit)(p.get(i)),1000000.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);
-			this.Prix.put((IProduit)(p.get(i)),8000.0);
 			this.volumeStock.ajouter(this,getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme));
 		}
+	}
+
+	/**
+ 	* Actualise les prix de vente en appliquant une marge sur le prix d'achat moyen pondéré.
+ 	* Stratégie actuelle : Marge fixe de 20%.
+ 	* @author Ewen Landron
+ 	*/
+	public void actualiserPrixDeVente() {
+    	// On parcourt tous les chocolats de marque de la filière
+    	for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsProduits()) {
+			
+    	    // On récupère notre prix d'achat moyen (PMP) calculé dans Approvisionnement/ContratCadre
+    	    // Si on n'a pas de prix d'achat (pas encore de contrat), on garde un prix par défaut élevé
+    	    double prixAchatMoyen = this.prixDAchat.getOrDefault(cdm, 0.0);
+			
+    	    if (prixAchatMoyen > 0) {
+    	        // Application de la marge de 20% (PrixVente = PrixAchat * 1.20)
+    	        double nouveauPrix = prixAchatMoyen * 1.20;
+				
+    	        // On stocke le résultat
+    	        this.Prix.put(cdm, nouveauPrix);
+				
+    	    }
+    	}
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -85,50 +130,6 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		 * @author Ewen Landron
          */ 
 	public void next() {
-		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
-		Banque b=Filiere.LA_FILIERE.getBanque();
-		Variable v=this.getvolumestock();
-		double v1=v.getValeur();
-
-		//JournalActions
-		this.journal3.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-		for (int i=0; i<p.size(); i++){
-			this.journal3.ajouter(AjoutenRayon(p.get(i), 100));
-		}
-		this.journal3.ajouter(changerTailleRayon(0));
-		this.journal3.ajouter("----------------------------------------------");
-
-		//Journal Étapes
-		this.journal0.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-
-		//Journal Rayon
-		this.journal1.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-		this.journal1.ajouter("Taille du Rayon : "+this.TailleRayon+"T");
-		this.journal1.ajouter("Quantité en rayon : "+this.volumerayon+"T");
-		for (int i=0; i<p.size(); i++){
-			double q=this.getQuantiteEnRayon(p.get(i),this.cryptogramme);
-			this.journal1.ajouter(p.get(i)+" : "+q+"T");
-		}
-		this.journal1.ajouter("----------------------------------------------");
-
-		//Journal Stock
-		this.journal2.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-		for (int i=0; i<p.size(); i++){
-			double q=this.getQuantiteEnStock(p.get(i),this.cryptogramme);
-			this.journal2.ajouter(p.get(i)+" : "+q+"T");
-		}
-		this.journal2.ajouter("----------------------------------------------");
-
-		//Journal Frais
-		if(this.volumerayon<this.TailleRayon){
-			this.TailleRayon=this.volumerayon;
-		}
-		this.journal4.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-		b.payerCout(this, this.cryptogramme, "Frais de Rayonnage", TailleRayon*0.01);
-		this.journal4.ajouter("Frais de Rayon : "+TailleRayon*0.01 +" €");
-		b.payerCout(this, this.cryptogramme, "Frais de Stockage", v1*0.01);
-		this.journal4.ajouter("Frais de Stockage : "+v1*0.01+" €");
-		this.journal4.ajouter("----------------------------------------------");
 		
 	}
 
@@ -314,8 +315,8 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
 			/** @author Lucas Levillain */
 			
-			this.Prix.put(p, (CoutParArticle + prixDAchat.getOrDefault(p, 1000.0)) * 1.1);
-			
+			//this.Prix.put(p, (CoutParArticle + prixDAchat.getOrDefault(p, 1000.0)) * 1.1);
+			this.Prix.put(p, 8000.0);
 			return this.Prix.get(p);
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
@@ -325,12 +326,21 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	/** @author Alexandre Cornet */
 	@Override
 	public double prix(ChocolatDeMarque choco) {
-		return this.getPrixProduit(choco, this.cryptogramme);
+		switch (choco.getChocolat()) {
+		case C_HQ_E: return 30000;
+		case C_HQ : return 27000;
+		case C_MQ_E:return 16000;
+		case C_MQ :return 14000;
+		case C_BQ_E :return 25000;
+		case C_BQ : return 22000;
+		default:
+			return 0.0;
+		}
 	}
 	/** @author Alexandre Cornet */
 	@Override
 	public double quantiteEnVente(ChocolatDeMarque choco, int crypto) {
-		return this.getQuantiteEnRayon(choco, this.cryptogramme);
+		return getQuantiteEnRayon((IProduit)(choco), crypto);
 	}
 	/** @author Alexandre Cornet */
 	@Override
