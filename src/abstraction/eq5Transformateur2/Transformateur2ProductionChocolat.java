@@ -7,7 +7,7 @@ import abstraction.eqXRomu.filiere.Filiere;
 
 /** @author Pierre
  */
-public class Transformateur2ProductionChocolat extends Transformateur2FabriquantChocolatDeMarque {
+public class Transformateur2ProductionChocolat extends Transformateur2Stock {
     
     public Transformateur2ProductionChocolat(){
         super();

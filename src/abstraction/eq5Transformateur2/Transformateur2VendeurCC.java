@@ -3,7 +3,9 @@ package abstraction.eq5Transformateur2;
 import java.util.List;
 
 import abstraction.eqXRomu.contratsCadres.*;
+import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.IProduit;
+import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 
 
@@ -17,62 +19,65 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         super();
     }
 
-	public boolean vend(IProduit produit){
-		if (produit instanceof ChocolatDeMarque){ 
+	public boolean vend(IProduit produit) {
+		if (produit != null && produit instanceof ChocolatDeMarque){ 
 			ChocolatDeMarque cdm = (ChocolatDeMarque) produit;
-			if (!cdm.getMarque().equals("Ferrara Rocher")) {
-        	return false; // On ne vend pas les marques des concurrents !
+			
+			String marque = cdm.getMarque().toLowerCase();
+			
+			if (marque.contains("ferrara")) {
+			    return true; 
 			}
-			if (cdm.getChocolat().isEquitable()){ // On extrait le chocolat générique pour tester
-				return false;
-			} else {
-			    return true;
-			}
-		} else {
-			return false;
 		}
+		
+		return false;
 	}
 
 	public Echeancier contrePropositionDuVendeur(ExemplaireContratCadre contrat) {
+        if (!(contrat.getProduit() instanceof ChocolatDeMarque)) {
+            return null;
+        }
+        ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
         Echeancier echeancier = contrat.getEcheancier();
         
-        // 1. Notre capacité de production maximale par étape (9000 employés * 8.4 T)
-        double capaciteProdParEtape = 500 * 8.4; // 75 600 Tonnes
+        double stockActuel = this.getStock_chocolatDeMarque(choco);
+        double quantiteDejaPromise = 0.0;
+        
+        for (ExemplaireContratCadre c : this.mesContratsEnCours) {
+            if (c.getVendeur().equals(this) && c.getProduit().equals(choco)) {
+                quantiteDejaPromise += c.getQuantiteRestantALivrer();
+            }
+        }
+        double stockVraimentDisponible = Math.max(0.0, stockActuel - quantiteDejaPromise);
 
-        int nbEcheancesPropose = echeancier.getNbEcheances();
+        int nbEcheancesPropose = Math.min(echeancier.getNbEcheances(), 5);
+        double capaciteFuture = nbEcheancesPropose * (500 * 8.4)*0.5;
+        
+        double quantiteMaxPossible = stockVraimentDisponible;
+
+        double quantiteDemandee = contrat.getQuantiteTotale();
         boolean modification = false;
 
-        // 2. On limite le nombre d'échéances à 5 maximum
-        if (nbEcheancesPropose > 5) {
-            nbEcheancesPropose = 5;
+        if (quantiteDemandee > quantiteMaxPossible) {
+            quantiteDemandee = quantiteMaxPossible;
+            modification = true;
+        }
+        if (echeancier.getNbEcheances() > 5) {
             modification = true;
         }
 
-        // 3. On calcule la quantité demandée par étape par le distributeur
-        double quantiteDemandeeParEcheance = contrat.getQuantiteTotale() / echeancier.getNbEcheances();
-        double quantiteParEcheance = quantiteDemandeeParEcheance;
-        
-        // 4. SÉCURITÉ : Si on nous demande plus que notre capacité max, on plafonne !
-        // (Vous pouvez même diviser capaciteProdParEtape par 2 ou 3 si vous voulez 
-        // garder de la place pour plusieurs contrats en même temps)
-        if (quantiteDemandeeParEcheance > capaciteProdParEtape) {
-            quantiteParEcheance = capaciteProdParEtape;
-            modification = true;
-        }
-
-        // 5. Si on a dû modifier la durée OU la quantité, on renvoie une contre-proposition
-        if (modification) {
+        if (modification) { 
             int etapeDebut = echeancier.getStepDebut();
             Echeancier nouvelEcheancier = new Echeancier(etapeDebut); 
-            
+            double quantiteParEcheance = quantiteDemandee / nbEcheancesPropose;
             for (int i = 0; i < nbEcheancesPropose; i++) {
                 nouvelEcheancier.ajouter(quantiteParEcheance);
             }
             return nouvelEcheancier;
-            
+        } else if (!modification) {
+            return echeancier; 
         } else {
-            // Sinon, l'échéancier respecte nos règles de durée et de quantité, on accepte !
-            return echeancier;
+            return null; 
         }
     }
 	
@@ -83,18 +88,16 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
     
         ChocolatDeMarque cdm = (ChocolatDeMarque) contrat.getProduit();
     
-        // 2. On définit un prix plancher (minimum absolu) à la tonne selon la gamme
-        // N'hésitez pas à ajuster ces valeurs selon vos stratégies !
         double prixPlancherTonne;
         switch (cdm.getChocolat()) {
             case C_HQ: 
-                prixPlancherTonne = 10000.0; // Le HQ est très cher
+                prixPlancherTonne = 10000.0;
                 break;
             case C_MQ: 
-                prixPlancherTonne = 7500.0; // Le MQ est standard
+                prixPlancherTonne = 7500.0; 
                 break;
             case C_BQ: 
-                prixPlancherTonne = 5000.0; // Le BQ est abordable
+                prixPlancherTonne = 5000.0; 
                 break;
             default:   
                 prixPlancherTonne = 3000.0;
@@ -105,15 +108,12 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         double coutDeRevient = prix_MP; 
         double prixCalculeTonne = coutDeRevient * 1.55;
 
-        // 4. Stratégie : On prend le plus haut entre notre prix calculé et notre prix plancher absolu
         double prixFinalTonne = Math.max(prixCalculeTonne, prixPlancherTonne);
 
-        // 5. On retourne le prix TOTAL demandé par le contrat
         return prixFinalTonne;
         }
 
 	public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){
-        // 1. On récupère notre prix plancher selon la gamme demandée
         double prixPlancherTonne;
         if (contrat.getProduit() instanceof ChocolatDeMarque) {
             switch (((ChocolatDeMarque) contrat.getProduit()).getChocolat()) {
@@ -126,34 +126,28 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
             return -1000; 
         }
         
-        // 2. Si le prix proposé par l'acheteur est déjà supérieur à notre minimum, 
-        // c'est parfait, on accepte tout de suite !
         if (contrat.getPrix() >= prixPlancherTonne) {
             this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
             return contrat.getPrix();
-            
-
         }
 
-        // 3. Sinon, on négocie
         List<Double> listePrix = contrat.getListePrix();
-        
         if (listePrix.size() < 2) {
-            // Premier tour de négo : On demande notre prix plancher + 20% pour avoir de la marge
             return prixPlancherTonne * 1.20; 
         }
         
-        // Tours suivants : On fait un pas vers l'acheteur (on coupe la poire en deux)
         double notreDerniereOffre = listePrix.get(listePrix.size() - 2);
         double nouvelleOffre = (4*contrat.getPrix() + 6*notreDerniereOffre) / 10;
         
-        if (contrat.getPrix() >= nouvelleOffre) {
+        double offreFinale = Math.max(nouvelleOffre, prixPlancherTonne);
+        
+        if (contrat.getPrix() >= offreFinale) {
             this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
             return contrat.getPrix();
-        } else{
-        return nouvelleOffre;
+        } else {
+            return offreFinale;
         }
-        }
+    }
 
 	public double livrer(IProduit produit, double quantite, ExemplaireContratCadre contrat){
 		if (produit instanceof ChocolatDeMarque){ 
@@ -165,7 +159,6 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
             this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
             return quantite;
         } else {
-            // On livre ce qu'il nous reste
             this.remove_chocolatDeMarque(cdm, stockDispo); // <--- LIGNE CRITIQUE
             this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
             return stockDispo; 
@@ -173,4 +166,46 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
     }
     return 0.0;
 	}
+
+    @Override
+    public void next() {
+        super.next(); 
+
+        SuperviseurVentesContratCadre supCC = (SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre");
+
+        ChocolatDeMarque chocoHQ = new ChocolatDeMarque(Chocolat.C_HQ, "Ferrara Rocher", 100);
+        ChocolatDeMarque chocoMQ = new ChocolatDeMarque(Chocolat.C_MQ, "Ferrara Rocher", 100);
+        ChocolatDeMarque chocoBQ = new ChocolatDeMarque(Chocolat.C_BQ, "Ferrara Rocher", 100);
+        
+        ChocolatDeMarque[] mesChocolats = {chocoHQ, chocoMQ, chocoBQ};
+
+        for (ChocolatDeMarque choco : mesChocolats) {
+            double stockActuel = this.getStock_chocolatDeMarque(choco);
+
+            double quantiteDejaPromise = 0.0;
+            
+            for (ExemplaireContratCadre c : this.mesContratsEnCours) {
+                // On vérifie qu'on est bien le vendeur sur ce contrat et que c'est le bon chocolat
+                if (c.getVendeur().equals(this) && c.getProduit().equals(choco)) {
+                    quantiteDejaPromise += c.getQuantiteRestantALivrer();
+                }
+            }
+
+            double stockVraimentDisponible = stockActuel - quantiteDejaPromise;
+
+            if (stockVraimentDisponible > 2000.0) {
+                List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(choco);
+
+                if (!acheteurs.isEmpty()) {
+                    IAcheteurContratCadre acheteur = acheteurs.get(0);
+                    
+                    double quantiteAVendreParTour = (stockVraimentDisponible * 0.80) / 5;
+                    Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 5, quantiteAVendreParTour);
+                    
+                    supCC.demandeVendeur(acheteur, this, choco, echeancier, cryptogramme, false);
+                }
+            }
+        }
+        this.mesContratsEnCours.removeIf(c -> c.getQuantiteRestantALivrer() == 0);
+    }
 }

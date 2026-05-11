@@ -17,13 +17,11 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AchatEnche
     }
 
     public void VendreEncheres(){
-        // On récupère la liste de nos produits (Ferrara Rocher HQ, MQ, BQ)
         List<ChocolatDeMarque> mesChocolats = this.getChocolatsProduits();
 
         for (ChocolatDeMarque choco : mesChocolats) {
             Double quantiteEnStock = this.getStock_chocolatDeMarque(choco);
             
-            // On ne lance une enchère que si on a du stock
             if (quantiteEnStock > 0 && Filiere.LA_FILIERE.getEtape() % 10 == 0) {
                 superviseur.vendreAuxEncheres(this, cryptogramme, choco, quantiteEnStock);
             }
@@ -35,7 +33,7 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AchatEnche
         
         Enchere choisie=propositions.get(0);
         for (Enchere enchere : propositions) {
-            if(enchere.getPrixTonne() > choisie.getPrixTonne()){ // Modifié : On veut le prix le PLUS HAUT en tant que vendeur !
+            if(enchere.getPrixTonne() > choisie.getPrixTonne()){
                 choisie=enchere;
             }
         }

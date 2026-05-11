@@ -18,36 +18,31 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AchatAppelO
 	public OffreVente proposerVente(AppelDOffre offre) {
         IProduit p = offre.getProduit();
         
-        // 1. On refuse si ce n'est pas un chocolat de marque
         if (!(p instanceof ChocolatDeMarque)) {
             return null;
         }
         
         ChocolatDeMarque cdm = (ChocolatDeMarque) p;
         
-        // 2. Choix stratégique : On ne vend que NOTRE marque Ferrara Rocher
         if (!cdm.getMarque().equals("Ferrara Rocher")) {
             return null;
         }
 
-        // 3. On vérifie nos stocks !
         double stockDispo = this.getStock_chocolatDeMarque(cdm);
         if (stockDispo < offre.getQuantiteT()) {
-            return null; // Pas assez de stock
+            return null; 
         }
 
-        // 4. On calcule un prix unitaire COHÉRENT avec la gamme demandée
-        // Vous pouvez ajuster ces prix pour être plus ou moins agressif face aux autres équipes
         double prixTonne;
         switch (cdm.getChocolat()) {
             case C_HQ: 
-                prixTonne = 8000.0; // Le HQ se vend cher
+                prixTonne = 8000.0;
                 break;
             case C_MQ: 
-                prixTonne = 5000.0; // Prix standard pour du MQ
+                prixTonne = 5000.0;
                 break;
             case C_BQ: 
-                prixTonne = 3000.0; // Prix bas pour du BQ pour s'assurer de remporter l'offre
+                prixTonne = 3000.0;
                 break;
             default:   
                 prixTonne = 2500.0;
