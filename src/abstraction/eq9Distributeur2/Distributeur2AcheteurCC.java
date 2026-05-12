@@ -362,7 +362,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
             if (stockProjete < seuilDeSecurite) {
                 double quantiteCible = 50.0; // 50 tonnes
                 double quantiteAcheter = quantiteCible - stockProjete;
-                if (quantiteAcheter < 1.0) { // Minimum 1 tonne
+                if (quantiteAcheter < 100.0) { // Minimum 100 tonnes
                     continue;
                 }
 
