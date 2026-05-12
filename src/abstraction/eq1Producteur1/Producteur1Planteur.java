@@ -160,7 +160,7 @@ public class Producteur1Planteur extends Producteur1Stock {
         double tailleBQProchaine = tailleAPlanter_prochaine * 0.85;
         double tailleMQProchaine = tailleAPlanter_prochaine * 0.15;
  
-        this capaciteProchaine = capaciteTotale
+        this.capaciteProchaine = capaciteTotale
                 + (tailleBQProchaine * 1800)  // BQ planté l'an prochain
                 + (tailleMQProchaine * 3500); // MQ planté l'an prochain
  
