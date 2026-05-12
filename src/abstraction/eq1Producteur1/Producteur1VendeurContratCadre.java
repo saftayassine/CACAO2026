@@ -74,11 +74,11 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public boolean vend(IProduit produit){
-        if(produit instanceof Feve){
-            return this.pourcentageAVendre.get(produit) < 70;
-        }
-        return false;
-    }
+		if(produit == Feve.F_BQ || produit == Feve.F_MQ){
+			return this.pourcentageAVendre.get(produit) < 70;
+		}
+		return false;
+	}
 
 
 	/**
@@ -396,12 +396,26 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	public void next(){
 		super.next();
 		int etape = Filiere.LA_FILIERE.getEtape();
-		if(etape%24 <= this.periode){
+		
+		// Réinitialisation annuelle du pourcentage à vendre
+		if(etape % 24 == 0){
+			for(Feve f : this.pourcentageAVendre.keySet()){
+				double quantiteEngagee = 0;
+				for(ExemplaireContratCadre contrat : this.contratsEnCours){
+					if(contrat.getProduit() == f){
+						quantiteEngagee += contrat.getEcheancier().getQuantiteJusquA(24);
+					}
+				}
+				double stock = this.getStock(f);
+				double pourcent = stock > 0 ? (quantiteEngagee / stock) * 100 : 0;
+				this.pourcentageAVendre.put(f, pourcent);
+			}
+		}
+		
+		if(etape % 24 <= this.periode){
 			this.initialisationContratCadre(Feve.F_BQ);
 			this.initialisationContratCadre(Feve.F_MQ);
 		}
-
-
 	}
 }
 
