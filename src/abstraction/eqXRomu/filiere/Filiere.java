@@ -283,7 +283,7 @@ public class Filiere implements IAssermente {
 		this.courbeAchatsChocolats.put(cc,new HashMap<IActeur, Courbe>());
 		this.courbeVentesChocolatsMarque.put(cc,new HashMap<IActeur, Courbe>());
 		for (IActeur acteur : this.getActeurs()) {
-				if (acteur instanceof IMarqueChocolat || acteur instanceof IAcheteurBourse) { // un producteur
+				if ((acteur instanceof IMarqueChocolat && !(acteur instanceof IDistributeurChocolatDeMarque)) || acteur instanceof IAcheteurBourse) { // un producteur
 					Courbe c = new Courbe("PM_"+acteur+"_"+cc);
 					c.setCouleur(acteur.getColor());
 					c.setMarque(numMarque);
