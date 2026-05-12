@@ -11,101 +11,63 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 public class Pseudo {
 
     public static class ActionTeteDeGondole {
-        private static final double SEUIL_ATTRACTIVITE = 1.0;
-        private static final double SEUIL_MARGE_MIN = 0.50; // marge unitaire minimale en euros
-        private static final int SEUIL_STOCK_MIN = 100; // volume minimum disponible
-        private ChocolatDeMarque produitEnTeteDeGondole;
+        private ChocolatDeMarque chocolat;
+        private int quantite;
 
-        /**
-         * @param produit produit concerne
-         * @param prixAchat prix d'achat unitaire
-         * @param prixVente prix de vente unitaire
-         * @param attractivite attractivite commerciale du produit
-         * @param volumeDisponible quantite que l'on peut mettre en rayon
-         * @return true si le produit est effectivement place en tete de gondole
-         */
-
-        public boolean placerProduitEnTeteDeGondole(ChocolatDeMarque produit,
-                                                    double prixAchat,
-                                                    double prixVente,
-                                                    double attractivite,
-                                                    int volumeDisponible) {
-            if (produit == null || Filiere.LA_FILIERE == null) {
-                return false;
-            }
-            if (prixAchat < 0.0 || prixVente <= 0.0 || volumeDisponible < 0) {
-                return false;
-            }
-            if (attractivite <= 0.0) {
-                attractivite = 1.0;
-            }
-
-            double margeUnitaire = prixVente - prixAchat;
-
-            boolean attractif = attractivite >= SEUIL_ATTRACTIVITE;
-            boolean margeSuffisante = margeUnitaire >= SEUIL_MARGE_MIN;
-            boolean stockSuffisant = volumeDisponible >= SEUIL_STOCK_MIN;
-
-            if (attractif && margeSuffisante && stockSuffisant) {
-                this.produitEnTeteDeGondole = produit;
-                return true;
-            }
-            return false;
+        public ActionTeteDeGondole(ChocolatDeMarque chocolat, int quantite) {
+            this.chocolat = chocolat;
+            this.quantite = quantite;
         }
 
-        /**
-         * Selectionne et place le meilleur produit parmi une liste de candidats.
-         * Le score est basé sur : marge * attractivite * volume.
-         */
-        public ChocolatDeMarque choisirEtPlacerMeilleurProduit(List<ChocolatDeMarque> produits,
-                                                                List<Double> prixAchats,
-                                                                List<Double> prixVentes,
-                                                                List<Double> attractivites,
-                                                                List<Integer> volumesDisponibles) {
-            if (produits == null || prixAchats == null || prixVentes == null
-                    || attractivites == null || volumesDisponibles == null) {
-                return null;
+        public ChocolatDeMarque getChocolat() {
+            return chocolat;
+        }
+
+        public int getQuantite() {
+            return quantite;
+        }
+
+        
+        public void choisirEtPlacerMeilleurProduit(List<ChocolatDeMarque> produits,
+                                                  List<Double> prixAchats,
+                                                  List<Double> prixVentes,
+                                                  List<Integer> volumesDisponibles) {
+            if (produits == null || prixAchats == null || prixVentes == null || volumesDisponibles == null) {
+                return;
             }
             int n = produits.size();
-            if (n == 0 || prixAchats.size() != n || prixVentes.size() != n
-                    || attractivites.size() != n || volumesDisponibles.size() != n) {
-                return null;
+            if (n == 0 || prixAchats.size() != n || prixVentes.size() != n || volumesDisponibles.size() != n) {
+                return;
             }
 
-            double meilleurScore = -1.0;
-            ChocolatDeMarque meilleurProduit = null;
+            double meilleureMarge = Double.NEGATIVE_INFINITY;
+            int idxMeilleur = -1;
 
             for (int i = 0; i < n; i++) {
                 ChocolatDeMarque p = produits.get(i);
-                double pa = prixAchats.get(i);
-                double pv = prixVentes.get(i);
-                double a = attractivites.get(i);
-                int v = volumesDisponibles.get(i);
+                Double pa = prixAchats.get(i);
+                Double pv = prixVentes.get(i);
+                Integer vol = volumesDisponibles.get(i);
 
-                boolean place = placerProduitEnTeteDeGondole(p, pa, pv, a, v);
-                if (!place) {
+                if (p == null || pa == null || pv == null || vol == null) {
+                    continue;
+                }
+                if (pa < 0.0 || pv <= 0.0) {
                     continue;
                 }
 
                 double marge = pv - pa;
-                double score = marge * a * v;
-                if (score > meilleurScore) {
-                    meilleurScore = score;
-                    meilleurProduit = p;
+                if (marge > meilleureMarge) {
+                    meilleureMarge = marge;
+                    idxMeilleur = i;
                 }
             }
 
-            this.produitEnTeteDeGondole = meilleurProduit;
-            return meilleurProduit;
-        }
-
-        public ChocolatDeMarque getProduitEnTeteDeGondole() {
-            return this.produitEnTeteDeGondole;
-        }
-
-        public void retirerProduitDeTeteDeGondole() {
-            this.produitEnTeteDeGondole = null;
+            if (idxMeilleur >= 0) {
+                this.chocolat = produits.get(idxMeilleur);
+                this.quantite = volumesDisponibles.get(idxMeilleur);
+            }
         }
     }
 }
-
+        
