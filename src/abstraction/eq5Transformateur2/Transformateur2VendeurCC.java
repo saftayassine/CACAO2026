@@ -127,10 +127,10 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         double prixPlancherTonne;
         if (contrat.getProduit() instanceof ChocolatDeMarque) {
             switch (((ChocolatDeMarque) contrat.getProduit()).getChocolat()) {
-                case C_HQ: prixPlancherTonne = 10000.0; break;
-                case C_MQ: prixPlancherTonne = 7500.0; break;
-                case C_BQ: prixPlancherTonne = 5000.0; break;
-                default:   prixPlancherTonne = 3000.0; break;
+                case C_HQ: prixPlancherTonne = 15000.0; break;
+                case C_MQ: prixPlancherTonne = 10000.0; break;
+                case C_BQ: prixPlancherTonne = 7000.0; break;
+                default:   prixPlancherTonne = 5000.0; break;
             }
         } else {
             return -1000; 

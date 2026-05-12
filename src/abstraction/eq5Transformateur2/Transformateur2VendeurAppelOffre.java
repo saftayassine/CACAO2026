@@ -37,16 +37,16 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AchatAppelO
         double prixTonne;
         switch (cdm.getChocolat()) {
             case C_HQ: 
-                prixTonne = 10000.0;
+                prixTonne = 15000.0;
                 break;
             case C_MQ: 
-                prixTonne = 2000.0;
+                prixTonne = 10000.0;
                 break;
             case C_BQ: 
-                prixTonne = 5000.0;
+                prixTonne = 7000.0;
                 break;
             default:   
-                prixTonne = 3000.0;
+                prixTonne = 5000.0;
                 break;
         }
 
