@@ -92,6 +92,8 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.Prix.put(C_BQ_E_Villors, 25000.0);
 		ChocolatDeMarque C_BQ_Villors = p.get(14);
 		this.Prix.put(C_BQ_Villors, 22000.0);
+		ChocolatDeMarque C_BQ_CACAO = p.get(15);
+		this.Prix.put(C_BQ_CACAO, 22000.0);
 
 		for (int i=0; i<p.size(); i++){
 			this.Stock.put((IProduit)(p.get(i)),1000000.0);
