@@ -8,6 +8,7 @@ import java.util.List;
 
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
+import abstraction.eqXRomu.filiere.IDistributeurChocolatDeMarque;
 import abstraction.eqXRomu.filiere.IFabricantChocolatDeMarque;
 import abstraction.eqXRomu.filiere.IMarqueChocolat;
 import abstraction.eqXRomu.general.Journal;
@@ -39,7 +40,7 @@ public class TransformateurXActeur  implements IActeur, IMarqueChocolat, IFabric
 	protected HashMap<Chocolat, Double> stockChoco;
 	protected HashMap<ChocolatDeMarque, Double> stockChocoMarque;
 	protected HashMap<Feve, HashMap<Chocolat, Double>> pourcentageTransfo; // pour les differentes feves, le chocolat qu'elle peuvent contribuer a produire avec le ratio
-	protected List<ChocolatDeMarque> chocolatsVillors;
+	protected List<ChocolatDeMarque> chocolatsVillorsEtDistributeurs;
 	protected Variable totalStocksFeves;  // La qualite totale de stock de feves 
 	protected Variable totalStocksChoco;  // La qualite totale de stock de chocolat 
 	protected Variable totalStocksChocoMarque;  // La qualite totale de stock de chocolat de marque 
@@ -88,16 +89,29 @@ public class TransformateurXActeur  implements IActeur, IMarqueChocolat, IFabric
 		this.pourcentageTransfo.put(Feve.F_BQ, new HashMap<Chocolat, Double>());
 		conversion = 1.0 + (100.0 - Filiere.LA_FILIERE.getParametre("pourcentage min cacao BQ").getValeur())/100.0;
 		this.pourcentageTransfo.get(Feve.F_BQ).put(Chocolat.C_BQ, conversion);
+		List<String> marques = Filiere.LA_FILIERE.getMarquesChocolat();
+		List<String> marquesDistributeurs = new LinkedList<String>();
+		for (String m : marques) {
+			//System.out.println("Marque de chocolat : "+m);
+			if (Filiere.LA_FILIERE.getProprietaireMarque(m) instanceof IDistributeurChocolatDeMarque) {
+				marquesDistributeurs.add(m);
+			}
+		}
 
 		this.journal.ajouter(Romu.COLOR_LLGRAY, Color.PINK, "Stock initial chocolat de marque : ");
-		this.chocolatsVillors=new LinkedList<ChocolatDeMarque>();
+		this.chocolatsVillorsEtDistributeurs=new LinkedList<ChocolatDeMarque>();
 		for (Feve f : Feve.values()) {
 			if (this.pourcentageTransfo.keySet().contains(f)) {
 				for (Chocolat c : this.pourcentageTransfo.get(f).keySet()) {
 					int pourcentageCacao =  (int) (Filiere.LA_FILIERE.getParametre("pourcentage min cacao "+c.getGamme()).getValeur());
 					ChocolatDeMarque cm= new ChocolatDeMarque(c, "Villors", pourcentageCacao);
-					this.chocolatsVillors.add(cm);
+					this.chocolatsVillorsEtDistributeurs.add(cm);
 					this.stockChocoMarque.put(cm, 40000.0);
+					for (String m : marquesDistributeurs) {
+						ChocolatDeMarque cmD = new ChocolatDeMarque(c, m, pourcentageCacao);
+						this.chocolatsVillorsEtDistributeurs.add(cmD);
+						this.stockChocoMarque.put(cmD, 40000.0);
+					}
 					this.journal.ajouter(Romu.COLOR_LLGRAY, Romu.COLOR_BROWN," stock("+cm+")->"+this.stockChocoMarque.get(cm));
 				}
 			}

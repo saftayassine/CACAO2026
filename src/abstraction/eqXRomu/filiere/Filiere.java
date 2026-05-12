@@ -198,7 +198,7 @@ public class Filiere implements IAssermente {
 					nbProduits++;
 				}
 			}
-			if (nbProduits==0) {
+			if (!(Filiere.LA_FILIERE.getProprietaireMarque(marque) instanceof IDistributeurChocolatDeMarque ) &&nbProduits==0) {
 				throw new IllegalStateException("la marque "+marque+" est deposee mais il n'y a aucune production d'un chocolat portant cette marque");
 			}
 			this.qualiteMoyenneMarque.put(marque, totalQualites/nbProduits);
