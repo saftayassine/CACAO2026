@@ -124,9 +124,11 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
 		this.mesContratsEnCours.add(contrat);
 		if (contrat.getProduit() instanceof Feve){
+			this.mesContratsEnCours.add(contrat);
 			this.getJournaux().get(3).ajouter("Achat fève en CC : " + contrat.toString() + "\n");
 		}
 		else if (contrat.getProduit() instanceof ChocolatDeMarque){
+			this.mesContratsEnCours.add(contrat);
 			this.getJournaux().get(4).ajouter("Vente chocolat en CC : " + contrat.toString() + "\n");
 		}
 	}

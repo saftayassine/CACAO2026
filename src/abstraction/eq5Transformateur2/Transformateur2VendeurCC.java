@@ -41,7 +41,7 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         Echeancier echeancier = contrat.getEcheancier();
         
         // NOTRE PLAFOND D'ENGAGEMENT (Doit être le même que dans next)
-        double PLAFOND_CC = 40000.0; 
+        double PLAFOND_CC = 10000.0; 
         
         double quantiteDejaPromise = 0.0;
         for (ExemplaireContratCadre c : this.mesContratsEnCours) {
