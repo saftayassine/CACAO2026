@@ -124,6 +124,10 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
 		/**
          * @author Anass Ouisrani
          */
+    protected double restantDu(IProduit produit) {
+        return 0.0;
+    }
+
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
