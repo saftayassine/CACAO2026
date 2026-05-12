@@ -8,7 +8,7 @@ import abstraction.eqXRomu.produits.Feve;
 /**
  * @Auteur Maxence
  */
-public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarche implements IAcheteurBourse {
+public class Transformateur2AcheteurBourse extends Transformateur2FabriquantChocolatDeMarque implements IAcheteurBourse {
 
     public Transformateur2AcheteurBourse(){
         super();
@@ -17,7 +17,7 @@ public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarch
     public double demande(Feve f, double cours) {
         HashMap<Chocolat, Double> demandeChoco =this.DemandeChocolat();
         if (f == Feve.F_BQ){
-            if(this.getStock_feve(f)<15000.0){
+            if(this.getStock_feve(f)<10000.0){
                 return demandeChoco.get(Chocolat.C_BQ) * 0.25;
             }
             else{
@@ -25,7 +25,7 @@ public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarch
             }
         }
         if (f == Feve.F_MQ){
-            if(this.getStock_feve(f)<15000.0){
+            if(this.getStock_feve(f)<10000.0){
                 return demandeChoco.get(Chocolat.C_MQ) * 0.25;
             }
             else{
@@ -33,7 +33,7 @@ public class Transformateur2AcheteurBourse extends Transformateur2AnalyseurMarch
             }
         }
         else{
-            if(this.getStock_feve(f)<15000.0){
+            if(this.getStock_feve(f)<10000.0){
                 return demandeChoco.get(Chocolat.C_HQ) * 0.25;
             }
             else{

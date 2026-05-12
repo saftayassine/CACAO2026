@@ -6,7 +6,7 @@ import java.util.List;
 import abstraction.eqXRomu.filiere.IMarqueChocolat;
 /** @author Maxence 
 **/
-public class Transformateur2Marque extends Transformateur2Stock implements IMarqueChocolat{
+public class Transformateur2Marque extends Transformateur2AnalyseurMarche implements IMarqueChocolat{
 
     @Override
     public List<String> getMarquesChocolat() {

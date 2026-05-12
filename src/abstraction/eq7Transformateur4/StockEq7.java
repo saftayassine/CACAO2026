@@ -104,7 +104,7 @@ public class StockEq7 {
             this.RemoveAction(Gamme.BQ, valeur);
         }
         else {
-            System.out.println("Stock de fèves BQ insuffisant");
+            //System.out.println("Stock de fèves BQ insuffisant");
         }
     }
 
@@ -114,7 +114,7 @@ public class StockEq7 {
             this.RemoveAction(Gamme.MQ, valeur);
         }
         else{
-            System.out.println("Stock de fèves MQ insuffisant");
+            //System.out.println("Stock de fèves MQ insuffisant");
         }
     }
 
@@ -125,7 +125,7 @@ public class StockEq7 {
         this.RemoveAction(Gamme.HQ, valeur);
         }
         else{
-            System.out.println("Stock de fèves HQ insuffisant");
+            //System.out.println("Stock de fèves HQ insuffisant");
         }
     }
     public void remove(double valeur, Gamme quality){

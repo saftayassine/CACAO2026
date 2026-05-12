@@ -11,7 +11,7 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
-public class Transformateur2Stock extends Transformateur2Acteur{
+public class Transformateur2Stock extends Transformateur2Marque{
 
     // Attributs
     private HashMap<ChocolatDeMarque, Double> stock_ChocolatDeMarque;
