@@ -43,7 +43,7 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 		}
 
 		int etape = Filiere.LA_FILIERE.getEtape();
-		if (this.periode < etape % 24){
+		if (etape % 24 >= this.periode) {  // vendre après une certaine période du cycle
 
 			double stock = getStock(f);
 
