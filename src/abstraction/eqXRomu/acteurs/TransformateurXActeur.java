@@ -92,7 +92,7 @@ public class TransformateurXActeur  implements IActeur, IMarqueChocolat, IFabric
 		List<String> marques = Filiere.LA_FILIERE.getMarquesChocolat();
 		List<String> marquesDistributeurs = new LinkedList<String>();
 		for (String m : marques) {
-			System.out.println("Marque de chocolat : "+m);
+			//System.out.println("Marque de chocolat : "+m);
 			if (Filiere.LA_FILIERE.getProprietaireMarque(m) instanceof IDistributeurChocolatDeMarque) {
 				marquesDistributeurs.add(m);
 			}
