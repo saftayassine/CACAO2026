@@ -24,7 +24,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	protected int periode = 8 ;
 	protected HashMap<Feve , Double > prixTonne = new HashMap<Feve , Double>();
 	protected HashMap<Feve , Double > prixMinTonne = new HashMap<Feve , Double>();
-	protected Journal journallivraisonlCC
+	protected Journal journallivraisonCC ;
 
 
 
@@ -32,7 +32,8 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
         super();
 		this.contratsEnCours=new LinkedList<ExemplaireContratCadre>();
 		this.contratsTermines=new LinkedList<ExemplaireContratCadre>();
-		this.journalCC = new Journal(this.getNom()+" journal CC", this);
+		this.journalCC = new Journal("Journal " +this.getNom()+" CC", this);
+		this.journallivraisonCC = new Journal("Journal " + this.getNom()+" livraison CC", this);
 		this.pourcentageAVendre.put(Feve.F_BQ,0.);
         this.pourcentageAVendre.put(Feve.F_BQ_E,0.);
         this.pourcentageAVendre.put(Feve.F_MQ,0.);
@@ -184,7 +185,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
         
         double vrai_quantite= Math.min(quantite,getStock((Feve)produit));
         this.takeFeve((Feve)produit, vrai_quantite);
-		this.journallivraisonlCC.ajouter("livraison de" + vrai_quantite + "tonnes de" + produit + "pour le contrat avec" + contrat.getAcheteur().getNom());
+		this.journallivraisonCC.ajouter("livraison de" + vrai_quantite + "tonnes de" + produit + "pour le contrat avec" + contrat.getAcheteur().getNom());
         return vrai_quantite;
     }
 
@@ -382,6 +383,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	public List<Journal> getJournaux() {
 		List<Journal> res=super.getJournaux();
 		res.add(this.journalCC);
+		res.add(this.journallivraisonCC);
 		return res;
 	}
 
