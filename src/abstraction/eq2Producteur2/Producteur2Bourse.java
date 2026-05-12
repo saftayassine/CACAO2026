@@ -39,36 +39,46 @@ public class Producteur2Bourse extends Sechage implements IVendeurBourse {
 		}
 	}
 
-	@Override
-	public double offre(Feve f, double cours) {
-		// Seules les fèves équitables ne se vendent pas en bourse
-		if (f.isEquitable()) {
-			return 0.0;
-		}
-		this.setStockMin(0.05); // Ne garder que 5% de marge de sécurité
+    @Override
+    public double offre(Feve f, double cours) {
+        // Seules les fèves équitables ne se vendent pas en bourse
+        if (f.isEquitable()) {
+            return 0.0;
+        }
+        this.setStockMin(0.05); // Ne garder que 5% de marge de sécurité
 
-		double offre = 0;
+        double offre = 0;
 
-		if (this.stockvar.containsKey(f) && this.cout_unit_t.containsKey(f) && this.seuil_stock.containsKey(f)) {
+        if (this.stockvar.containsKey(f) && this.cout_unit_t.containsKey(f) && this.seuil_stock.containsKey(f)) {
 
-			double stockActuel = this.stockvar.get(f).getValeur();
-			double quantiteAGarder = this.restantDu(f);
+            double stockActuel = this.stockvar.get(f).getValeur();
+            double quantiteAGarder = this.restantDu(f);
+            
+            // Calcul de la marge dynamique selon l'engorgement de notre entrepôt
+            double stockTotalGlobal = this.stockTotal.getValeur();
+            double marge = 1.10; // Marge normale de 10%
+            
+            if (stockTotalGlobal > 400000.0) {
+                marge = 0.90; // PANIC SELL: l'entrepôt déborde, on vend à -10% pour écouler et éviter le stopRecolte !
+                this.journalBourse.ajouter("⚠️ PANIC SELL ACTIVÉ pour " + f + " (Stock Global = " + stockTotalGlobal + " T). Marge baissée à 0.90");
+            } else if (stockTotalGlobal > 300000.0) {
+                marge = 1.00; // ALERTE: on vend à prix coûtant
+                this.journalBourse.ajouter("Alerte Stock pour " + f + " (> 300k T). Marge baissée à 1.00");
+            }
 
-			double marge = 1.1;
+            double prixMinimal = this.cout_unit_t.get(f) * marge;
 
-			double prixMinimal = this.cout_unit_t.get(f) * marge;
+            this.journalBourse.ajouter("Valeur du cours de la feve " + f + " : " + cours
+                    + " | Prix minimal voulu : " + prixMinimal);
 
-			this.journalBourse.ajouter("Valeur du cours de la feve " + f + " : " + cours
-					+ "\nValeur du prix minimal voulu : " + prixMinimal);
+            if ((stockActuel - quantiteAGarder > this.seuil_stock.get(f)) && (prixMinimal < cours)) {
+                offre = stockActuel - quantiteAGarder - this.seuil_stock.get(f);
+                this.journalBourse.ajouter(Filiere.LA_FILIERE.getEtape() + " Je mets en vente " + offre + " T de " + f);
+            }
+        }
 
-			if ((stockActuel - quantiteAGarder > this.seuil_stock.get(f)) && (prixMinimal < cours)) {
-				offre = stockActuel - quantiteAGarder - this.seuil_stock.get(f);
-				this.journalBourse.ajouter(Filiere.LA_FILIERE.getEtape() + " Je mets en vente " + offre + " T de " + f);
-			}
-		}
-
-		return offre;
-	}
+        return offre;
+    }
 
 	public double restantDu(Feve f) {
 		return 0.0;
