@@ -31,41 +31,137 @@ public class Transformateur3VendeurCCadre extends Transformateur3AcheteurCCadre 
     
     
     public boolean vend(IProduit produit){
-        boolean vend = this.getStockProduit(produit)>200 && !produit.getType().equals("Feve");
+
+        if (produit.getType().equals("Feve")) {
+            return false;
+        }
+
+        double disponible = this.getStockProduit(produit) - stockEngage(produit);
+
+        boolean vend = disponible > 500;
+
         return vend;
-    }
+    }   
+
+
 
     public Echeancier contrePropositionDuVendeur(ExemplaireContratCadre contrat){
-        Echeancier e = contrat.getEcheancier();
-        if (contratAvecDistributeur(contrat)) {
-            this.journalCCVente.ajouter("Contre-proposition d'\u00e9ch\u00e9ancier pour " + contrat.getProduit() + " : " + e);
+
+        double disponible =
+                this.getStockProduit(contrat.getProduit())
+                - stockEngage(contrat.getProduit());
+
+        if (disponible < contrat.getQuantiteTotale()) {
+
+            this.journalCCVente.ajouter(
+                    "REFUS echeancier contrat "
+                    + contrat.getNumero()
+                    + " : stock insuffisant"
+            );
+
+            return null;
         }
+
+        Echeancier e = contrat.getEcheancier();
+
+        this.journalCCVente.ajouter(
+                "ACCEPTATION echeancier contrat "
+                + contrat.getNumero()
+                + " pour "
+                + contrat.getProduit()
+        );
+
         return e;
     }
 
-    public double propositionPrix(ExemplaireContratCadre contrat){
-        double prix = 50000000.0;
-        if (contratAvecDistributeur(contrat)) {
-            this.journalCCVente.ajouter("Proposition prix vendeur pour contrat " + contrat.getNumero() + " = " + prix);
+    public double stockEngage(IProduit produit) {
+
+        double total = 0.0;
+
+        for (ExemplaireContratCadre c : this.contratsVendus) {
+
+            if (c.getProduit().equals(produit)) {
+
+                total += c.getQuantiteRestantALivrer();
+            }
         }
+
+        return total;
+    }
+
+    public double propositionPrix(ExemplaireContratCadre contrat){
+
+        IProduit produit = contrat.getProduit();
+
+        double prix = 10000.0;
+
+        if (produit.equals(LamborghiniduCacao)) {
+
+            prix = 18000.0;
+
+        } else if (produit.equals(Chocoenbien)) {
+
+            prix = 12000.0;
+        }
+
+        this.journalCCVente.ajouter(
+                "Proposition prix vendeur pour contrat "
+                + contrat.getNumero()
+                + " = "
+                + prix
+        );
+
         return prix;
     }
 
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){
-        double prix = contrat.getPrix();
-        if (contratAvecDistributeur(contrat)) {
-            this.journalCCVente.ajouter("Contre-proposition prix vendeur pour contrat " + contrat.getNumero() + " = " + prix);
+
+        double prixAcheteur = contrat.getPrix();
+
+        double prixMinimum = propositionPrix(contrat);
+
+        if (prixAcheteur >= prixMinimum * 0.95) {
+
+            this.journalCCVente.ajouter(
+                    "ACCORD prix contrat "
+                    + contrat.getNumero()
+                    + " = "
+                    + prixAcheteur
+            );
+
+            return prixAcheteur;
+
+        } else {
+
+            double contreProposition = (prixAcheteur + prixMinimum) / 2.0;
+
+            this.journalCCVente.ajouter(
+                    "CONTRE-PROPOSITION prix contrat "
+                    + contrat.getNumero()
+                    + " = "
+                    + contreProposition
+            );
+
+            return contreProposition;
         }
-        return prix;
     }
 
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
+
         if (contratAvecDistributeur(contrat)) {
-            this.journalCCVente.ajouter("Notification nouveau contrat cadre : " + contrat);
+
+            this.journalCCVente.ajouter(
+                    "CONTRAT SIGNE : "
+                    + contrat.getProduit()
+                    + " | quantite = "
+                    + contrat.getQuantiteTotale()
+                    + " | prix = "
+                    + contrat.getPrix()
+            );
+
             this.contratsVendus.add(contrat);
         }
     }
-
 
     public double livrer(IProduit produit, double quantite, ExemplaireContratCadre contrat){
         double disponible = this.getStockProduit(produit);
@@ -106,7 +202,16 @@ public class Transformateur3VendeurCCadre extends Transformateur3AcheteurCCadre 
         if (this.getStockProduit(LamborghiniduCacao) > 500 && !acheteurs.isEmpty()) {
             IAcheteurContratCadre acheteur = acheteurs.get(0);
             if (acheteur instanceof IDistributeurChocolatDeMarque) {
-                Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape()+1, 2, this.getStockProduit(LamborghiniduCacao) / 2);
+                double disponible =
+                        this.getStockProduit(LamborghiniduCacao)
+                        - stockEngage(LamborghiniduCacao);
+
+                double quantite = disponible * 0.25;
+                Echeancier e = new Echeancier(
+                        Filiere.LA_FILIERE.getEtape()+1,
+                        4,
+                        quantite / 4
+                );
                 this.journalCCVente.ajouter("Envoi d'une demande vendeur pour " + LamborghiniduCacao + " \u00e0 " + acheteur.getNom());
                 sup.demandeVendeur(acheteur, this, LamborghiniduCacao, e, cryptogramme, false);
             }
