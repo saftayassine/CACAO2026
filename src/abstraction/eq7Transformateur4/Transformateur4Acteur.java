@@ -18,6 +18,11 @@ public class Transformateur4Acteur implements IActeur {
 	protected Journal journal; //Aymeric
 	protected Journal journal_production;
 	protected Journal journal_achat_bourse;
+
+	protected Journal journal_CC_achat;
+	
+	protected Journal journal_vente_enchere;
+
 	protected Journal journal_vente_CC;
 	protected Journal journal_negociation_CC;
 	private StockEq7 stock_Equitable;
@@ -46,6 +51,8 @@ public class Transformateur4Acteur implements IActeur {
 		this.journal_production = new Journal("Production", this);
 		this.journal_achat_bourse = new Journal("Achat en bourse",this);
 		this.journal_negociation_CC = new Journal("Negociations Contrats Cadres",this);
+		this.journal_CC_achat=new Journal("Contrats cadre achat fèves",this);
+		this.journal_vente_enchere = new Journal("Vente aux enchères", this);
 
 		this.cout_prod = new Variable("Coût instantannée de production d'une tonne de chocolat", this,0);
 		this.cout_prod_journal = new Journal("Coût instantannée de production", this);
@@ -127,7 +134,9 @@ public class Transformateur4Acteur implements IActeur {
 		res.add(this.journal_production);
 		res.add(this.journal_vente_CC);
 		res.add(this.journal_negociation_CC);
-		
+		res.add(this.journal_CC_achat);
+		res.add(this.journal_vente_enchere);
+
 		return res;
 	}
 

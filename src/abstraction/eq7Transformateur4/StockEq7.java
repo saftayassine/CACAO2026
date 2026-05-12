@@ -81,8 +81,11 @@ public class StockEq7 {
     //Enlève dans la file d'action la quantité quantity avec la qualité quality
     public void RemoveAction(Gamme quality,double quantity){
         int i=0;
+        if (this.actions.size()==0){
+            return;
+        }
         while (quantity>0.){
-            if (this.actions.get(i).getGamme()==quality){
+            if (this.actions.get(i).getGamme()==quality && this.actions.size()>0){
                 if (this.actions.get(i).getQuantity()<quantity){
                     quantity=quantity - this.actions.get(i).getQuantity();
                     this.actions.remove(i);
@@ -95,7 +98,8 @@ public class StockEq7 {
             else{
                 i++;
             }
-        }
+        
+    }
     }
 
     public void RemoveLowQ(double valeur){
