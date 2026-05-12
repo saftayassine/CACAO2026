@@ -229,8 +229,6 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public void propositionContratCadre(IAcheteurContratCadre acheteur, Feve f){
-		// vérifier si c'est un nouvel acheteur. Si c'est un ancien (avec qui on a déjà fait des Contrats) on adapte la demande 
-
 		double quantiteTot = 0;
 
 		if (null == f) {
@@ -238,43 +236,37 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		} else {
 			switch (f) {
 				case F_BQ:
-					quantiteTot = Math.min(255000,this.stock.get(f)*(100-this.pourcentageAVendre.get(f)-5)/100);
+					quantiteTot = Math.min(255000, this.stock.get(f) * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
 					break;
 				case F_MQ:
-					quantiteTot = Math.min(45000,this.stock.get(f)*(100-this.pourcentageAVendre.get(f)-5)/100);
+					quantiteTot = Math.min(45000, this.stock.get(f) * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
 					break;
 				default:
 					return;
 			}
-			
-			if (quantiteTot <= 0) return; //
+
+			if (quantiteTot <= 0) return;
 		}
 
-
-		int temps = 24 + this.periode - Filiere.LA_FILIERE.getEtape()%24 ;
-
+		int temps = 24 + this.periode - Filiere.LA_FILIERE.getEtape() % 24;
 
 		ArrayList<Double> quantites = new ArrayList<>();
 		for (int k = 1; k < temps + 1; k++) {
-			quantites.add(quantiteTot/temps);
+			quantites.add(quantiteTot / temps);
 		}
 
-		Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape()+1,quantites);
-		if(this.onPeutVendre(f,echeancier)){
-			ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur,this,f,echeancier,this.cryptogramme,false);
-			if (contrat==null) {
-				journalCC.ajouter(Color.RED, Color.white,"   echec des negociations");
+		Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, quantites);
+		if (this.onPeutVendre(f, echeancier)) {
+			ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur, this, f, echeancier, this.cryptogramme, false);
+			if (contrat == null) {
+				journalCC.ajouter(Color.RED, Color.white, "   echec des negociations");
 			} else {
 				this.contratsEnCours.add(contrat);
-				journalCC.ajouter(Color.GREEN, acheteur.getColor(), "   contrat signe");
-
-				double pourcent = (quantiteTot/this.getStock(f))*100;
-				this.pourcentageAVendre.put(f,pourcent + this.pourcentageAVendre.get(f));
-
+				double pourcent = (quantiteTot / this.getStock(f)) * 100;
+				this.pourcentageAVendre.put(f, pourcent + this.pourcentageAVendre.get(f));
+				this.logContratSigne(contrat, f, quantiteTot, acheteur);
 			}
 		}
-
-
 	}
 
 
@@ -283,27 +275,30 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public void renouvellementContratCadre(IAcheteurContratCadre acheteur, Feve f, ExemplaireContratCadre contrat){
+		int temps         = contrat.getEcheancier().getStepFin() - contrat.getEcheancier().getStepDebut();
+		double quantiteTot = Math.min(contrat.getQuantiteTotale(), this.stock.get(f) * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
 
-		int temps = contrat.getEcheancier().getStepFin() - contrat.getEcheancier().getStepDebut();
-		double quantiteTot = Math.min(contrat.getQuantiteTotale(),this.stock.get(f)*(100-this.pourcentageAVendre.get(f)-5)/100);
+		if (quantiteTot <= 0) {
+			journalCC.ajouter(Color.RED, Color.white, "   renouvellement annulé : quantité disponible nulle pour " + f);
+			return;
+		}
 
 		ArrayList<Double> quantites = new ArrayList<>();
 		for (int k = 1; k < temps + 1; k++) {
-			quantites.add(quantiteTot/temps);
+			quantites.add(quantiteTot / temps);
 		}
 
-		Echeancier echeancier = new Echeancier(contrat.getEcheancier().getStepFin()+1,quantites);
-		ExemplaireContratCadre contratAct = supCC.demandeVendeur(acheteur,this,f,echeancier,this.cryptogramme,false);
-					if (contratAct==null) {
-						journalCC.ajouter(Color.RED, Color.white,"   echec des negociations");
-					} else {
-						this.contratsEnCours.add(contratAct);
-						journalCC.ajouter(Color.GREEN, acheteur.getColor(), "   contrat signe");
-						double pourcent = (quantiteTot/this.getStock(f))*100;
-						this.pourcentageAVendre.put(f,pourcent + this.pourcentageAVendre.get(f));
-					}
+		Echeancier echeancier = new Echeancier(contrat.getEcheancier().getStepFin() + 1, quantites);
+		ExemplaireContratCadre contratAct = supCC.demandeVendeur(acheteur, this, f, echeancier, this.cryptogramme, false);
+		if (contratAct == null) {
+			journalCC.ajouter(Color.RED, Color.white, "   echec des negociations");
+		} else {
+			this.contratsEnCours.add(contratAct);
+			double pourcent = (quantiteTot / this.getStock(f)) * 100;
+			this.pourcentageAVendre.put(f, pourcent + this.pourcentageAVendre.get(f));
+			this.logContratSigne(contratAct, f, quantiteTot, acheteur);
+		}
 	}
-
 	/////////////////////////////////
 	//         Indicateurs         //
 	/////////////////////////////////
@@ -388,6 +383,24 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	}
 
 
+
+	private void logContratSigne(ExemplaireContratCadre contrat, Feve f, double quantiteTot, IAcheteurContratCadre acheteur) {
+    int stepDebut = contrat.getEcheancier().getStepDebut();
+    int stepFin   = contrat.getEcheancier().getStepFin();
+    int duree     = stepFin - stepDebut;
+    double stock  = this.getStock(f);
+    double pourcent = stock > 0 ? (quantiteTot / stock) * 100 : 0;
+
+    journalCC.ajouter(Color.GREEN, acheteur.getColor(), "   contrat signé avec " + acheteur.getNom());
+    journalCC.ajouter(Color.GREEN, acheteur.getColor(),
+        "     produit : " + f
+        + " | qté totale : " + String.format("%.1f", quantiteTot) + " t"
+        + " | période : étape " + stepDebut + " → " + stepFin + " (" + duree + " steps)"
+        + " | % du stock engagé : " + String.format("%.1f", pourcent) + "%"
+        + " | % engagé cumulé : " + String.format("%.1f", this.pourcentageAVendre.get(f)) + "%");
+}
+
+
 	//////////////////////////////////////////
 	//         En fonction du temps         //
 	//////////////////////////////////////////
@@ -396,22 +409,41 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	public void next(){
 		super.next();
 		int etape = Filiere.LA_FILIERE.getEtape();
-		
+
 		// Réinitialisation annuelle du pourcentage à vendre
 		if(etape % 24 == 0){
+			journalCC.ajouter("=== Bilan annuel des contrats cadres (étape "+etape+") ===");
+
 			for(Feve f : this.pourcentageAVendre.keySet()){
 				double quantiteEngagee = 0;
+				int stepMin = Integer.MAX_VALUE;
+				int stepMax = Integer.MIN_VALUE;
+
 				for(ExemplaireContratCadre contrat : this.contratsEnCours){
 					if(contrat.getProduit() == f){
-						quantiteEngagee += contrat.getEcheancier().getQuantiteJusquA(24);
+						double qte = contrat.getEcheancier().getQuantiteJusquA(24);
+						quantiteEngagee += qte;
+						stepMin = Math.min(stepMin, contrat.getEcheancier().getStepDebut());
+						stepMax = Math.max(stepMax, contrat.getEcheancier().getStepFin());
+						journalCC.ajouter("  Contrat avec "+contrat.getAcheteur().getNom()
+							+" | produit : "+f
+							+" | qté totale : "+contrat.getQuantiteTotale()+" t"
+							+" | période : étape "+contrat.getEcheancier().getStepDebut()
+							+" → "+contrat.getEcheancier().getStepFin());
 					}
 				}
+
 				double stock = this.getStock(f);
 				double pourcent = stock > 0 ? (quantiteEngagee / stock) * 100 : 0;
 				this.pourcentageAVendre.put(f, pourcent);
+
+				journalCC.ajouter("  ["+f+"] quantité engagée cette année : "+quantiteEngagee+" t"
+					+" | stock : "+stock+" t"
+					+" | % engagé : "+String.format("%.1f", pourcent)+"%"
+					+" | % disponible : "+String.format("%.1f", Math.max(0, 70 - pourcent))+"%");
 			}
 		}
-		
+
 		if(etape % 24 <= this.periode){
 			this.initialisationContratCadre(Feve.F_BQ);
 			this.initialisationContratCadre(Feve.F_MQ);
