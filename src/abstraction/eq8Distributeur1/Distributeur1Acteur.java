@@ -10,6 +10,7 @@ import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.filiere.IDistributeurChocolatDeMarque;
+import abstraction.eqXRomu.filiere.IMarqueChocolat;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.Chocolat;
@@ -61,29 +62,25 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	}
 	/** @author Alexandre Cornet */
 	public void initialiser() {
+
+		
 		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
-		ChocolatDeMarque C_MQ_ProntellaM = p.get(0);
-		this.Prix.put(C_MQ_ProntellaM, 14000.0);
-		ChocolatDeMarque C_HQ_Ferrara = p.get(1);
-		this.Prix.put(C_HQ_Ferrara, 27000.0);
-		ChocolatDeMarque C_MQ_Ferrara = p.get(2);
-		this.Prix.put(C_MQ_Ferrara, 14000.0);
-		ChocolatDeMarque C_BQ_Ferrara = p.get(3);
-		this.Prix.put(C_BQ_Ferrara, 22000.0);
-		ChocolatDeMarque C_HQ_E_Villors = p.get(4);
-		this.Prix.put(C_HQ_E_Villors, 30000.0);
-		ChocolatDeMarque C_HQ_Villors = p.get(5);
-		this.Prix.put(C_HQ_Villors, 27000.0);
-		ChocolatDeMarque C_MQ_E_Villors = p.get(6);
-		this.Prix.put(C_MQ_E_Villors, 14000.0);
-		ChocolatDeMarque C_MQ_Villors = p.get(7);
-		this.Prix.put(C_MQ_Villors, 14000.0);
-		ChocolatDeMarque C_BQ_E_Villors = p.get(8);
-		this.Prix.put(C_BQ_E_Villors, 25000.0);
-		ChocolatDeMarque C_BQ_Villors = p.get(9);
-		this.Prix.put(C_BQ_Villors, 22000.0);
 
 		for (int i=0; i<p.size(); i++){
+			if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.BQ && !p.get(i).isEquitable()) {
+				this.Prix.put((IProduit)(p.get(i)), 22000.0);
+			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.MQ && !p.get(i).isEquitable()) {
+				this.Prix.put((IProduit)(p.get(i)), 14000.0);
+			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.HQ && !p.get(i).isEquitable()) {
+				this.Prix.put((IProduit)(p.get(i)), 27000.0);
+			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.BQ && p.get(i).isEquitable()) {
+				this.Prix.put((IProduit)(p.get(i)), 25000.0);
+			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.MQ && p.get(i).isEquitable()) {
+				this.Prix.put((IProduit)(p.get(i)), 16000.0);
+			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.HQ && p.get(i).isEquitable()) {
+				this.Prix.put((IProduit)(p.get(i)), 30000.0);
+			}
+
 			this.Stock.put((IProduit)(p.get(i)),1000000.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);
 			this.volumeStock.ajouter(this,getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme));
@@ -101,7 +98,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 			
     	    // On récupère notre prix d'achat moyen (PMP) calculé dans Approvisionnement/ContratCadre
     	    // Si on n'a pas de prix d'achat (pas encore de contrat), on garde un prix par défaut élevé
-    	    double prixAchatMoyen = this.prixDAchat.getOrDefault(cdm, this.Prix.getOrDefault(cdm, 1000.0));
+    	    double prixAchatMoyen = this.prixDAchat.getOrDefault(cdm, this.Prix.getOrDefault(cdm, 1000.0) / 1.20);
 			
     	    if (prixAchatMoyen > 0) {
     	        // Application de la marge de 20% (PrixVente = PrixAchat * 1.20)
@@ -316,7 +313,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 			/** @author Lucas Levillain */
 			
 			//this.Prix.put(p, (CoutParArticle + prixDAchat.getOrDefault(p, 1000.0)) * 1.1);
-			this.Prix.put(p, 8000.0);
+			//this.Prix.put(p, 8000.0);
 			return this.Prix.get(p);
 		} else {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
@@ -326,6 +323,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	/** @author Alexandre Cornet */
 	@Override
 	public double prix(ChocolatDeMarque choco) {
+		/** 
 		switch (choco.getChocolat()) {
 		case C_HQ_E: return 30000;
 		case C_HQ : return 27000;
@@ -336,6 +334,8 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		default:
 			return 0.0;
 		}
+		*/
+		return getPrixProduit((IProduit)(choco), this.cryptogramme);
 	}
 	/** @author Alexandre Cornet */
 	@Override
@@ -361,4 +361,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.journal0.ajouter("Rayon de "+choco+" en rupture");
 		
 	}
+
+	
+	
 }

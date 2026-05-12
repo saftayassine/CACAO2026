@@ -9,7 +9,7 @@ import abstraction.eqXRomu.produits.IProduit;
 public class TransformateurXVendeurCCadre extends TransformateurXAcheteurCCadre implements IVendeurContratCadre{
 
     public boolean vend(IProduit produit) {
-       return (this.chocolatsVillors.contains(produit));
+       return (this.chocolatsVillorsEtDistributeurs.contains(produit));
     }
 
     public double totalEngagement(IProduit produit) {

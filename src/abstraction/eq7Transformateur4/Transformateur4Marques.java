@@ -7,7 +7,7 @@ import abstraction.eqXRomu.filiere.IMarqueChocolat;
 
 //Auteur : Matteo
 
-public class Transformateur4Marques extends Transformateur4AcheteurBourse implements IMarqueChocolat {
+public class Transformateur4Marques extends Transformateur4AcheteurCC implements IMarqueChocolat {
 
 
     public Transformateur4Marques(){

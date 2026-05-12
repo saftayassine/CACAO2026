@@ -21,6 +21,7 @@ public class Approvisionnement extends Distributeur1Acteur {
     private Map<String, List<ChocolatDeMarque>> classements;
     protected List<ExemplaireContratCadre> mesContrats;
     protected double pourcentBQ, pourcentBQ_E, pourcentMQ, pourcentMQ_E, pourcentHQ, pourcentHQ_E;
+    protected Map<ChocolatDeMarque, Double> stockPreditTG;
 
     public Approvisionnement() {
         super();
@@ -40,34 +41,9 @@ public class Approvisionnement extends Distributeur1Acteur {
         this.pourcentBQ = 0.15;   // 15% Bas de gamme standard
         this.pourcentBQ_E = 0.05; // 5%  Bas de gamme équitable
         this.pourcentMQ = 0.35;   // 35% Milieu de gamme standard
-        this.pourcentMQ_E = 0.10; // 10% Milieu de gamme équitable
+        this.pourcentMQ_E = 0.15; // 15% Milieu de gamme équitable
         this.pourcentHQ = 0.20;   // 20% Haut de gamme standard
-        this.pourcentHQ_E = 0.15; // 15% Haut de gamme équitable
-    }
-
-    /**
-     * Initialise les prix avec les données historiques (1 an en arrière)
-     */
-    protected void initialiserPrixReferenceUniquementChocolats() {
-        // On récupère directement la liste des chocolats de marque enregistrés dans la filière
-        for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsProduits()) {
-        
-            int etapeActuelle = Filiere.LA_FILIERE.getEtape();
-            int etapeCible = Math.max(0, etapeActuelle - 1);
-            
-            double prixRef = Filiere.LA_FILIERE.prixMoyen(cdm, etapeCible);
-            
-            if (prixRef <= 0) {
-                // Initialisation par défaut selon la gamme
-                switch (cdm.getGamme()) {
-                    case HQ: prixRef = 15.0; break;
-                    case MQ: prixRef = 10.0; break;
-                    case BQ: prixRef = 6.0;  break;
-                    default: prixRef = 8.0;
-                }
-            }
-            this.prixDAchat.put(cdm, prixRef);
-        }
+        this.pourcentHQ_E = 0.10; // 10% Haut de gamme équitable
     }
 
     /**
@@ -175,28 +151,47 @@ public class Approvisionnement extends Distributeur1Acteur {
     }
 
     private void parcourirEtAcheter(List<ChocolatDeMarque> liste, double besoinCategorie) {
-        // Si on a plusieurs marques dans la même catégorie, on divise le besoin par le nombre de marques
-        // pour ne pas tout acheter chez le premier (ou on peut tout mettre sur le moins cher)
         if (liste.isEmpty()) return;
 
         for (int i = 0; i < liste.size(); i++) {
             ChocolatDeMarque actuel = liste.get(i);
             double prixCible = this.prixDAchat.getOrDefault(actuel, 15.0);
-        
-            double prixMax = prixCible * 1.3; // Marge de négo de 30%
+            double prixMax = prixCible * 1.3;
+
             if (i < liste.size() - 1) {
                 prixMax = this.prixDAchat.getOrDefault(liste.get(i + 1), prixMax);
             }
 
-            // On tente d'acheter une fraction du besoin pour cette marque
-            // Ici, on est agressif : on demande tout le besoin au moins cher, 
-            // ce qui restera sera demandé au suivant au tour d'après si le contrat échoue.
-            methodeIntermediaireAchat(actuel, besoinCategorie, prixCible, prixMax);
+            // --- NOUVELLE LOGIQUE TÊTE DE GONDOLE (TG) ---
+            boolean demandeTG = false;
+            double quantiteAcheter = besoinCategorie;
+            
+            // 1. On ne demande la TG que pour les produits équitables
+            if (actuel.isEquitable()) {
+                double capaciteMaxTG = this.TailleRayon * 0.1;
+                double occupationActuelleTG = getQuantiteTotaleTG();
+                double placeRestanteTG = getPlaceRestanteTG();
+
+                // 2. Condition de seuil : on n'initie de TG que si moins de 80% de l'espace TG est pris
+                if (occupationActuelleTG < (capaciteMaxTG * 0.8)) {
+                    demandeTG = true;
+                    
+                    // 3. Sécurité de volume : si le besoin dépasse la place restante, on plafonne
+                    if (besoinCategorie > placeRestanteTG) {
+                        quantiteAcheter = Math.max(0, placeRestanteTG);
+                    }
+                }
+            }
+
+            // Si après plafonnement il reste quelque chose à acheter, on lance le contrat
+            if (quantiteAcheter > 0.1) {
+                methodeIntermediaireAchat(actuel, quantiteAcheter, prixCible, prixMax, demandeTG);
+            }
         }
     }
 
-    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax) {
-    // Vide ici, implémentée dans ContratCadre
+    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
+        // Sera surchargée
     }
 
     /**
@@ -205,58 +200,71 @@ public class Approvisionnement extends Distributeur1Acteur {
      */
     private Map<ChocolatDeMarque, Double> initialiserStockPredit() {
         Map<ChocolatDeMarque, Double> predit = new HashMap<>();
-        // On réinitialise aussi notre suivi des achats pour ce tour
         this.ChocolatsAchetes = new HashMap<>(); 
-    
+        this.stockPreditTG = new HashMap<>(); // Initialisation du dictionnaire TG
+        
         int etapeActuelle = Filiere.LA_FILIERE.getEtape();
 
-        // 1. Stock physique actuel (uniquement pour le stock prédit)
-        for (IProduit p : this.Stock.keySet()) {
-            if (p instanceof ChocolatDeMarque) {
-                predit.put((ChocolatDeMarque)p, this.Stock.get(p));
-                // On initialise les achats à 0.0 pour chaque produit connu en stock
-                this.ChocolatsAchetes.put((ChocolatDeMarque)p, 0.0);
-            }
+        // 1. Initialisation à 0 pour tous les chocolats de la filière
+        for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsProduits()) {
+            predit.put(cdm, this.getQuantiteEnStock(cdm, this.cryptogramme));
+            this.ChocolatsAchetes.put(cdm, 0.0);
+            this.stockPreditTG.put(cdm, 0.0);
         }
-    
 
-        // 2. Livraisons prévues pour CE tour par les contrats CADRES EXISTANTS
+        // 2. Prise en compte des contrats CADRES EXISTANTS (Livraisons + TG)
         for (ExemplaireContratCadre contrat : this.mesContrats) {
             IProduit p = (IProduit) contrat.getProduit();
             if (p instanceof ChocolatDeMarque) {
                 ChocolatDeMarque cdm = (ChocolatDeMarque) p;
                 double quantiteAttendue = contrat.getEcheancier().getQuantite(etapeActuelle);
                 
-                // Mise à jour Stock Predit
-                double stockActuel = predit.getOrDefault(cdm, 0.0);
-                predit.put(cdm, stockActuel + quantiteAttendue);
+                // Mise à jour Stock Predit global
+                predit.put(cdm, predit.get(cdm) + quantiteAttendue);
                 
-                // ACTION : On remplit ChocolatsAchetes avec ce qui est livré ce tour
-                double achatsActuels = this.ChocolatsAchetes.getOrDefault(cdm, 0.0);
-                this.ChocolatsAchetes.put(cdm, achatsActuels + quantiteAttendue);
+                // Suivi des achats du tour
+                this.ChocolatsAchetes.put(cdm, this.ChocolatsAchetes.get(cdm) + quantiteAttendue);
+                
+                // Suivi spécifique des TG si le contrat le stipule
+                if (contrat.getTeteGondole()) {
+                    this.stockPreditTG.put(cdm, this.stockPreditTG.get(cdm) + quantiteAttendue);
+                }
             }
         }
-        
         return predit;
     }
 
-protected void actualiserStockPredit(ExemplaireContratCadre nouveauContrat) {
-    if (nouveauContrat != null) {
-        IProduit p = (IProduit) nouveauContrat.getProduit();
-        if (p instanceof ChocolatDeMarque) {
-            ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-            int etapeActuelle = Filiere.LA_FILIERE.getEtape();
-        
-            double livraisonImmediate = nouveauContrat.getEcheancier().getQuantite(etapeActuelle);
-        
-            // 1. Mise à jour du Stock Predit (pour la logique de mise en rayon)
-            double ancienStockPredit = this.stockPredit.getOrDefault(cdm, 0.0);
-            this.stockPredit.put(cdm, ancienStockPredit + livraisonImmediate);
+    protected void actualiserStockPredit(ExemplaireContratCadre nouveauContrat) {
+        if (nouveauContrat != null) {
+            IProduit p = (IProduit) nouveauContrat.getProduit();
+            if (p instanceof ChocolatDeMarque) {
+                ChocolatDeMarque cdm = (ChocolatDeMarque) p;
+                int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+                double livraisonImmediate = nouveauContrat.getEcheancier().getQuantite(etapeActuelle);
             
-            // 2. ACTION : Mise à jour de ChocolatsAchetes (suivi des flux du tour)
-            double anciensAchats = this.ChocolatsAchetes.getOrDefault(cdm, 0.0);
-            this.ChocolatsAchetes.put(cdm, anciensAchats + livraisonImmediate);
+                // 1. Stock Predit Global
+                this.stockPredit.put(cdm, this.stockPredit.getOrDefault(cdm, 0.0) + livraisonImmediate);
+                
+                // 2. Suivi des achats
+                this.ChocolatsAchetes.put(cdm, this.ChocolatsAchetes.getOrDefault(cdm, 0.0) + livraisonImmediate);
+                
+                // 3. Suivi TG
+                if (nouveauContrat.getTeteGondole()) {
+                    this.stockPreditTG.put(cdm, this.stockPreditTG.getOrDefault(cdm, 0.0) + livraisonImmediate);
+                }
+            }
         }
     }
-}
+
+    public double getQuantiteTotaleTG() {
+        double total = 0;
+        for (Double qte : this.stockPreditTG.values()) {
+            total += qte;
+        }
+        return total;
+    }
+
+    public double getPlaceRestanteTG() {
+        return (this.TailleRayon * 0.1) - getQuantiteTotaleTG();
+    }
 }

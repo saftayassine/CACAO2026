@@ -1,4 +1,5 @@
 package abstraction.eq5Transformateur2;
+import java.util.ArrayList;
 import java.util.HashMap;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.Chocolat;
@@ -7,9 +8,12 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 /**
  * @author Maxence
  */
-public class Transformateur2AnalyseurMarche extends Transformateur2ProductionChocolat{
+public class Transformateur2AnalyseurMarche extends Transformateur2Acteur{
+    private ArrayList<Double> prixDernieresEncheres; /*0:FerraraHQ, 1:FerraraMQ, 2:FerraraBQ */
+
     public Transformateur2AnalyseurMarche(){
         super();
+        this.prixDernieresEncheres = new ArrayList<>(3);
     }
 
     public HashMap<ChocolatDeMarque,Double> DemandeMarque(){
@@ -38,6 +42,20 @@ public class Transformateur2AnalyseurMarche extends Transformateur2ProductionCho
             demandeChocolat.put(choco.getChocolat(),demandeChocolat.get(choco.getChocolat())+vente);
         }
         return demandeChocolat;
+    }
+
+    public void updatePrixEnchere(Integer indice, Double prixTonne){
+        /*indice 0:FerraraHQ, 1:FerraraMQ, 2:FerraraBQ  */
+        this.prixDernieresEncheres.add(indice,prixTonne);
+    }
+
+    public Double getPrixEnchere(Integer indice){
+        /*indice 0:FerraraHQ, 1:FerraraMQ, 2:FerraraBQ  */
+        return this.prixDernieresEncheres.get(indice);
+    }
+    @Override
+    public void next(){
+        super.next();
     }
 }
 

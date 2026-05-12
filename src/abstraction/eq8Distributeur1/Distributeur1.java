@@ -36,13 +36,16 @@ public class Distributeur1 extends MiseEnRayon {
 		//Choix de l'acteur
 		this.trierChocolatsParPrix();
 		if (Filiere.LA_FILIERE.getEtape() == 1) {
-			this.initialiserPrixReferenceUniquementChocolats();
+			this.initialiser();
 		}
+		this.lancement_CC = true;
 		this.lancerApprovisionnementGeneral(volumeCibleTotal);
+		this.lancement_CC = false;
 		this.executerMiseEnRayon();
 		for (int j=0; j<p.size(); j++){
 			double f=this.getQuantiteEnRayon(p.get(j),this.cryptogramme);
 		}
+		this.actualiserPrixDeVente();
 		this.actualiserPrixDachatParContrats();
 
 		//JournalActions
