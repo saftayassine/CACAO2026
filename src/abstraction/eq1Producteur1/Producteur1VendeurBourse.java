@@ -12,7 +12,7 @@ import java.awt.Color;
 /** 
  * @author Elise Dossal & Théophile Trillat
  */
-public class Producteur1VendeurBourse extends Producteur1VendeurContractCadre implements IVendeurBourse{
+public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre implements IVendeurBourse{
 ///*
     private int blacklist=0;
 	protected HashMap<Feve , Double > pourcentageAVendre = new HashMap<Feve , Double>();
@@ -116,6 +116,7 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContractCadre im
 		res.add(this.journalBourse);
 		return res;
 	}
+
 
 }
 

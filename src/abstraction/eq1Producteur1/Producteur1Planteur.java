@@ -4,6 +4,7 @@ import java.util.List;
  
 import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
  
  
@@ -14,7 +15,8 @@ public class Producteur1Planteur extends Producteur1Stock {
     private double taille_totale = 1000000;
     private double tailleEq     = 850000;
     private double tailleNonEq  = 150000;
- 
+    private double capaciteProchaine;
+    protected Journal journalPlantation;
     /**
      * @author Théophile Trillat
      */
@@ -24,6 +26,7 @@ public class Producteur1Planteur extends Producteur1Stock {
         Plantation MQ = new Plantation(Feve.F_MQ, 150000, -600);
         this.plantations.add(BQ);
         this.plantations.add(MQ);
+        this.journalPlantation = new Journal("Journal "+this.getNom()+ " plantation", this);
     }
  
     /**
@@ -157,20 +160,22 @@ public class Producteur1Planteur extends Producteur1Stock {
         double tailleBQProchaine = tailleAPlanter_prochaine * 0.85;
         double tailleMQProchaine = tailleAPlanter_prochaine * 0.15;
  
-        double capaciteProchaine = capaciteTotale
+        this.capaciteProchaine = capaciteTotale
                 + (tailleBQProchaine * 1800)  // BQ planté l'an prochain
                 + (tailleMQProchaine * 3500); // MQ planté l'an prochain
  
-        this.journal.ajouter("Année " + annee + " : Rotation des plantations");
-        this.journal.ajouter("Nouveaux arbres plantés : " + tailleAPlanter + " ha"
+        this.journalPlantation.ajouter("Année " + annee + " : Rotation des plantations");
+        this.journalPlantation.ajouter("Nouveaux arbres plantés : " + tailleAPlanter + " ha"
                 + " (BQ : " + tailleBQAPlanter + " ha, MQ : " + tailleMQAPlanter + " ha)");
-        this.journal.ajouter("Surface totale : " + this.taille_totale
+        this.journalPlantation.ajouter("Surface totale : " + this.taille_totale
                 + " ha (équitable : " + this.tailleEq + " ha, non-équitable : " + this.tailleNonEq + " ha)");
-        this.journal.ajouter("Production annuelle estimée : " + capaciteTotale + " kg");
-        this.journal.ajouter("Production estimée l'année prochaine : " + capaciteProchaine + " kg");
+        this.journalPlantation.ajouter("Production annuelle estimée : " + capaciteTotale + " kg");
+        this.journalPlantation.ajouter("Production estimée l'année prochaine : " + capaciteProchaine + " kg");
     }
  
-
+    public double getCapaciteProchaine() {
+        return this.capaciteProchaine;
+    }
 
     public void impots(){
         double montant = 250*this.taille_totale;
