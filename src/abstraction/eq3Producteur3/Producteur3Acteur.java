@@ -32,7 +32,7 @@ public class Producteur3Acteur implements IActeur {
 		this.journal_periode = new Journal("Journal des périodes EQ3", this); 
 		this.journal_vente_bouse = new Journal("Journal Ventes en bourse EQ3", this);
 		this.journal_stock = new Journal("Journal des Stocks détaillé EQ3", this);
-		this.journal_cout_periode = new Journal("Journal des coûts par période", this);
+		this.journal_cout_periode = new Journal("Journal des coûts par période EQ3", this);
 		this.journal_plantation = new Journal("Journal plantation EQ3", this);
 
 		/** @author Guillaume Leroy */

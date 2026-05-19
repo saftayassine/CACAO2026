@@ -69,6 +69,7 @@ public class Transformateur1AcheteurEnchere extends Transformateur1VendeurEncher
 		Feve cm = (Feve)(enchereRetenue.getMiseAuxEncheres().getProduit());
 		journalAchatEncheres.ajouter(" Enchere remportee : j'ajoute "+enchereRetenue.getQuantiteT()+" T de "+cm+" au stock");
 		this.getStock().put(cm, this.getStock().get(cm)+enchereRetenue.getQuantiteT());
+		this.addPeremption(enchereRetenue.getQuantiteT(), this.getChoco(cm));
 		prix.put(cm, prix.get(cm)*0.95); // on essayera un peu moins cher
 		journalAchatEncheres.ajouter(" Enchere remportee : le prix de "+cm+" passe a "+prix.get(cm));
 	}

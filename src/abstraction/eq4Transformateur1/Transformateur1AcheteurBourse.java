@@ -13,6 +13,7 @@ public class Transformateur1AcheteurBourse extends Transformateur1Couts implemen
     }
     public void notificationAchat(Feve f, double quantiteEnT, double coursEnEuroParT){
         this.setStocksProduit(f,this.getStocksProduit(f)+quantiteEnT);
+        this.addPeremption(quantiteEnT, this.getChoco(f));
     }
     /**@author Safta Yassine */ 
     public double demande(Feve f, double cours){

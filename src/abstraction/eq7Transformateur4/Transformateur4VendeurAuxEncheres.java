@@ -52,6 +52,7 @@ public class Transformateur4VendeurAuxEncheres extends Transformateur4Vente impl
             return null;
         }
     }
+	
 
 /* public Enchere choisir(List<Enchere> encheres) {
 		this.journal.ajouter("encheres : "+encheres);

@@ -26,12 +26,13 @@ public class Transformateur1AcheteurAppelDOffre extends Transformateur1VendeurAp
 		this.journalAO.ajouter("=== STEP "+Filiere.LA_FILIERE.getEtape()+" ====================");
 		for (IProduit f : this.getStock().keySet()) {
 			if (f instanceof Feve && f!=Feve.F_MQ_E && this.getStocksPrevuProduit(this.getChoco(f)) < 30000) { 
-				double quantite = 30000-this.getStocksPrevuProduit(this.getChoco(f)); 
+				double quantite = 35000-this.getStocksPrevuProduit(this.getChoco(f)); 
 				OffreVente ov = supAO.acheterParAO(this,  cryptogramme, f, quantite);
 				journalAO.ajouter("   Je lance un appel d'offre de "+quantite+" T de "+f);
 				if (ov!=null) { // on a retenu l'une des offres de vente
 					journalAO.ajouter("   AO finalise : on ajoute "+quantite+" T de "+f+" au stock");
 					this.getStock().put(f, this.getStock().get(f)+quantite);
+					this.addPeremption(quantite, this.getChoco(f));
 				}
 			}
 		}
@@ -45,12 +46,26 @@ public class Transformateur1AcheteurAppelDOffre extends Transformateur1VendeurAp
 	public OffreVente choisirOV(List<OffreVente> propositions) {
 		BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
 		for (OffreVente ov : propositions) {
-			
+		if (ov.getProduit() instanceof Feve && ov.getProduit()!=Feve.F_MQ_E && ov.getProduit()!=Feve.F_HQ_E && ov.getProduit()!=Feve.F_BQ_E) {
 		double cours = ( bourse.getCours((Feve)ov.getProduit())).getValeur();
 		if (ov.getPrixT()<=0.9*cours) {
 			return ov;
 		}
 		}
+		else if (ov.getProduit().equals(Feve.F_BQ_E)) {
+				double cours = ( bourse.getCours(Feve.F_BQ)).getValeur(); {
+				if (ov.getPrixT()<=0.95*cours) {
+					return ov;
+				}
+			}
+		}
+		else if (ov.getProduit().equals(Feve.F_HQ_E)) {
+			double cours = ( bourse.getCours(Feve.F_HQ)).getValeur(); {
+			if (ov.getPrixT()<=0.95*cours) {
+				return ov;
+			}
+		}
+	}}
 		return null;
 	}
 
