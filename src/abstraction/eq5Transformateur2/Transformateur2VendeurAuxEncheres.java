@@ -22,7 +22,7 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AchatEnche
         for (ChocolatDeMarque choco : mesChocolats) {
             Double quantiteEnStock = this.getStock_chocolatDeMarque(choco);
             
-            if (quantiteEnStock > 0 && Filiere.LA_FILIERE.getEtape() % 10 == 0) {
+            if (quantiteEnStock > 5 && Filiere.LA_FILIERE.getEtape() % 10 == 0) {
                 superviseur.vendreAuxEncheres(this, cryptogramme, choco, quantiteEnStock);
             }
         }

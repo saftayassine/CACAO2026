@@ -52,7 +52,7 @@ public class SacDeFeves {
         return this.datePeremption;
     }
 
-    public Double remove_feve(Double q){
+    public Double remove_feve_sac(Double q){
         /*Enlève q fèves du sac
         ne retire pas plus de fèves que la quantité dans le sac
         return la quantité de fèves qui n'a pas été enlevée (éventuellement 0.0)
