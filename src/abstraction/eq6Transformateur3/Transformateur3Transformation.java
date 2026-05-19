@@ -1,5 +1,8 @@
 
 package abstraction.eq6Transformateur3;
+import abstraction.eq4Transformateur1.Transformateur1Stock;
+import abstraction.eqXRomu.filiere.Filiere;
+
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -35,7 +38,7 @@ import abstraction.eq6Transformateur3.StockChocolat;
  * - qualité du chocolat calculée selon les règles du prof
  * - qualité perçue
  */
-public class Transformateur3Transformation extends Transformateur3Acteur{
+public class Transformateur3Transformation extends Transformateur3Couts{
 
     
 
@@ -239,15 +242,13 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
     }
 
     
-       double coutMainOeuvre = nbOuvriers * 1250;
+
 
        double coutEnergie = quantiteChocolatProduite * 500.0 * 0.18;
 
-       double coutLocauxEtChargesFixes = 2000000.0;
+    
 
-       double coutTotal = coutMainOeuvre + coutEnergie + coutLocauxEtChargesFixes;
-
-       return coutTotal;
+       return coutEnergie;
 }
 
     /**
@@ -291,8 +292,10 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
                + " | qualité perçue = " + qualitePercue
                + " | péremption = " + dureePeremption(pourcentageCacao) + " mois"
                + " | coût estimé = " + cout + " €");
+        Filiere.LA_FILIERE.getBanque().payerCout(this, this.cryptogramme,"couts totaux", cout);
 
        return chocolatProduit;
+
 }
     /**
      * Version simple appelée à chaque étape.
@@ -305,6 +308,7 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
      * noteMarque par défaut = 1.0
      */
     public void next() {
+        super.next();
         double capaciteRestante = capaciteProduction();
         double noteMarque = 1.0;
 
@@ -334,5 +338,6 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
                 capaciteRestante -= quantiteATransformer;
             }
         }
+        
     }
 }
