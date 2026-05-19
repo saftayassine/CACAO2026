@@ -25,7 +25,7 @@ public class Transformateur2Stock extends Transformateur2Marque{
     private List<SacDeFeves> sacsMQ_E;
     private List<SacDeFeves> sacsBQ_E;
 
-    private static float prixStockageTonne=20; 
+    private static float prixStockageTonne=30; 
     
     // Constructeur
 
