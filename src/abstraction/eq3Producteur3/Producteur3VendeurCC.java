@@ -18,7 +18,6 @@ import abstraction.eqXRomu.produits.IProduit;
 /** @author Victor Vannier-Moreau */
 public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IVendeurContratCadre {
 
-    protected List<ExemplaireContratCadre> contratsEnCours;
     protected Journal journalCC;
 
     public Producteur3VendeurCC() {
