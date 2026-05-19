@@ -57,7 +57,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
 
     @Override
-    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax, boolean TG) {
+    protected void methodeIntermediaireAchatCC(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax, boolean TG) {
         this.besoinCourant = besoinParEtape;
         this.prixCibleCourant = prixCible;
         this.prixMaxCourant = prixMax;
