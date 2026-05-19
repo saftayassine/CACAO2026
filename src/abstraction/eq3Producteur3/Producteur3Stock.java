@@ -20,6 +20,10 @@ public class Producteur3Stock {
         }
     }
 
+    public HashMap<Feve, List<Double>> getStockMap(){
+        return this.stock;
+    }
+
     public double getStock(Feve f) {
         double tot = 0;
         if (this.stock.get(f) != null) {
@@ -80,6 +84,20 @@ public class Producteur3Stock {
             }
         } else if (f.getGamme() == Gamme.BQ && liste.size() > 48) {
             liste.remove(48);
+        }
+    }
+
+    public void donnerAuxEnfantsMalades(double seuil) {
+        for (Feve f : Feve.values()) {
+            double stockActuel = this.getStock(f);
+            if (stockActuel > seuil) {
+                double quantiteADonner = stockActuel - seuil;
+                this.retireStock(f, quantiteADonner);
+                
+                // On consigne l'action dans le journal pour la transparence
+                this.journalStock.ajouter("Don caritatif : " + quantiteADonner + 
+                                        " tonnes de " + f + " données pour réduire les coûts.");
+            }
         }
     }
 
