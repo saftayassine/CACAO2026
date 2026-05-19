@@ -33,6 +33,7 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 		this.plantations = new ArrayList<Plantation>();
 		// Initialiser le journal des coûts avec l'acteur correct
 		this.JournalCout = new Journal("Journal Coûts Eq2", this);
+		this.journalStock = new Journal("Journal Stock Eq2", this);
 	}
 
 	/** @author Thomas */
@@ -108,6 +109,8 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 		res.add(this.journal);
 		res.add(this.JournalBanque);
 		res.add(this.journalContratCadre);
+		if (this.JournalCout != null) res.add(this.JournalCout);
+		if (this.journalStock != null) res.add(this.journalStock);
 		return res;
 	}
 
