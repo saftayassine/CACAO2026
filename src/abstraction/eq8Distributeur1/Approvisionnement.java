@@ -36,6 +36,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
     
         this.mesContrats = new ArrayList<>();
         this.stockPredit = new HashMap<>();
+        this.stockPreditTG = new HashMap<>();
 
         // Initialisation des pourcentages de répartition (Total = 1.0)
         this.pourcentBQ = 0.30;   // 30% Bas de gamme standard
