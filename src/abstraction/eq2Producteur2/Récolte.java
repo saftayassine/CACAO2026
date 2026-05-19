@@ -275,8 +275,8 @@ public class Récolte extends Producteur2Acteur {
     public void initialiser() {
         super.initialiser();
         int age_init = 72;
-        ajouterPlantation(new Plantation(Feve.F_BQ, 300000, age_init));
-        ajouterPlantation(new Plantation(Feve.F_MQ, 300000, age_init));
+        ajouterPlantation(new Plantation(Feve.F_BQ, 500000, age_init));
+        ajouterPlantation(new Plantation(Feve.F_MQ, 100000, age_init));
         ajouterPlantation(new Plantation(Feve.F_HQ, 400000, age_init));
         ajouterPlantation(new Plantation(Feve.F_HQ_E, 0, age_init));
 
