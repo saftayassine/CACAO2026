@@ -41,36 +41,56 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
             this.journalContratCadre.ajouter("Stock disponible " + f + " = " + disponible);
             double seuilCC = (f == Feve.F_HQ) ? 10.0 : 100.0;
             if (disponible > seuilCC) {
-                // Retrait du plafond de 1000 T pour proposer des méga-contrats adaptés à notre
-                // grosse production
-                double parStep = Math.max(100.0, disponible / 12.0);
-                Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
-                List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
-                if (!acheteurs.isEmpty()) {
-                    for (IAcheteurContratCadre acheteur : acheteurs) {
-                        if (disponible <= seuilCC)
-                            break; // On arrête si on a plus assez de stock
-
-                        ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur, this, f, e, cryptogramme,
-                                false);
-                        if (contrat != null) {
-                            if (!this.contratsEnCours.contains(contrat)) {
-                                this.contratsEnCours.add(contrat);
-                            }
-                            this.journalContratCadre.ajouter("Contrat signé avec " + acheteur.getNom() + " pour " + f
-                                    + " = " + contrat.getQuantiteTotale());
-
-                            disponible -= contrat.getQuantiteTotale();
-                            parStep = Math.max(100.0, disponible / 12.0);
-                            if (parStep >= 100.0)
-                                e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
-                        } else {
-                            this.journalContratCadre
-                                    .ajouter("Négociation échouée avec " + acheteur.getNom() + " pour " + f);
+                // --- SÉCURISATION : Limiter les engagements à notre capacité de production ---
+                // On évite la faillite due à la péremption : si on s'engage sur plus que notre 
+                // production et que le stock pourrit, on ne peut plus livrer !
+                double productionStep = this.feve_recolte.getOrDefault(f, 0.0);
+                double engageParStep = 0.0;
+                for (ExemplaireContratCadre c : this.contratsEnCours) {
+                    if (c.getProduit().equals(f) && c.getQuantiteRestantALivrer() > 0) {
+                        int nbEcheances = c.getEcheancier().getNbEcheances();
+                        if (nbEcheances > 0) {
+                            engageParStep += c.getQuantiteTotale() / nbEcheances;
                         }
                     }
+                }
+                
+                double dispoParStep = Math.max(0.0, (productionStep - engageParStep) * 0.9); // 10% de marge de sécu
+                double parStep = Math.min(disponible / 12.0, dispoParStep);
+                
+                if (parStep >= 100.0) {
+                    Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
+                    List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
+                    if (!acheteurs.isEmpty()) {
+                        for (IAcheteurContratCadre acheteur : acheteurs) {
+                            if (disponible <= seuilCC)
+                                break; // On arrête si on a plus assez de stock
+
+                            ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur, this, f, e, cryptogramme,
+                                    false);
+                            if (contrat != null) {
+                                if (!this.contratsEnCours.contains(contrat)) {
+                                    this.contratsEnCours.add(contrat);
+                                }
+                                this.journalContratCadre.ajouter("Contrat signé avec " + acheteur.getNom() + " pour " + f
+                                        + " = " + contrat.getQuantiteTotale());
+
+                                disponible -= contrat.getQuantiteTotale();
+                                engageParStep += contrat.getQuantiteTotale() / e.getNbEcheances();
+                                dispoParStep = Math.max(0.0, (productionStep - engageParStep) * 0.9);
+                                parStep = Math.min(disponible / 12.0, dispoParStep);
+                                if (parStep >= 100.0)
+                                    e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
+                            } else {
+                                this.journalContratCadre
+                                        .ajouter("Négociation échouée avec " + acheteur.getNom() + " pour " + f);
+                            }
+                        }
+                    } else {
+                        this.journalContratCadre.ajouter("Pas d'acheteur pour " + f);
+                    }
                 } else {
-                    this.journalContratCadre.ajouter("Pas d'acheteur pour " + f);
+                    this.journalContratCadre.ajouter("Capacité de production insuffisante pour proposer un CC pour " + f);
                 }
             }
         }
@@ -113,16 +133,36 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         if (disponible < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
             return null;
         }
-        double quantiteDemandee = contrat.getEcheancier().getQuantiteTotale();
-        if (quantiteDemandee <= disponible) {
-            return contrat.getEcheancier();
+        
+        // --- SÉCURISATION : Limiter les engagements à notre capacité de production ---
+        double productionStep = this.feve_recolte.getOrDefault(f, 0.0);
+        double engageParStep = 0.0;
+        for (ExemplaireContratCadre c : this.contratsEnCours) {
+            if (c.getProduit().equals(f) && c.getQuantiteRestantALivrer() > 0) {
+                int nbE = c.getEcheancier().getNbEcheances();
+                if (nbE > 0) {
+                    engageParStep += c.getQuantiteTotale() / nbE;
+                }
+            }
         }
-
+        
+        double dispoParStep = Math.max(0.0, (productionStep - engageParStep) * 0.9); // 10% de marge de sécu
+        
         int nbSteps = contrat.getEcheancier().getNbEcheances();
         if (nbSteps <= 0)
             nbSteps = 12; // Sécurité
+            
+        double quantiteDemandeeParStep = contrat.getEcheancier().getQuantiteTotale() / nbSteps;
+        
+        // On limite la proposition par step à dispoParStep ou disponible/nbSteps
+        double quantiteParStepMax = Math.min(disponible / nbSteps, dispoParStep);
 
-        double quantiteParStep = disponible / nbSteps;
+        if (quantiteDemandeeParStep <= quantiteParStepMax) {
+            return contrat.getEcheancier();
+        }
+
+        double quantiteParStep = quantiteParStepMax;
+        
         if (quantiteParStep * nbSteps < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
             return null;
         }
