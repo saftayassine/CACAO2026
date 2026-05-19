@@ -77,7 +77,7 @@ public class Transformateur3VendeurAppelDOffre extends Transformateur3VendeurAux
 				px = bourse.getCours(Feve.F_BQ).getMax()*1.75;
 			}
 			double quantite= Double.min(Double.min(offre.getQuantiteT(),this.getStockPrevuProduit(cm)),this.getStockProduit(cm));
-			if (quantite>100){
+			if (quantite>1000000000){
 				AppelDOffre newoffre= new AppelDOffre(offre.getAcheteur(), cm, quantite,offre.getTeteGondole());
 				return new OffreVente(newoffre, this, cm, px);
 			}
@@ -86,7 +86,7 @@ public class Transformateur3VendeurAppelDOffre extends Transformateur3VendeurAux
 			}
 		} else {
 			double quantite= Double.min(Double.min(offre.getQuantiteT(),this.getStockPrevuProduit(cm)),this.getStockProduit(cm));
-			if (quantite>100){
+			if (quantite>100000000){
 				AppelDOffre newoffre= new AppelDOffre(offre.getAcheteur(), cm, quantite,offre.getTeteGondole());
 				return new OffreVente(newoffre, this, cm, prixMoyen(cm)*1.05);
 			}
