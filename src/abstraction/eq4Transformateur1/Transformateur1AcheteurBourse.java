@@ -16,7 +16,7 @@ public class Transformateur1AcheteurBourse extends Transformateur1Couts implemen
     }
     /**@author Safta Yassine */ 
     public double demande(Feve f, double cours){
-        if (this.getStocksPrevuProduit(f) < 20000){
+        if (this.getStocksPrevuProduit(this.getChoco(f)) < 20000){
 			return 20000; 
 		}
 		else{

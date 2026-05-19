@@ -3,127 +3,147 @@ import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
 import java.util.HashMap;
 
+public class Producteur1Cooperative extends Producteur1Planteur {
 
-
-
-public class Producteur1Cooperative extends Producteur1Planteur{
-    
     HashMap<String, Double> coopNonEq = new HashMap<>();
     HashMap<String, Double> coopEq = new HashMap<>();
-    double pourcentageEnfant = 0.5 ;
 
-    public Producteur1Cooperative(){
+    // 50% de la force de travail non équitable est faite par des enfants
+    double pourcentageEnfant = 0.5;
+
+    // PART DE LA SURFACE ÉQUITABLE (0 = tout non équitable)
+    double partEquitable = 0.0;
+
+    public Producteur1Cooperative() {
         super();
-        this.coopEq.put("salaire adultes",2.);
-        this.coopEq.put("taille",this.getTaillePlantation(true));
 
+        //-----------------------------
+        // SALAIRES
+        //-----------------------------
+        coopEq.put("salaire adultes", 2.0);
 
-        this.coopNonEq.put("salaire adultes",0.5);
-        this.coopNonEq.put("salaire enfants",0.2);
+        coopNonEq.put("salaire adultes", 0.5);
+        coopNonEq.put("salaire enfants", 0.2);
 
-        //initilisation nombre de salariés eq
-        this.coopNonEq.put("taille",this.getTaillePlantation(false));
+        //-----------------------------
+        // RÉPARTITION DES TERRES
+        //-----------------------------
+        double surfaceTotale = 1000000;
 
-        int nbAdulteEq =  (int) Math.floor(this.getTaillePlantation(true)*30);
-        this.coopEq.put( "nombre adultes", (double) nbAdulteEq);
+        double surfaceEq = surfaceTotale * partEquitable;
+        double surfaceNonEq = surfaceTotale - surfaceEq;
 
+        coopEq.put("taille", surfaceEq);
+        coopNonEq.put("taille", surfaceNonEq);
 
-        //initilisation nombre de salariés non eq
-        int nbForceNonEq = (int) Math.floor(this.getTaillePlantation(false)*30);
-        double prop = 1/(2+ (1-this.pourcentageEnfant)/this.pourcentageEnfant);
+        //-----------------------------
+        // COOP ÉQUITABLE (100% adultes)
+        //-----------------------------
+        double forceEq = surfaceEq * 30;
 
-        double nbEnfant = (double) (int) Math.floor(prop * nbForceNonEq);
-        this.coopNonEq.put("nombre enfants", (double) nbEnfant ) ;
-        this.coopNonEq.put( "nombre adultes", (double) nbForceNonEq - nbEnfant*2);
+        coopEq.put("nombre adultes", forceEq);
 
-        System.err.println("nb enfant : " + this.coopNonEq.get("nombre enfants"));
-        System.err.println("nb adulte non Eq : " + this.coopNonEq.get("nombre adultes"));
-        System.err.println("nb adulte Eq : " + this.coopEq.get("nombre adultes"));
+        //-----------------------------
+        // COOP NON ÉQUITABLE
+        //-----------------------------
+        double forceNonEq = surfaceNonEq * 30;
+
+        double travailEnfant = forceNonEq * pourcentageEnfant;
+        double travailAdulte = forceNonEq - travailEnfant;
+
+        double nbEnfant = travailEnfant * 2;
+        double nbAdulte = travailAdulte;
+
+        coopNonEq.put("nombre enfants", nbEnfant);
+        coopNonEq.put("nombre adultes", nbAdulte);
     }
 
-    public double getSalaireAdulte(boolean equitable){
+    // -----------------------------
+    // GETTERS
+    // -----------------------------
+    public double getSalaireAdulte(boolean equitable) {
+        return equitable
+                ? coopEq.get("salaire adultes")
+                : coopNonEq.get("salaire adultes");
+    }
+
+    public double getNombreAdultes(boolean equitable) {
+        return equitable
+                ? coopEq.get("nombre adultes")
+                : coopNonEq.get("nombre adultes");
+    }
+
+    public double getNombreEnfant() {
+        return coopNonEq.get("nombre enfants");
+    }
+
+    public double getSalaireEnfant() {
+        return coopNonEq.get("salaire enfants");
+    }
+
+    // -----------------------------
+    // POURCENTAGE ENFANTS
+    // -----------------------------
+    public void setPourcentageEnfants(double p) {
+
+        if (p >= 0 && p <= 1) {
+
+            this.pourcentageEnfant = p;
+
+            double surfaceNonEq = coopNonEq.get("taille");
+            double force = surfaceNonEq * 30;
+
+            double travailEnfant = force * p;
+            double travailAdulte = force - travailEnfant;
+
+            coopNonEq.put("nombre enfants", travailEnfant * 2);
+            coopNonEq.put("nombre adultes", travailAdulte);
+        }
+    }
+
+    // -----------------------------
+    // SALAIRES
+    // -----------------------------
+    public void payerSalaire() {
+
+        double montantJournalier =
+                coopEq.get("nombre adultes") * coopEq.get("salaire adultes")
+                        +
+                coopNonEq.get("nombre adultes") * coopNonEq.get("salaire adultes")
+                        +
+                coopNonEq.get("nombre enfants") * coopNonEq.get("salaire enfants");
+
+        double montant = montantJournalier * 15;
+
+        Banque banque = Filiere.LA_FILIERE.getBanque();
+
+        banque.payerCout(
+                this,
+                this.cryptogramme,
+                "Masse salariale",
+                montant
+        );
+
+        this.journalBanque.ajouter(
+                "Salaire payé : " + montant
+        );
+    }
+
+    public void setSalaire(boolean adulte, boolean equitable, double salaire) {
+
         if (equitable) {
-            return this.coopEq.get("salaire adultes");
-            
+            coopEq.put("salaire adultes", salaire);
         }
-
-        else{
-            return this.coopNonEq.get("salaire adultes");
+        else if (adulte) {
+            coopNonEq.put("salaire adultes", salaire);
         }
-    }
-
-    public double getNombreAdultes(boolean equitable){
-        if (equitable) {
-            return this.coopEq.get("nombre adultes");
-            
-        }
-
-        else{
-            return this.coopNonEq.get("nombre adultes");
+        else {
+            coopNonEq.put("salaire enfants", salaire);
         }
     }
 
-    public double getNombreEnfant(){
-        return this.coopNonEq.get("nombre enfants");
-    }
-
-    public double getSalaireEnfant(){
-        return this.coopEq.get("salaire enfants");
-    }
-
-    public double getPourcentageEnfant(){
-        return this.pourcentageEnfant;
-    }
-
-
-    public void setPourcentageEnfants(double pourcent){
-
-        if (pourcent <= 0 && pourcent >= 100){
-            this.pourcentageEnfant = pourcent;
-
-            //Mise à jour du nombre d'enfants et d'adultes en non Eq
-            int nbForceNonEq = (int) Math.floor(this.getTaillePlantation(false)*30);
-            double prop = 1/(2+ (1-this.pourcentageEnfant)/this.pourcentageEnfant);
-
-            double nbEnfant = (double) (int) Math.floor(prop * nbForceNonEq);
-            this.coopNonEq.put("nombre enfants", (double) nbEnfant ) ;
-            this.coopNonEq.put( "nombre adultes", (double) nbForceNonEq - nbEnfant*2);
-        }
-    }
-
-    public void payerSalaire(){
-
-        double montant = this.coopEq.get("nombre adultes")* this.coopEq.get("salaire adultes")
-        + this.coopNonEq.get("nombre adultes")*this.coopNonEq.get("salaire adultes") 
-        +this.coopNonEq.get("salaire enfants")*this.coopNonEq.get("nombre enfants");
-
-
-        Banque banque=Filiere.LA_FILIERE.getBanque();
-        banque.payerCout(this, this.cryptogramme, "Masse salariales" , 15 * montant);
-        this.journal.ajouter("Salaire payé : " + montant);
-    }
-
-
-    public void setSalaire(boolean adulte, boolean equitable, double salaire){
-        if(equitable){
-            this.coopEq.put("salaire adultes", salaire);
-        }
-
-        else if(adulte){
-            this.coopNonEq.put("salaire adultes", salaire);
-        }
-
-        else{
-            this.coopNonEq.put("salaire enfants", salaire);
-        }
-    }
-
-
-    public void next(){
-
+    public void next() {
         super.next();
         this.payerSalaire();
-
     }
-
 }

@@ -81,8 +81,11 @@ public class StockEq7 {
     //Enlève dans la file d'action la quantité quantity avec la qualité quality
     public void RemoveAction(Gamme quality,double quantity){
         int i=0;
+        if (this.actions.size()==0){
+            return;
+        }
         while (quantity>0.){
-            if (this.actions.get(i).getGamme()==quality){
+            if (this.actions.size()>0 && this.actions.get(i).getGamme()==quality){
                 if (this.actions.get(i).getQuantity()<quantity){
                     quantity=quantity - this.actions.get(i).getQuantity();
                     this.actions.remove(i);
@@ -95,7 +98,8 @@ public class StockEq7 {
             else{
                 i++;
             }
-        }
+        
+    }
     }
 
     public void RemoveLowQ(double valeur){
@@ -104,7 +108,7 @@ public class StockEq7 {
             this.RemoveAction(Gamme.BQ, valeur);
         }
         else {
-            System.out.println("Stock de fèves BQ insuffisant");
+            //System.out.println("Stock de fèves BQ insuffisant");
         }
     }
 
@@ -114,7 +118,7 @@ public class StockEq7 {
             this.RemoveAction(Gamme.MQ, valeur);
         }
         else{
-            System.out.println("Stock de fèves MQ insuffisant");
+            //System.out.println("Stock de fèves MQ insuffisant");
         }
     }
 
@@ -125,7 +129,7 @@ public class StockEq7 {
         this.RemoveAction(Gamme.HQ, valeur);
         }
         else{
-            System.out.println("Stock de fèves HQ insuffisant");
+            //System.out.println("Stock de fèves HQ insuffisant");
         }
     }
     public void remove(double valeur, Gamme quality){

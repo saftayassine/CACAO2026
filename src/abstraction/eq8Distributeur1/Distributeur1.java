@@ -22,7 +22,7 @@ public class Distributeur1 extends MiseEnRayon {
 		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
 		Banque b=Filiere.LA_FILIERE.getBanque();
 		Variable v=this.getvolumestock();
-		double vr=this.getvolumerayon();
+		this.getvolumerayon();
 		double v1=v.getValeur();
 		double volumeCibleTotal = 3600000.0;
 
@@ -36,11 +36,17 @@ public class Distributeur1 extends MiseEnRayon {
 		//Choix de l'acteur
 		this.trierChocolatsParPrix();
 		if (Filiere.LA_FILIERE.getEtape() == 1) {
-			this.initialiserPrixReferenceUniquementChocolats();
+			this.initialiser();
 		}
+		this.lancement_CC = true;
 		this.lancerApprovisionnementGeneral(volumeCibleTotal);
+		this.lancement_CC = false;
 		this.executerMiseEnRayon();
-		
+		for (int j=0; j<p.size(); j++){
+			double f=this.getQuantiteEnRayon(p.get(j),this.cryptogramme);
+		}
+		this.actualiserPrixDeVente();
+		this.actualiserPrixDachatParContrats();
 
 		//JournalActions
 		this.journal3.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());

@@ -111,6 +111,16 @@ public class Transformateur3VendeurCCadre extends Transformateur3AcheteurCCadre 
                 sup.demandeVendeur(acheteur, this, LamborghiniduCacao, e, cryptogramme, false);
             }
         }
+
+        if (this.getStockProduit(Chocoenbien) > 200 && !acheteurs.isEmpty()) {
+            IAcheteurContratCadre acheteur = acheteurs.get(0);
+            if (acheteur instanceof IDistributeurChocolatDeMarque) {
+                Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape()+1, 2, this.getStockProduit(Chocoenbien) / 2);
+                this.journalCCVente.ajouter("Envoi d'une demande vendeur pour " + Chocoenbien + " \u00e0 " + acheteur.getNom());
+                sup.demandeVendeur(acheteur, this, Chocoenbien, e, cryptogramme, false);
+            }
+        }
+        
         List<ExemplaireContratCadre> termines = new LinkedList<ExemplaireContratCadre>();
         for (ExemplaireContratCadre c : this.contratsVendus) {
             if (c.getQuantiteRestantALivrer()==0.0 && c.getMontantRestantARegler()<=0.0) {

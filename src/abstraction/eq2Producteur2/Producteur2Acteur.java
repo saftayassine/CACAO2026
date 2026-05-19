@@ -12,12 +12,11 @@ import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
 
-
 public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	/** @author Thomas */
-	protected HashMap<Feve,Double> fevesSeches = new HashMap<Feve, Double>();
+	protected HashMap<Feve, Double> fevesSeches = new HashMap<Feve, Double>();
 	protected Journal journal = new Journal("Journal Eq2", this);
-	protected Journal JournalBanque  = new Journal("Journal Banque Eq2", this);
+	protected Journal JournalBanque = new Journal("Journal Banque Eq2", this);
 	protected Journal journalContratCadre = new Journal("Journal Contrat Cadre Eq2", this);
 	protected List<Plantation> plantations;
 
@@ -35,7 +34,7 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 		// Initialiser le journal des coûts avec l'acteur correct
 		this.JournalCout = new Journal("Journal Coûts Eq2", this);
 	}
-	
+
 	/** @author Thomas */
 	public void initialiser() {
 	}
@@ -43,13 +42,13 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	public String getNom() {// NE PAS MODIFIER
 		return "EQ2";
 	}
-	
+
 	public String toString() {// NE PAS MODIFIER
 		return this.getNom();
 	}
 
 	////////////////////////////////////////////////////////
-	//         En lien avec l'interface graphique         //
+	// En lien avec l'interface graphique //
 	////////////////////////////////////////////////////////
 	/** @author Thomas */
 	public void next() {
@@ -65,48 +64,47 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
-		return new Color(244, 198, 156); 
+		return new Color(244, 198, 156);
 	}
 
 	public String getDescription() {
-		return "Producteur de fèves de cacao simples (BQ, MQ, HQ).";
+		return "Producteur de fèves de cacao";
 	}
 
 	// Renvoie les indicateurs
 	public List<Variable> getIndicateurs() {
 		List<Variable> res = new ArrayList<Variable>();
-		
+
 		// Stock total général
 		res.add(this.stockTotal);
-		
+
 		// Stocks détaillés par type de fève
-		for (Feve feve : new Feve[] {Feve.F_HQ, Feve.F_BQ, Feve.F_MQ, Feve.F_HQ_E}) {
+		for (Feve feve : new Feve[] { Feve.F_HQ, Feve.F_BQ, Feve.F_MQ, Feve.F_HQ_E }) {
 			Variable stockFeve = this.stockvar.get(feve);
 			if (stockFeve != null) {
 				res.add(stockFeve);
 			}
 		}
-		
-		// Ajouter les indicateurs pour chaque type de plantation
+
 		if (this.plantations != null) {
 			for (Plantation p : this.plantations) {
 				res.add(new Variable("Hectares " + p.getTypeFeve(), this, p.getParcelles()));
 			}
 		}
-		
+
 		return res;
 	}
 
 	// Renvoie les parametres
 	public List<Variable> getParametres() {
-		List<Variable> res=new ArrayList<Variable>();
+		List<Variable> res = new ArrayList<Variable>();
 		return res;
 	}
 
 	// Renvoie les journaux
 	/** @author Thomas */
 	public List<Journal> getJournaux() {
-		List<Journal> res=new ArrayList<Journal>();
+		List<Journal> res = new ArrayList<Journal>();
 		res.add(this.journal);
 		res.add(this.JournalBanque);
 		res.add(this.journalContratCadre);
@@ -114,10 +112,10 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	}
 
 	////////////////////////////////////////////////////////
-	//               En lien avec la Banque               //
+	// En lien avec la Banque //
 	////////////////////////////////////////////////////////
 
-	// Appelee en debut de simulation pour vous communiquer 
+	// Appelee en debut de simulation pour vous communiquer
 	// votre cryptogramme personnel, indispensable pour les
 	// transactions.
 	public void setCryptogramme(Integer crypto) {
@@ -134,20 +132,30 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 	public void notificationOperationBancaire(double montant) {
 		this.JournalBanque.ajouter("Opération bancaire : " + montant + "€ | Solde actuel : " + this.getSolde() + "€");
 	}
-	
+
 	// Renvoie le solde actuel de l'acteur
 	protected double getSolde() {
 		return Filiere.LA_FILIERE.getBanque().getSolde(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme);
 	}
 
+	@Override
+	public void TaxeStockage() {
+		double montant = this.stockTotal.getValeur(this.cryptogramme) * this.cout_stockage;
+		if (montant > 0) {
+			Filiere.LA_FILIERE.getBanque().payerCout(this, this.cryptogramme, "Taxe de stockage", montant);
+			this.JournalBanque.ajouter("Paiement de la taxe de stockage : " + montant + "€ pour "
+					+ this.stockTotal.getValeur(this.cryptogramme) + " T");
+		}
+	}
+
 	////////////////////////////////////////////////////////
-	//        Pour la creation de filieres de test        //
+	// Pour la creation de filieres de test //
 	////////////////////////////////////////////////////////
 
 	// Renvoie la liste des filieres proposees par l'acteur
 	public List<String> getNomsFilieresProposees() {
 		ArrayList<String> filieres = new ArrayList<String>();
-		return(filieres);
+		return (filieres);
 	}
 
 	// Renvoie une instance d'une filiere d'apres son nom
@@ -164,6 +172,5 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}
 	}
-
 
 }

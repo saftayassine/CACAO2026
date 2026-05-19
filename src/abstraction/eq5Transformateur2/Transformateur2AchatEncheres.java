@@ -1,22 +1,16 @@
 package abstraction.eq5Transformateur2;
 
-import java.util.HashMap;
-import java.util.List;
-import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.produits.IProduit;
 import abstraction.eqXRomu.bourseCacao.BourseCacao;
-import abstraction.eqXRomu.bourseCacao.IAcheteurBourse;
 import abstraction.eqXRomu.encheres.Enchere;
-import abstraction.eqXRomu.encheres.ExempleAbsAcheteurAuxEncheres;
 import abstraction.eqXRomu.encheres.IAcheteurAuxEncheres;
-import abstraction.eqXRomu.encheres.IVendeurAuxEncheres;
 import abstraction.eqXRomu.encheres.MiseAuxEncheres;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.Feve;
 
 /**
- * Auteur Maxence
+ * @Auteur Maxence
  */
 
 

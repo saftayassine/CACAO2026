@@ -36,7 +36,6 @@ public class Producteur2Stock {
         this.stock_initial.put(Feve.F_BQ, 5000.0);
         this.stock_initial.put(Feve.F_MQ, 4000.0);
         this.stock_initial.put(Feve.F_HQ, 1200.0);
-        this.stock_initial.put(Feve.F_HQ_E, 0.0);
 
         for (Feve f : Feve.values()) {
             this.stockvar.get(f).setValeur(null, this.stock_initial.get(f));
@@ -149,7 +148,6 @@ public class Producteur2Stock {
 
 
     public void TaxeStockage(){
-        this.stockTotal.getValeur(cryptogramme);
     }
 
 }

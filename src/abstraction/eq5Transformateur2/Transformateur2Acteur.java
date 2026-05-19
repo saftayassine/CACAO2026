@@ -1,7 +1,6 @@
 package abstraction.eq5Transformateur2;
 
 import java.awt.Color;
-import java.awt.geom.FlatteningPathIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.lang.Integer;
@@ -15,7 +14,6 @@ import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.IProduit;
-import abstraction.eqXRomu.produits.Feve;
 
 public class Transformateur2Acteur implements IActeur {
 	
@@ -41,6 +39,7 @@ public class Transformateur2Acteur implements IActeur {
 		this.Journaux.add(new Journal("Achat Bourse", this));
 		this.Journaux.add(new Journal("Vente AO", this));
 		this.Journaux.add(new Journal("Achat AO", this));
+		this.Journaux.add(new Journal("Frais divers", this));
 		this.initialise=false;
 	}
 	
@@ -68,7 +67,7 @@ public class Transformateur2Acteur implements IActeur {
 	/** @author Pierre
 	 */
 	public void next() {
-		for (int i = 0; i < 9; i++){
+		for (int i = 0; i < this.Journaux.size(); i++){
 			this.Journaux.get(i).ajouter("Etape : "+ Integer.toString((Filiere.LA_FILIERE.getEtape()))+ "\n");
 		}
 		/*

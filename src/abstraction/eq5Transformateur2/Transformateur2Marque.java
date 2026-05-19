@@ -1,13 +1,12 @@
 package abstraction.eq5Transformateur2;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import abstraction.eqXRomu.filiere.IMarqueChocolat;
 /** @author Maxence 
 **/
-public class Transformateur2Marque extends Transformateur2Stock implements IMarqueChocolat{
+public class Transformateur2Marque extends Transformateur2AnalyseurMarche implements IMarqueChocolat{
 
     @Override
     public List<String> getMarquesChocolat() {

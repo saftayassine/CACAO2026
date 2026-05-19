@@ -23,12 +23,33 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
     public ChocolatDeMarque ProntellaH= new ChocolatDeMarque(Chocolat.C_HQ, "Prontella", 65);
     public ChocolatDeMarque ProntellaBE= new ChocolatDeMarque(Chocolat.C_BQ_E, "Prontella", 50);
     public ChocolatDeMarque ProntellaHE= new ChocolatDeMarque(Chocolat.C_HQ_E, "Prontella", 65);
+    private HashMap<Integer, List<Double>> PeremptionProntellaB= new HashMap<Integer, List<Double>>();
+    private HashMap<Integer, List<Double>> PeremptionProntellaM= new HashMap<Integer, List<Double>>();
+    private HashMap<Integer, List<Double>> PeremptionProntellaH= new HashMap<Integer, List<Double>>();
+    private HashMap<Integer, List<Double>> PeremptionProntellaBE= new HashMap<Integer, List<Double>>();
+    private HashMap<Integer, List<Double>> PeremptionProntellaHE= new HashMap<Integer, List<Double>>();
+    private int NumLotMinB=0;
+    private int NumLotMinM=0;
+    private int NumLotMinH=0;
+    private int NumLotMinBE=0;
+    private int NumLotMinHE=0;
+    private int NumLotMaxB=0;
+    private int NumLotMaxM=0;   
+    private int NumLotMaxH=0;
+    private int NumLotMaxBE=0;  
+    private int NumLotMaxHE=0;
 
     public Transformateur1Stock(){
         super();
         this.stock=new HashMap<IProduit, Double>();
         this.stockPrévu=new HashMap<IProduit, Double>();
         this.ChocoProduit=0;
+        this.PeremptionProntellaB.put(0, new ArrayList<Double>());
+        this.PeremptionProntellaM.put(0, new ArrayList<Double>());  
+        this.PeremptionProntellaH.put(0, new ArrayList<Double>());
+        this.PeremptionProntellaBE.put(0, new ArrayList<Double>());
+        this.PeremptionProntellaHE.put(0, new ArrayList<Double>());
+
     }
     public List<ChocolatDeMarque> getChocolatsProduits(){
 		List<ChocolatDeMarque> ListeChoco=new ArrayList<ChocolatDeMarque>();
@@ -85,6 +106,32 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
     public HashMap<IProduit, Double> getStockPrevu(){
         return this.stockPrévu;
     }
+
+    public IProduit getChoco(IProduit f){
+        if (f instanceof Feve){
+        if (f==Feve.F_BQ){
+            return ProntellaB;
+        }
+        else if (f==Feve.F_MQ){
+            return ProntellaM;
+        }
+        else if (f==Feve.F_HQ){
+            return ProntellaH;
+        }
+        else if (f==Feve.F_BQ_E){
+            return ProntellaBE;
+        }
+        else if (f==Feve.F_HQ_E){
+            return ProntellaHE;
+        }
+        else{
+            return null;
+        }}
+        else{
+            return null;
+        }
+    }
+
 
     public double getStocksProduit(IProduit produit){
         if (this.getStock().keySet().contains(produit)){
@@ -204,5 +251,57 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         this.setStocksProduit(Feve.F_HQ_E, this.getStocksProduit(Feve.F_HQ_E)-F_HQ_E_ATransfo);
         this.setStocksProduit(ProntellaHE, this.getStocksProduit(ProntellaHE)+ChocoHEObtenu);
         this.setStocksPrevuProduit(ProntellaHE, this.getStocksPrevuProduit(ProntellaHE)+ChocoHEObtenu);
+
+        if (!this.PeremptionProntellaB.isEmpty()){
+            if (!this.PeremptionProntellaB.get(NumLotMinB).isEmpty()){
+                while (!this.PeremptionProntellaB.isEmpty() && this.PeremptionProntellaB.get(NumLotMinB).get(0)<=Filiere.LA_FILIERE.getEtape()){
+                    double quantitePerimee= PeremptionProntellaB.get(NumLotMinB).get(1);
+                    this.setStocksProduit(ProntellaB, this.getStocksProduit(ProntellaB)-quantitePerimee);
+                    this.setStocksPrevuProduit(ProntellaB, this.getStocksPrevuProduit(ProntellaB)-quantitePerimee);
+                    this.PeremptionProntellaB.remove(NumLotMinB);
+                    NumLotMinB++;
+        }
+        }
+    }
+
+        if (!this.PeremptionProntellaBE.isEmpty()){
+            if (!this.PeremptionProntellaBE.get(NumLotMinBE).isEmpty()){
+        while (!this.PeremptionProntellaBE.isEmpty() && this.PeremptionProntellaBE.get(NumLotMinBE).get(0)<=Filiere.LA_FILIERE.getEtape()){
+            double quantitePerimee= PeremptionProntellaBE.get(NumLotMinBE).get(1);
+            this.setStocksProduit(ProntellaBE, this.getStocksProduit(ProntellaBE)-quantitePerimee);
+            this.setStocksPrevuProduit(ProntellaBE, this.getStocksPrevuProduit(ProntellaBE)-quantitePerimee);
+            this.PeremptionProntellaBE.remove(NumLotMinBE);
+            NumLotMinBE++;
+        }
+    }
+}
+        if (!this.PeremptionProntellaM.isEmpty()){
+            if (!this.PeremptionProntellaM.get(NumLotMinM).isEmpty()){
+        while (!this.PeremptionProntellaM.isEmpty() && this.PeremptionProntellaM.get(NumLotMinM).get(0)<=Filiere.LA_FILIERE.getEtape()){
+            double quantitePerimee= PeremptionProntellaM.get(NumLotMinM).get(1);
+            this.setStocksProduit(ProntellaM, this.getStocksProduit(ProntellaM)-quantitePerimee);
+            this.setStocksPrevuProduit(ProntellaM, this.getStocksPrevuProduit(ProntellaM)-quantitePerimee);
+            this.PeremptionProntellaM.remove(NumLotMinM);
+            NumLotMinM++;
+        }}
+        }
+        if (!this.PeremptionProntellaH.isEmpty()){
+            if (!this.PeremptionProntellaH.get(NumLotMinH).isEmpty()){
+        while (!this.PeremptionProntellaH.isEmpty() && this.PeremptionProntellaH.get(NumLotMinH).get(0)<=Filiere.LA_FILIERE.getEtape()){
+            double quantitePerimee= PeremptionProntellaH.get(NumLotMinH).get(1);
+            this.setStocksProduit(ProntellaH, this.getStocksProduit(ProntellaH)-quantitePerimee);
+            this.setStocksPrevuProduit(ProntellaH, this.getStocksPrevuProduit(ProntellaH)-quantitePerimee);
+            this.PeremptionProntellaH.remove(NumLotMinH);
+            NumLotMinH++;
+        }}}
+        if (!this.PeremptionProntellaHE.isEmpty()){
+            if (!this.PeremptionProntellaHE.get(NumLotMinHE).isEmpty()){
+        while (!this.PeremptionProntellaHE.isEmpty() && this.PeremptionProntellaHE.get(NumLotMinHE).get(0)<=Filiere.LA_FILIERE.getEtape()){
+            double quantitePerimee= PeremptionProntellaHE.get(NumLotMinHE).get(1);
+            this.setStocksProduit(ProntellaHE, this.getStocksProduit(ProntellaHE)-quantitePerimee);
+            this.setStocksPrevuProduit(ProntellaHE, this.getStocksPrevuProduit(ProntellaHE)-quantitePerimee);
+            this.PeremptionProntellaHE.remove(NumLotMinHE);
+            NumLotMinHE++;
+        }}}
     }
 }

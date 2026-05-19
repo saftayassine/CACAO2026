@@ -22,11 +22,13 @@ public class Producteur1Acteur implements IActeur {
 	protected Journal journal;
 	protected int cryptogramme;
 	protected Variable stockTot;
+	protected Journal journalBanque;
 
 	public Producteur1Acteur() {
 
 		//Créer un journal à chaque next  
 		this.journal = new Journal("Journal "+this.getNom(), this);
+		this.journalBanque = new Journal("Journal "+this.getNom()+ " banque", this);
 
 		//Ajoutez un indicateur du volume total de notre stock, en tonne Elise Dossal/Théophile Trillat
 		this.stockTot = new VariableReadOnly("stock de EQ1", "<html>Stock de EQ1</html>",this, 0.0, 1000000000.0, 6000.0);
@@ -79,6 +81,7 @@ public class Producteur1Acteur implements IActeur {
 	public List<Journal> getJournaux() {
 		List<Journal> res=new ArrayList<Journal>();
 		res.add(this.journal);
+		res.add(this.journalBanque);
 		return res;
 	}
 

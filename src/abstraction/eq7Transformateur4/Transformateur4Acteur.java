@@ -16,6 +16,15 @@ public class Transformateur4Acteur implements IActeur {
 	
 	protected int cryptogramme;
 	protected Journal journal; //Aymeric
+	protected Journal journal_production;
+	protected Journal journal_achat_bourse;
+
+	protected Journal journal_CC_achat;
+	
+	protected Journal journal_vente_enchere;
+
+	protected Journal journal_vente_CC;
+	protected Journal journal_negociation_CC;
 	private StockEq7 stock_Equitable;
 	private StockEq7 stock_PasEquitable;
 	private Variable LQ; //Indicateur LQ Equitable + pas equitable
@@ -24,6 +33,9 @@ public class Transformateur4Acteur implements IActeur {
 	protected Variable StockChoco_BQ;
 	protected Variable StockChoco_MQ;
 	protected Variable StockChoco_HQ;
+	protected Variable cout_prod;
+	protected Journal cout_prod_journal;
+	protected Variable cours_feves_bq;
 	public Transformateur4Acteur() {
 		//Aymeric
 		this.journal = new Journal("Journal equipe 7 (transformateur)", this);
@@ -34,11 +46,24 @@ public class Transformateur4Acteur implements IActeur {
 		this.LQ=new Variable("LQ", this,0);
 		this.MQ=new Variable("MQ",this,0);
 		this.HQ=new Variable("HQ", this, 0);
+
+		this.journal_vente_CC = new Journal("Ventes CC", this);
+		this.journal_production = new Journal("Production", this);
+		this.journal_achat_bourse = new Journal("Achat en bourse",this);
+		this.journal_negociation_CC = new Journal("Negociations Contrats Cadres",this);
+		this.journal_CC_achat=new Journal("Contrats cadre achat fèves",this);
+		this.journal_vente_enchere = new Journal("Vente aux enchères", this);
+
+		this.cout_prod = new Variable("Coût instantannée de production d'une tonne de chocolat", this,0);
+		this.cout_prod_journal = new Journal("Coût instantannée de production", this);
+		this.cours_feves_bq = new Variable("Cours fèves basse qualité", this, 0);
 		
 		//Paul
 		this.StockChoco_BQ=new Variable("StockChoco_BQ", this, 0);
 		this.StockChoco_MQ=new Variable("StockChoco_MQ", this, 0);
 		this.StockChoco_HQ=new Variable("StockChoco_HQ", this, 0);	
+
+		
 
 
 	}
@@ -71,6 +96,7 @@ public class Transformateur4Acteur implements IActeur {
 		//Matteo
 		this.stock_Equitable.next();
 		this.stock_PasEquitable.next();
+
 	}
 
 	public Color getColor() {// NE PAS MODIFIER
@@ -88,8 +114,9 @@ public class Transformateur4Acteur implements IActeur {
 		res.add(this.LQ);
 		res.add(this.MQ);
 		res.add(this.HQ);
-		
-
+		res.add(this.StockChoco_BQ);
+		res.add(this.cours_feves_bq);
+		res.add(this.cout_prod);
 		return res;
 	}
 
@@ -103,6 +130,13 @@ public class Transformateur4Acteur implements IActeur {
 	public List<Journal> getJournaux() {
 		List<Journal> res=new ArrayList<Journal>();
 		res.add(this.journal);
+		res.add(this.journal_achat_bourse);
+		res.add(this.journal_production);
+		res.add(this.journal_vente_CC);
+		res.add(this.journal_negociation_CC);
+		res.add(this.journal_CC_achat);
+		res.add(this.journal_vente_enchere);
+
 		return res;
 	}
 
@@ -113,48 +147,6 @@ public class Transformateur4Acteur implements IActeur {
 	public StockEq7 get_Stock(){
 		return this.stock_PasEquitable;
 	}
-
-	////////////////////////////////////////////////////////
-	//               En lien avec la Banque               //
-	////////////////////////////////////////////////////////
-
-	// Appelee en debut de simulation pour vous communiquer 
-	// votre cryptogramme personnel, indispensable pour les
-	// transactions.
-	public void setCryptogramme(Integer crypto) {
-		this.cryptogramme = crypto;
-	}
-
-	// Appelle lorsqu'un acteur fait faillite (potentiellement vous)
-	// afin de vous en informer.
-	public void notificationFaillite(IActeur acteur) {
-	}
-
-	// Apres chaque operation sur votre compte bancaire, cette
-	// operation est appelee pour vous en informer
-	public void notificationOperationBancaire(double montant) {
-	}
-	
-	// Renvoie le solde actuel de l'acteur
-	protected double getSolde() {
-		return Filiere.LA_FILIERE.getBanque().getSolde(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme);
-	}
-
-	////////////////////////////////////////////////////////
-	//        Pour la creation de filieres de test        //
-	////////////////////////////////////////////////////////
-
-	// Renvoie la liste des filieres proposees par l'acteur
-	public List<String> getNomsFilieresProposees() {
-		ArrayList<String> filieres = new ArrayList<String>();
-		return(filieres);
-	}
-
-	// Renvoie une instance d'une filiere d'apres son nom
-	public Filiere getFiliere(String nom) {
-		return Filiere.LA_FILIERE;
-	}
-
 	//Matteo
 	public Variable get_StockChoco_HQ(){
 		return this.StockChoco_HQ;
@@ -198,6 +190,49 @@ public class Transformateur4Acteur implements IActeur {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}
 	}
+
+	////////////////////////////////////////////////////////
+	//               En lien avec la Banque               //
+	////////////////////////////////////////////////////////
+
+	// Appelee en debut de simulation pour vous communiquer 
+	// votre cryptogramme personnel, indispensable pour les
+	// transactions.
+	public void setCryptogramme(Integer crypto) {
+		this.cryptogramme = crypto;
+	}
+
+	// Appelle lorsqu'un acteur fait faillite (potentiellement vous)
+	// afin de vous en informer.
+	public void notificationFaillite(IActeur acteur) {
+	}
+
+	// Apres chaque operation sur votre compte bancaire, cette
+	// operation est appelee pour vous en informer
+	public void notificationOperationBancaire(double montant) {
+	}
+	
+	// Renvoie le solde actuel de l'acteur
+	protected double getSolde() {
+		return Filiere.LA_FILIERE.getBanque().getSolde(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme);
+	}
+
+	////////////////////////////////////////////////////////
+	//        Pour la creation de filieres de test        //
+	////////////////////////////////////////////////////////
+
+	// Renvoie la liste des filieres proposees par l'acteur
+	public List<String> getNomsFilieresProposees() {
+		ArrayList<String> filieres = new ArrayList<String>();
+		return(filieres);
+	}
+
+	// Renvoie une instance d'une filiere d'apres son nom
+	public Filiere getFiliere(String nom) {
+		return Filiere.LA_FILIERE;
+	}
+
+	
 }
 
 

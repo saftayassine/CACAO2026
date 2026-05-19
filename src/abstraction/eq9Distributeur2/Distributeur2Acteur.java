@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import abstraction.eqXRomu.filiere.IMarqueChocolat;
 import abstraction.eqXRomu.clients.ClientFinal;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
@@ -14,9 +15,13 @@ import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
-public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarque {
+public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarque, IMarqueChocolat {
 	protected int cryptogramme;
 	protected Journal journal;
+	protected Journal journalStocks;
+	protected Journal journalCC;
+	protected Journal journalAO;
+	protected Journal journalFinancier;
 	protected Map<IProduit, Double> stock;
 	protected Variable indicateurStockTotal;
     protected Map<ChocolatDeMarque, Double> prix;
@@ -34,14 +39,16 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
      * @author Paul Juhel
      */
 	public Distributeur2Acteur() {
-		this.journal = new Journal("Journal EQ9", this);
+		this.journal = new Journal("Journal EQ9 - Général", this);
+		this.journalStocks = new Journal("Journal EQ9 - Stocks", this);
+		this.journalCC = new Journal("Journal EQ9 - Contrats Cadres", this);
+		this.journalAO = new Journal("Journal EQ9 - Appels d'offres", this);
+		this.journalFinancier = new Journal("Journal EQ9 - Finances", this);
 		this.stock = new HashMap<>();
-        this.prix = new HashMap<>();
-        this.strategieFixationPrix = new EQ9_StrategieFixationPrix(this.journal);
 		this.indicateurStockTotal = new Variable("EQ9_stock_total", this, 0.0);
-        this.indicateurMargeMoyenne = new Variable("EQ9_marge_moyenne", this, 18.0);
-        this.indicateurMixMarquePrivee = new Variable("EQ9_pct_marque_privee", this, 40.0);
-        this.indicateurProfitBrutEtape = new Variable("EQ9_profit_brut", this, 0.0);
+		this.indicateurMargeMoyenne = new Variable("EQ9_marge_moyenne", this, 18.0);
+		this.indicateurMixMarquePrivee = new Variable("EQ9_pct_marque_privee", this, 40.0);
+		this.indicateurProfitBrutEtape = new Variable("EQ9_profit_brut", this, 0.0);
 	}
 
 
@@ -56,16 +63,22 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         // Initialiser le stock pour TOUS les produits disponibles (pas seulement le premier)
         if (produits != null && !produits.isEmpty()) {
             for (ChocolatDeMarque choco : produits) {
-                
-                this.stock.put(choco, 0.0);
+                // Stock initial réaliste : 200 tonnes par produit
+                this.stock.put(choco, 200.0); // 200 tonnes = 200 000 kg
             }
         }
 
         this.indicateurStockTotal.setValeur(this, getStockTotal());
 
+        // Initialisation des prix selon la qualité du chocolat
+        this.prix = new HashMap<>();
         
+        this.strategieFixationPrix = new EQ9_StrategieFixationPrix(journal);
         
-        
+        this.indicateurMargeMoyenne.setValeur(this, 18.0);
+        this.indicateurMixMarquePrivee.setValeur(this, 40.0);
+        this.indicateurProfitBrutEtape.setValeur(this, 0.0);
+
         journal.ajouter("Initialisation terminée : " + produits.size() + " produits en stock");
     }
 
@@ -137,6 +150,10 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
 	public List<Journal> getJournaux() {
 		List<Journal> res=new ArrayList<Journal>();
 		res.add(journal);
+		res.add(journalStocks);
+		res.add(journalCC);
+		res.add(journalAO);
+		res.add(journalFinancier);
 		return res;
 	}
 
@@ -215,7 +232,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
             default:     return 0.0;
         }
     }
-    return prix.get(choco);
+    return prix.getOrDefault(choco, 0.0);
 }
 
 @Override
@@ -367,7 +384,18 @@ private double estimerPrixConcurrent(ChocolatDeMarque choco) {
     return Filiere.LA_FILIERE.prixMoyen(choco, etape - 1);
 }
 
-
+////////////////////////////////////////////////////////
+//              IMarqueChocolat                       //
+////////////////////////////////////////////////////////
+/**
+ * @author Anass Ouisrani
+ */
+@Override
+public List<String> getMarquesChocolat() {
+    List<String> marques = new ArrayList<>();
+    marques.add(NOM_MARQUE);
+    return marques;
+}
 }
 
 

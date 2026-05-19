@@ -10,6 +10,7 @@ import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
 import abstraction.eqXRomu.contratsCadres.IVendeurContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.IProduit;
@@ -54,19 +55,56 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     }
 
     public double propositionPrix(ExemplaireContratCadre contrat){
-        return 90000;
+        IProduit produit = contrat.getProduit();
+            if (produit == this.ProntellaM){
+                return 11000;
+            }
+            else if (produit == this.ProntellaB){
+                return 9000;
+            }
+            else if (produit == this.ProntellaH){
+                return 13000;
+            }
+            else if (produit == this.ProntellaBE){
+                return 10000;
+            }
+            else if (produit == this.ProntellaHE){
+                return 14000;
+            }
+            else{
+                return 0.0;
+                
+            }
     }
 
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){
-        return Double.max(contrat.getPrix(),2000);
+        IProduit produit = contrat.getProduit();
+        double prix= contrat.getPrix();
+            if (produit == this.ProntellaM && prix>=9500){
+                return prix;
+            }
+            else if (produit == this.ProntellaB && prix>=7500){
+                return prix;
+            }
+            else if (produit == this.ProntellaH && prix>=11000){
+                return prix;
+            }
+            else if (produit == this.ProntellaBE && prix>=8500){
+                return prix;
+            }
+            else if (produit == this.ProntellaHE && prix>=12000){
+                return prix;
+            }
+            else{
+                return 0.0;
+            }
     }
 
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
         if (contrat.getVendeur().equals(this)){
             journalVenteCC.ajouter("Nouveau contrat cadre : "+contrat.toString());
         this.setStocksPrevuProduit(contrat.getProduit(),this.getStocksPrevuProduit(contrat.getProduit())-contrat.getQuantiteTotale());
-        }
-        
+        }        
     }
 
 
@@ -89,15 +127,18 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
         super.next();
     SuperviseurVentesContratCadre sup =null;
     sup= (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
-    List<IAcheteurContratCadre> acheteurs= sup.getAcheteurs(ProntellaM);
-    if (this.getStocksProduit(ProntellaM)>200 && this.getStocksPrevuProduit(ProntellaM)>200 && this.getStocksPrevuProduit(ProntellaM)<200000){
-    Echeancier e= new Echeancier(Filiere.LA_FILIERE.getEtape()+1,2,(Double.min(this.getStocksProduit(ProntellaM),this.getStocksPrevuProduit(ProntellaM)))/2);
+    for ( ChocolatDeMarque cm:this.getChocolatsProduits() ){
+        List<IAcheteurContratCadre> acheteurs= sup.getAcheteurs(cm);
+        if (this.getStocksProduit(cm)>200 && this.getStocksPrevuProduit(cm)>200 && this.getStocksPrevuProduit(cm)<200000){
+        Echeancier e= new Echeancier(Filiere.LA_FILIERE.getEtape()+1,2,(Double.min(this.getStocksProduit(cm),this.getStocksPrevuProduit(cm)))/2);
         if (!acheteurs.isEmpty()) {
-        ExemplaireContratCadre contrat=sup.demandeVendeur(acheteurs.get(0), this, ProntellaM, e, cryptogramme, false);
+        ExemplaireContratCadre contrat=sup.demandeVendeur(acheteurs.get(0), this, cm, e, cryptogramme, true);
         if (! (contrat==null)){
             this.setStocksPrevuProduit(contrat.getProduit(),this.getStocksPrevuProduit(contrat.getProduit())-contrat.getQuantiteTotale());
         }
         }
     }
+    }
+    
     }
 }

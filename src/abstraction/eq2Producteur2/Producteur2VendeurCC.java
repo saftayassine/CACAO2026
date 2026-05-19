@@ -41,7 +41,9 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
             this.journalContratCadre.ajouter("Stock disponible " + f + " = " + disponible);
             double seuilCC = (f == Feve.F_HQ) ? 10.0 : 100.0;
             if (disponible > seuilCC) {
-                double parStep = Math.max(100.0, Math.min(disponible / 12.0, 1000.0));
+                // Retrait du plafond de 1000 T pour proposer des méga-contrats adaptés à notre
+                // grosse production
+                double parStep = Math.max(100.0, disponible / 12.0);
                 Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
                 List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
                 if (!acheteurs.isEmpty()) {
@@ -59,7 +61,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
                                     + " = " + contrat.getQuantiteTotale());
 
                             disponible -= contrat.getQuantiteTotale();
-                            parStep = Math.max(100.0, Math.min(disponible / 12.0, 1000.0));
+                            parStep = Math.max(100.0, disponible / 12.0);
                             if (parStep >= 100.0)
                                 e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
                         } else {
@@ -78,6 +80,9 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         double res = 0;
         for (ExemplaireContratCadre c : this.contratsEnCours) {
             if (c.getProduit().equals(f)) {
+                // Il faut absolument bloquer la quantité TOTALE restante du contrat,
+                // sinon on vend la même fève deux fois (en CC et en Bourse) et on fait faillite
+                // !
                 res += c.getQuantiteRestantALivrer();
             }
         }
@@ -91,7 +96,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         }
         Feve f = (Feve) produit;
         double disponible = stocks.get(f).getValeur(this.cryptogramme) - restantDu(f);
-        double seuilVente = (f == Feve.F_HQ) ? 100.0 : 1200.0;
+        double seuilVente = (f == Feve.F_HQ) ? 10.0 : 100.0;
         boolean peutVendre = disponible > seuilVente;
         this.journalContratCadre
                 .ajouter("vend? " + f + " (disponible=" + disponible + ", seuil=" + seuilVente + ") -> " + peutVendre);
@@ -112,11 +117,16 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         if (quantiteDemandee <= disponible) {
             return contrat.getEcheancier();
         }
-        double quantiteParStep = disponible / 12.0;
-        if (quantiteParStep * 12.0 < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
+
+        int nbSteps = contrat.getEcheancier().getNbEcheances();
+        if (nbSteps <= 0)
+            nbSteps = 12; // Sécurité
+
+        double quantiteParStep = disponible / nbSteps;
+        if (quantiteParStep * nbSteps < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
             return null;
         }
-        return new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, quantiteParStep);
+        return new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, nbSteps, quantiteParStep);
     }
 
     @Override
@@ -140,8 +150,9 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         double prixMinimum = this.prixMinimumAcceptable(feve);
         if (prixActuel < prixMinimum) {
             this.journalContratCadre
-                    .ajouter("Refus prix CC " + prixActuel + " < seuil " + prixMinimum + " pour " + feve);
-            return 0.0;
+                    .ajouter("Contre-proposition: Acheteur propose " + prixActuel + " < " + prixMinimum + " pour "
+                            + feve + " -> on impose " + prixMinimum);
+            return prixMinimum; // On force l'acheteur à monter au prix minimum au lieu d'annuler
         }
 
         if (feve == Feve.F_HQ_E) {

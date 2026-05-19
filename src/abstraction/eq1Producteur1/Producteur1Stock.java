@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
 
 
@@ -18,6 +19,7 @@ public class Producteur1Stock extends Producteur1Acteur{
     private List<Lot> lots;
     HashMap<Feve, Double> stock = new HashMap<>();
     protected double totalStock=0;
+    protected Journal journalStock;
 
     public Producteur1Stock(){
         super();
@@ -34,6 +36,7 @@ public class Producteur1Stock extends Producteur1Acteur{
 
 
         this.stockTot.setValeur(this, totalStock, this.cryptogramme);
+        this.journalStock = new Journal("Journal "+this.getNom()+ " Stock", this);
     }
 
 	/////////////////////////////////////////////
@@ -139,9 +142,15 @@ public class Producteur1Stock extends Producteur1Acteur{
         double montant = 180 * this.totalStock;
         Banque banque=Filiere.LA_FILIERE.getBanque();
         banque.payerCout(this, this.cryptogramme, "Loyer Stockage" , montant);
-        this.journal.ajouter("Loyer Stockage : " + montant);
+        this.journalBanque.ajouter("Loyer Stockage : " + montant);
     }
     
+    public List<Journal> getJournaux() {
+		List<Journal> res=super.getJournaux();
+		res.add(this.journalStock);
+		return res;
+	}
+
     public void next() {
         super.next();
 
@@ -149,12 +158,12 @@ public class Producteur1Stock extends Producteur1Acteur{
         // mettre à jour stockTot
         this.stockTot.setValeur(this, this.totalStock, this.cryptogramme);
         // Permet de suivre le stock de fève
-		this.journal.ajouter( "Stock fève BQ :"+String.valueOf(this.stock.get(Feve.F_BQ)));
-        this.journal.ajouter( "Stock fève BQ_E :"+String.valueOf(this.stock.get(Feve.F_BQ_E)));
-        this.journal.ajouter( "Stock fève MQ :"+String.valueOf(this.stock.get(Feve.F_MQ)));
-        this.journal.ajouter( "Stock fève MQ_E :"+String.valueOf(this.stock.get(Feve.F_MQ_E)));
-        this.journal.ajouter( "Stock fève HQ :"+String.valueOf(this.stock.get(Feve.F_HQ)));
-        this.journal.ajouter( "Stock fève HQ_E :"+String.valueOf(this.stock.get(Feve.F_HQ_E)));
+		this.journalStock.ajouter( "Stock fève BQ :"+String.valueOf(this.stock.get(Feve.F_BQ)));
+        this.journalStock.ajouter( "Stock fève BQ_E :"+String.valueOf(this.stock.get(Feve.F_BQ_E)));
+        this.journalStock.ajouter( "Stock fève MQ :"+String.valueOf(this.stock.get(Feve.F_MQ)));
+        this.journalStock.ajouter( "Stock fève MQ_E :"+String.valueOf(this.stock.get(Feve.F_MQ_E)));
+        this.journalStock.ajouter( "Stock fève HQ :"+String.valueOf(this.stock.get(Feve.F_HQ)));
+        this.journalStock.ajouter( "Stock fève HQ_E :"+String.valueOf(this.stock.get(Feve.F_HQ_E)));
 
 
         // Loyer

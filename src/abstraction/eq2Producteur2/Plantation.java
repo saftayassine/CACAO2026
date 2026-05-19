@@ -16,6 +16,8 @@ public class Plantation {
     private double cout_cooperative = 0 ; // Prix que coûtent les infrastructures communes à la coopérative par step
     private double stock_max;       // Stock maximum de fèves avant de ne pas replanter
     private boolean replante = false;
+    private int etapeMort = -1;     // Étape à laquelle la plantation est devenue morte (-1 si vivante)
+    private final int delaiAvantVente = 24; // Délai en étapes avant de vendre une parcelle morte non replantée (2 ans)
     
     // Champs pour la certification équitable
     private boolean estEquitable = false;           // Est certifiée équitable
@@ -138,6 +140,29 @@ public class Plantation {
         return age >= dureeDeVie;
     }
 
+    /**
+     * Met à jour l'étape de mort si la plantation vient de mourir
+     */
+    public void mettreAJourEtatMort(int etapeActuelle) {
+        if (estMorte() && etapeMort == -1) {
+            etapeMort = etapeActuelle;
+        }
+    }
+
+    /**
+     * Vérifie si la plantation doit être vendue (morte depuis trop longtemps sans replantation)
+     */
+    public boolean doitEtreVendue(int etapeActuelle) {
+        return etapeMort != -1 && (etapeActuelle - etapeMort) >= delaiAvantVente;
+    }
+
+    /**
+     * Calcule le prix de vente de la plantation (utilise prix_vente déjà défini)
+     * @return Le prix de vente total pour toutes les parcelles
+     */
+    public double calculerPrixVente() {
+        return parcelles * prix_vente;
+    }
 
     public boolean getReplante() {
         return replante;
@@ -166,6 +191,7 @@ public class Plantation {
         // Les conditions sont remplies, replanter l'arbre
         age = 0;
         replante = true;
+        etapeMort = -1; // Reset l'étape de mort car on replante
         return true;
     }
     
@@ -178,6 +204,7 @@ public class Plantation {
     }
 
     public double getcout() {
+        double salaire_total = getCoutOuvriersEquitable();
         if ((age == 0) && (replante == false)) {
             return parcelles*prix_achat + cout_cooperative;
         }
@@ -185,7 +212,7 @@ public class Plantation {
             return parcelles*prix_replantation + cout_cooperative;
         }
         else if (age <= dureeDeVie){
-            return parcelles*salaire_employe + cout_cooperative;
+            return salaire_total + cout_cooperative;
         }
         else {
             return 0;
@@ -193,6 +220,7 @@ public class Plantation {
     }
 
     public double getcout_amorti() {
+        double salaire_total = getCoutOuvriersEquitable();
         if ((age == 0) && (replante == false)) {
             return cout_cooperative + parcelles*prix_achat / 960;
         }
@@ -200,10 +228,10 @@ public class Plantation {
             return cout_cooperative + parcelles*prix_replantation / 960;
         }
         else if ((age <= dureeDeVie) && (replante == false)){
-            return parcelles*salaire_employe + cout_cooperative + (parcelles*prix_achat / 960);
+            return salaire_total + cout_cooperative + (parcelles*prix_achat / 960);
         }
         else if ((age <= dureeDeVie) && (replante == true)){
-            return parcelles*salaire_employe + cout_cooperative + (parcelles*prix_replantation / 960);
+            return salaire_total + cout_cooperative + (parcelles*prix_replantation / 960);
         }
         else {
             return 0;
@@ -213,7 +241,7 @@ public class Plantation {
     public double get_prix_vente() {
         return prix_vente;
     }
-
+/** @author Thomas */
     // ========== Méthodes pour la certification équitable ==========
     
     /**
@@ -346,5 +374,17 @@ public class Plantation {
     
     public void setStock_max(double stock_max) {
         this.stock_max = stock_max;
+    }
+    
+    public int getEtapeMort() {
+        return etapeMort;
+    }
+    
+    public int getDelaiAvantVente() {
+        return delaiAvantVente;
+    }
+    
+    public double getprix_vente() {
+        return prix_vente;
     }
 }

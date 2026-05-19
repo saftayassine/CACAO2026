@@ -3,15 +3,11 @@ package abstraction.eq5Transformateur2;
 import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
-import abstraction.eqXRomu.produits.Gamme;
-import abstraction.eqXRomu.produits.IProduit;
-import abstraction.eqXRomu.filiere.Banque;
 import abstraction.eqXRomu.filiere.Filiere;
-import abstraction.eqXRomu.filiere.IActeur;
 
 /** @author Pierre
  */
-public class Transformateur2ProductionChocolat extends Transformateur2Production {
+public class Transformateur2ProductionChocolat extends Transformateur2Stock {
     
     public Transformateur2ProductionChocolat(){
         super();
@@ -21,9 +17,64 @@ public class Transformateur2ProductionChocolat extends Transformateur2Production
     @Override
     public void next() {
         super.next();
-        ProductionChocolat(Chocolat.C_BQ, 2000.0);
-        ProductionChocolat(Chocolat.C_MQ, 1500.0);
-        ProductionChocolat(Chocolat.C_HQ, 500.0);
+
+        // 1. PAIEMENT DES EMPLOYÉS (Coût fixe) 
+        double coutSalaires = 9000 * 625.0;
+        
+        // On demande à la banque de payer nos employés
+        Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Salaires des employés", coutSalaires);
+
+        // 2. OPTIMISATION DE LA PRODUCTION (Flux tendu)
+        double stockCibleHQ = 200000.0;
+        double stockCibleMQ = 200000.0;
+        double stockCibleBQ = 200000.0;
+
+        // On recrée nos références exactes pour lire les stocks
+        ChocolatDeMarque chocoHQ = new ChocolatDeMarque(Chocolat.C_HQ, "Ferrara Rocher", 100);
+        ChocolatDeMarque chocoMQ = new ChocolatDeMarque(Chocolat.C_MQ, "Ferrara Rocher", 100);
+        ChocolatDeMarque chocoBQ = new ChocolatDeMarque(Chocolat.C_BQ, "Ferrara Rocher", 45); 
+
+        // On calcule ce qu'il nous MANQUE pour atteindre l'objectif
+        double aProduireHQ = stockCibleHQ - this.getStock_chocolatDeMarque(chocoHQ);
+        double aProduireMQ = stockCibleMQ - this.getStock_chocolatDeMarque(chocoMQ);
+        double aProduireBQ = stockCibleBQ - this.getStock_chocolatDeMarque(chocoBQ);
+
+        // Capacité de production de notre usine 
+        double capaciteRestante = 9000 * 8.4; 
+
+        // 3. On lance la production par ordre de priorité (le HQ rapporte le plus !)        
+        if (aProduireHQ > 0 && capaciteRestante > 0) {
+            double stockFeveHQ = this.getStock_feve(Feve.F_HQ);
+            double stockFeveMQ = this.getStock_feve(Feve.F_MQ);
+            
+            double maxPossibleHQ = stockFeveHQ / 0.49;
+            double maxPossibleMQ = stockFeveMQ / 0.51;
+            
+            double prodHQ = Math.min(Math.min(aProduireHQ, capaciteRestante), Math.min(maxPossibleHQ, maxPossibleMQ));
+            this.ProductionFerraraHQ(prodHQ);
+            capaciteRestante -= prodHQ; // On met à jour la capacité restante
+        }
+        
+        if (aProduireMQ > 0 && capaciteRestante > 0) {
+            double stockFeveMQ = this.getStock_feve(Feve.F_MQ);
+            double stockFeveBQ = this.getStock_feve(Feve.F_BQ);
+            
+            double maxPossibleMQ = stockFeveMQ / 0.26;
+            double maxPossibleBQ = stockFeveBQ / 0.74;
+        
+            double prodMQ = Math.min(Math.min(aProduireMQ, capaciteRestante), Math.min(maxPossibleMQ, maxPossibleBQ));
+            this.ProductionFerraraMQ(prodMQ);
+            capaciteRestante -= prodMQ;
+        }
+
+        if (aProduireBQ > 0 && capaciteRestante > 0) {
+            double stockFeveBQ = this.getStock_feve(Feve.F_BQ);
+        
+            double maxPossibleBQ = stockFeveBQ / 0.45;
+            double prodBQ = Math.min(Math.min(aProduireBQ, capaciteRestante), maxPossibleBQ);
+            this.ProductionFerraraBQ(prodBQ);
+            capaciteRestante -= prodBQ;
+        }
     }
 
     public void ProductionChocolat(Chocolat c,Double n){
@@ -38,46 +89,58 @@ public class Transformateur2ProductionChocolat extends Transformateur2Production
         }
     }
 
-
-    /**@author Maxence 
+    /**
+     * @author Maxence & Pierre
      * Notre Chocolat HQ a 100% de cacao, dont 49% de fèves HQ et 51% de fèves MQ
-    */
-    public void ProductionFerraraHQ(Double quantite){
-        Double quantiteFeveHQ=quantite*0.49;
-        Double quantiteFeveMQ=quantite*0.51;
-        if((quantiteFeveHQ<=this.getStock_feve(Feve.F_HQ)) && (quantiteFeveMQ<=this.getStock_feve(Feve.F_MQ))){
-            this.remove_feve(quantiteFeveHQ,Feve.F_HQ);
-            this.remove_feve(quantiteFeveMQ,Feve.F_MQ);
+     */
+    public void ProductionFerraraHQ(Double quantiteDemandee){
+        
+        if (quantiteDemandee > 0) {
+            double fevesHQUtilisees = quantiteDemandee * 0.49;
+            double fevesMQUtilisees = quantiteDemandee * 0.51;
+            
+            this.remove_feve(fevesHQUtilisees, Feve.F_HQ);
+            this.remove_feve(fevesMQUtilisees, Feve.F_MQ);
+            
             ChocolatDeMarque chocoHQ = new ChocolatDeMarque(Chocolat.C_HQ, "Ferrara Rocher", 100);
-            this.add_chocolatDeMarque(chocoHQ, quantite);
+            this.add_chocolatDeMarque(chocoHQ, quantiteDemandee);
         }
     }
-/** @author Maxence
-* notre chocolat MQ a 100% de cacao, dont 26% de fèves MQ et 74% de fèves BQ
- */
-    public void ProductionFerraraMQ(Double quantite){
-        Double quantiteFeveMQ=quantite*0.26;
-        Double quantiteFeveBQ=quantite*0.74;
-        if((quantiteFeveMQ<=this.getStock_feve(Feve.F_MQ)) && (quantiteFeveBQ<=this.getStock_feve(Feve.F_BQ))){
-            this.remove_feve(quantiteFeveMQ,Feve.F_MQ);
-            this.remove_feve(quantiteFeveBQ,Feve.F_BQ);
+
+    /** 
+     * @author Maxence & Pierre
+     * notre chocolat MQ a 100% de cacao, dont 26% de fèves MQ et 74% de fèves BQ
+     */
+    public void ProductionFerraraMQ(Double quantiteDemandee){
+        
+        if (quantiteDemandee > 0) {
+            double fevesMQUtilisees = quantiteDemandee * 0.26;
+            double fevesBQUtilisees = quantiteDemandee * 0.74;
+            
+            this.remove_feve(fevesMQUtilisees, Feve.F_MQ);
+            this.remove_feve(fevesBQUtilisees, Feve.F_BQ);
+            
             ChocolatDeMarque chocoMQ = new ChocolatDeMarque(Chocolat.C_MQ, "Ferrara Rocher", 100);
-            this.add_chocolatDeMarque(chocoMQ, quantite);       
+            this.add_chocolatDeMarque(chocoMQ, quantiteDemandee);       
         }
     }
-/** @author Maxence
-* notre chocolat BQ a 45% de cacao
- */
-    public void ProductionFerraraBQ(Double quantite){
-        Double quantiteFeveBQ=quantite*0.45;
-        Double quantiteMP=quantite*0.65;
-        if(quantiteFeveBQ<=this.getStock_feve(Feve.F_BQ)){
-            ChocolatDeMarque chocoBQ = new ChocolatDeMarque(Chocolat.C_BQ, "Ferrara Rocher", 100);
-            this.add_chocolatDeMarque(chocoBQ, quantite);
-        }
-        // J'ai ajouté une petite sécurité ici pour éviter un crash si prix_MP n'est pas initialisé
-        if (prix_MP != null) {
-            Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Achat de MP pour production de chocolat FerraraBQ", quantiteMP*prix_MP);
+
+    /** 
+     * @author Maxence & Pierre
+     * notre chocolat BQ a 45% de cacao
+     */
+    public void ProductionFerraraBQ(Double quantiteDemandee){
+        
+        if (quantiteDemandee > 0) {
+            double fevesBQUtilisees = quantiteDemandee * 0.45;
+            double quantiteMP = quantiteDemandee * 0.65;
+            
+            this.remove_feve(fevesBQUtilisees, Feve.F_BQ);
+            
+            ChocolatDeMarque chocoBQ = new ChocolatDeMarque(Chocolat.C_BQ, "Ferrara Rocher", 45);
+            this.add_chocolatDeMarque(chocoBQ, quantiteDemandee);
+            
+            Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Achat de MP pour production Ferrara BQ", quantiteMP * prix_MP);
         }
     }
 }

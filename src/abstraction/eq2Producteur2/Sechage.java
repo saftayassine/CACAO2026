@@ -73,28 +73,7 @@ public class Sechage extends Récolte {
             fileSechageSteps.put(f, nouveauxSteps);
 
             // Mise à jour des fèves sèches et passage en tonnes
-            switch (f) {
-                case F_BQ:
-                    fevesSeches.put(f, sechageFini.get(f));
-                    break;
-                case F_BQ_E:
-                    fevesSeches.put(f, sechageFini.get(f));
-                    break;
-                case F_MQ:
-                    fevesSeches.put(f, sechageFini.get(f));
-                    break;
-                case F_MQ_E:
-                    fevesSeches.put(f, sechageFini.get(f));
-                    break;
-                case F_HQ:
-                    fevesSeches.put(f, sechageFini.get(f));
-                    break;
-                case F_HQ_E:
-                    fevesSeches.put(f, sechageFini.get(f));
-                    break;
-                default:
-                    break;
-            }
+            fevesSeches.put(f, sechageFini.get(f));
         }
 
         journalSechage.ajouter("Step " + stepActuel + " : Nouvelles tonnes de fèves sèches : " + fevesSeches);

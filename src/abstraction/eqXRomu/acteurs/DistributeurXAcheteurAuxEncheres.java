@@ -36,7 +36,7 @@ public class DistributeurXAcheteurAuxEncheres extends DistributeurXDistributeur 
 			return 0.0; // on ne fait des propositions que pour les chocolats de marque
 		}
 		journalEncheres.ajouter(" pour "+miseAuxEncheres.getProduit()+" prix propose = "+this.prix.get((ChocolatDeMarque)(miseAuxEncheres.getProduit())));
-		return this.prix.get((ChocolatDeMarque)(miseAuxEncheres.getProduit()));
+		return this.prix.keySet().contains((ChocolatDeMarque)(miseAuxEncheres.getProduit())) ? this.prix.get((ChocolatDeMarque)(miseAuxEncheres.getProduit())) : 0.0	;
 	}
 
 	public void notifierAchatAuxEncheres(Enchere enchereRetenue) {

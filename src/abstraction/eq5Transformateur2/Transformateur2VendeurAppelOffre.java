@@ -1,17 +1,10 @@
 package abstraction.eq5Transformateur2;
 
-import java.awt.Color;
-import java.util.List;
-
 import abstraction.eqXRomu.appelDOffre.AppelDOffre;
 import abstraction.eqXRomu.appelDOffre.IVendeurAO;
 import abstraction.eqXRomu.appelDOffre.OffreVente;
-import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.IProduit;
-import abstraction.eqXRomu.produits.Chocolat;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
-import abstraction.eqXRomu.produits.Feve;
-import abstraction.eqXRomu.bourseCacao.BourseCacao;
 
 /**
  * @author Pierre GUTTIEREZ
@@ -22,33 +15,51 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AchatAppelO
         super();
     }
 
-	public OffreVente proposerVente(AppelDOffre offre){
-            IProduit p = offre.getProduit();
-            
-            // Si le produit n'est pas un chocolat de marque, on refuse
-            if (!(p instanceof ChocolatDeMarque)) {
-                return null;
-            }
-            
-            ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-            
-            // On s'assure qu'on ne vend que NOTRE marque
-            if (!cdm.getNom().equals("Ferrara Rocher")) {
-                return null;
-            }
+	public OffreVente proposerVente(AppelDOffre offre) {
+        IProduit p = offre.getProduit();
+        
+        if (!(p instanceof ChocolatDeMarque)) {
+            return null;
+        }
+        
+        ChocolatDeMarque cdm = (ChocolatDeMarque) p;
+        String marque = cdm.getMarque().toLowerCase();
 
-            OffreVente OV = new OffreVente(offre, this, offre.getProduit(),((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur()*1.18*offre.getQuantiteT());
-			
-			Chocolat c = cdm.getChocolat();
-			this.ProductionChocolat(c, offre.getQuantiteT());
-            return OV;
+        if (!marque.contains("ferrara")) {
+            return null;
+        }
+
+        double stockDispo = this.getStock_chocolatDeMarque(cdm);
+        if (stockDispo < offre.getQuantiteT()) {
+            return null; 
+        }
+
+        double prixTonne;
+        switch (cdm.getChocolat()) {
+            case C_HQ: 
+                prixTonne = 15000.0;
+                break;
+            case C_MQ: 
+                prixTonne = 10000.0;
+                break;
+            case C_BQ: 
+                prixTonne = 7000.0;
+                break;
+            default:   
+                prixTonne = 5000.0;
+                break;
+        }
+
+        return new OffreVente(offre, this, cdm, prixTonne);
     }
 
 	public void notifierVenteAO(OffreVente propositionRetenue){
-        this.getJournaux().get(7).ajouter(propositionRetenue.toString()+ "\n");
+        ChocolatDeMarque cdm = (ChocolatDeMarque) propositionRetenue.getProduit();
+        this.remove_chocolatDeMarque(cdm, propositionRetenue.getQuantiteT());
+        this.getJournaux().get(8).ajouter("Retenue de l'offre: "+propositionRetenue.toString()+ "\n");
     }
 
 	public void notifierPropositionNonRetenueAO(OffreVente propositionRefusee){
-        this.getJournaux().get(7).ajouter(propositionRefusee.toString()+ "\n");
+        this.getJournaux().get(8).ajouter("Refus de l'offre: "+propositionRefusee.toString()+ "\n");
     }
 }

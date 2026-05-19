@@ -21,7 +21,7 @@ import abstraction.eqXRomu.produits.IProduit;
 public class Transformateur1Acteur implements IActeur {
 	private Journal journal= new Journal("numéro de l'étape",this );
 	protected int cryptogramme;
-		
+	private int NbMachines =90;	
 
 	public Transformateur1Acteur() {
 	}
@@ -102,6 +102,12 @@ public class Transformateur1Acteur implements IActeur {
 	// Renvoie le solde actuel de l'acteur
 	protected double getSolde() {
 		return Filiere.LA_FILIERE.getBanque().getSolde(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme);
+	}
+	public int getNbMachines(){
+		return this.NbMachines;
+	}
+	public void setNbMachines(int nb){
+		this.NbMachines=nb;
 	}
 
 	////////////////////////////////////////////////////////

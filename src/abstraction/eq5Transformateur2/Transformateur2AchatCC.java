@@ -1,25 +1,27 @@
 package abstraction.eq5Transformateur2;
 
-import java.awt.Color;
-import java.util.List;
 
 import abstraction.eqXRomu.contratsCadres.*;
 import abstraction.eqXRomu.filiere.Filiere;
-import abstraction.eqXRomu.filiere.IActeur;
-import abstraction.eqXRomu.general.Journal;
-import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.IProduit;
-import abstraction.eqXRomu.produits.Chocolat; 
+import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
-import abstraction.eqXRomu.bourseCacao.BourseCacao;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
 
 /**
  * @author Pierre GUTTIEREZ
  */
 public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres implements IAcheteurContratCadre{
 
+	protected List<ExemplaireContratCadre> mesContratsEnCours;
+
     public Transformateur2AchatCC() {
         super();
+		this.mesContratsEnCours = new LinkedList<ExemplaireContratCadre>();
     }
 
 	/**
@@ -56,9 +58,31 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	 *         du contrat (contrat.getEcheancier()) si l'acheteur est d'accord pour
 	 *         un tel echeancier. Sinon, retourne un nouvel echeancier que le
 	 *         superviseur soumettra au vendeur.
+	 * @author Pierre et Maxence
 	 */
 	public Echeancier contrePropositionDeLAcheteur(ExemplaireContratCadre contrat){
-			return contrat.getEcheancier();
+			Echeancier echeancier=contrat.getEcheancier();
+			superviseurCC.recapitulerContratsEnCours();;
+			if(echeancier.getNbEcheances()<11){
+				return echeancier;
+			}
+			else{
+				Integer debut = echeancier.getStepDebut();
+				Echeancier proposition = new Echeancier(debut);
+				for (int index = debut; index < debut+10; index++) {
+					if(echeancier.getQuantite(index)<2000){
+						proposition.ajouter(2000);
+					}
+					else{proposition.ajouter(echeancier.getQuantite(index));}
+				}
+				if(proposition.echeancierAcceptable()){
+					return proposition;
+				}
+				else{
+					return null;
+				}
+			}
+
 	}
 
 	/**
@@ -75,11 +99,16 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	 *         un autre prix correspondant a sa contreproposition.
 	 */
 	public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat){
-		if (contrat.getPrix() <= contrat.getQuantiteTotale()*0.85*((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur()){
-			return contrat.getPrix();
-		} else{
-			return 0.75*0.5*(contrat.getQuantiteTotale()*0.85*((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur() + contrat.getPrix());
-		}
+		List<Double> listePrix = contrat.getListePrix();
+        
+        // SÉCURITÉ CRITIQUE : Évite le crash (IndexOutOfBoundsException) si c'est la première proposition
+        if (listePrix.size() < 2) {
+            // Au premier tour de négociation, on tente de faire baisser le prix de 10%
+            return contrat.getPrix() * 0.90; 
+        }
+        
+        // Ensuite, on négocie en faisant une moyenne entre son prix et notre ancienne offre
+        return ((contrat.getPrix() + listePrix.get(listePrix.size() - 2)) / 2) * 0.95;
 	}
 
 	/**
@@ -92,7 +121,17 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	 * 
 	 * @param contrat
 	 */
-	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){}
+	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
+		this.mesContratsEnCours.add(contrat);
+		if (contrat.getProduit() instanceof Feve){
+			this.mesContratsEnCours.add(contrat);
+			this.getJournaux().get(3).ajouter("Achat fève en CC : " + contrat.toString() + "\n");
+		}
+		else if (contrat.getProduit() instanceof ChocolatDeMarque){
+			this.mesContratsEnCours.add(contrat);
+			this.getJournaux().get(4).ajouter("Vente chocolat en CC : " + contrat.toString() + "\n");
+		}
+	}
 
 	/**
 	 * Methode appelee par le SuperviseurVentesContratCadre afin de notifier
@@ -107,8 +146,75 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 		if (p instanceof Feve){
 			Feve f = (Feve) p;
 			this.add_feve(quantiteEnTonnes, f);
+			this.getJournaux().get(3).ajouter("Réception de " + quantiteEnTonnes + " T de " + f + " via Contrat Cadre de " + contrat.getVendeur().getNom() + "\n");
 		}
 	}
 
+	@Override
+    public void next() {
+        super.next();
+
+        // --- NOUVEAU : LE FREIN D'URGENCE (Limite globale 600 000 T) ---
+        // On calcule d'abord combien de place on prend déjà avec nos fèves
+        double stockFevesTotal = this.getStock_feve(Feve.F_HQ) + this.getStock_feve(Feve.F_MQ) + this.getStock_feve(Feve.F_BQ);
+        
+        // (Il faudrait idéalement ajouter ici votre stock de chocolat total si vous avez la méthode)
+        // double stockChocoTotal = ...
+        
+        // Si nos entrepôts sont déjà dangereusement pleins (ex: plus de 500 000 T), on gèle les achats !
+        if (stockFevesTotal > 650000.0) {
+            return; // On arrête la méthode next() ici, on n'achète rien ce tour-ci !
+        }
+        // ---------------------------------------------------------------
+
+        // 1. Définition des besoins cibles en fèves (pour couvrir vos 100k de choco)
+        HashMap<Feve, Double> ciblesFeves = new HashMap<>();
+        ciblesFeves.put(Feve.F_HQ, 98000.0);
+        ciblesFeves.put(Feve.F_MQ, 154000.0);
+        ciblesFeves.put(Feve.F_BQ, 238000.0);
+
+        for (Feve f : ciblesFeves.keySet()) {
+            double stockActuel = this.getStock_feve(f);
+            
+            // 2. On calcule ce qui arrive déjà par NOS contrats cadres en cours
+            double attendu = 0;
+            
+            for (ExemplaireContratCadre c : this.mesContratsEnCours) {
+                if (c.getAcheteur().equals(this) && c.getProduit().equals(f)) {
+                    attendu += c.getQuantiteRestantALivrer();
+                }
+            }
+
+            // 3. Si (Stock actuel + Fèves en livraison) < Cible, on cherche activement un vendeur
+            if (stockActuel + attendu < ciblesFeves.get(f)) {
+                double quantiteAManquer = ciblesFeves.get(f) - (stockActuel + attendu);
+                
+                // On cherche la liste des producteurs qui vendent cette fève
+                List<IVendeurContratCadre> vendeurs = ((SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre")).getVendeurs(f);
+                
+                if (!vendeurs.isEmpty()) {
+                    
+                    // --- NOUVEAU : LA RECHERCHE MULTI-VENDEURS ---
+                    // On essaie les vendeurs un par un. Si un contrat est signé, on s'arrête.
+                    for (IVendeurContratCadre vendeur : vendeurs) {
+                        
+                        Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 10, quantiteAManquer/10.0 );
+                        
+                        // On stocke le résultat de la demande dans une variable
+                        ExemplaireContratCadre nouveauContrat = ((SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre")).demandeAcheteur(this, vendeur, f, echeancier, cryptogramme, false);
+                        
+                        // Si le contrat a été accepté et signé (il n'est pas null)
+                        if (nouveauContrat != null) {
+                            break; // SUCCÈS ! On quitte la boucle des vendeurs, inutile de demander aux autres.
+                        }
+                    }
+                    // ---------------------------------------------
+                }
+            }
+        }
+        
+        // 4. Nettoyage : On supprime de notre liste les contrats qui sont totalement terminés
+        this.mesContratsEnCours.removeIf(c -> c.getQuantiteRestantALivrer() == 0);
+    }
 }
     

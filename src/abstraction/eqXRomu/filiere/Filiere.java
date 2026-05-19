@@ -198,7 +198,7 @@ public class Filiere implements IAssermente {
 					nbProduits++;
 				}
 			}
-			if (nbProduits==0) {
+			if (!(Filiere.LA_FILIERE.getProprietaireMarque(marque) instanceof IDistributeurChocolatDeMarque ) &&nbProduits==0) {
 				throw new IllegalStateException("la marque "+marque+" est deposee mais il n'y a aucune production d'un chocolat portant cette marque");
 			}
 			this.qualiteMoyenneMarque.put(marque, totalQualites/nbProduits);
@@ -214,7 +214,7 @@ public class Filiere implements IAssermente {
 					    this.ventesFeves.get(acteur).put(ff, new VariableReadOnly("VF_"+acteur.getNom()+"_"+ff.name(), romu,0.0 ));
 						//m.out.println("creation variable ventesFeves "+acteur+" "+ff);
 					}
-				} else if (acteur instanceof IMarqueChocolat || acteur instanceof IAcheteurBourse) { // un transformateur
+				} else if ((acteur instanceof IMarqueChocolat &&!(acteur instanceof IDistributeurChocolatDeMarque)) || acteur instanceof IAcheteurBourse) { // un transformateur
 					this.achatsFeves.put(acteur, new HashMap<Feve, VariableReadOnly>());
 					for (Feve ff : Feve.values()) {
 					    this.achatsFeves.get(acteur).put(ff, new VariableReadOnly("AF_"+acteur.getNom()+"_"+ff.name(), romu,0.0 ));
@@ -283,7 +283,7 @@ public class Filiere implements IAssermente {
 		this.courbeAchatsChocolats.put(cc,new HashMap<IActeur, Courbe>());
 		this.courbeVentesChocolatsMarque.put(cc,new HashMap<IActeur, Courbe>());
 		for (IActeur acteur : this.getActeurs()) {
-				if (acteur instanceof IMarqueChocolat || acteur instanceof IAcheteurBourse) { // un producteur
+				if ((acteur instanceof IMarqueChocolat && !(acteur instanceof IDistributeurChocolatDeMarque)) || acteur instanceof IAcheteurBourse) { // un producteur
 					Courbe c = new Courbe("PM_"+acteur+"_"+cc);
 					c.setCouleur(acteur.getColor());
 					c.setMarque(numMarque);
