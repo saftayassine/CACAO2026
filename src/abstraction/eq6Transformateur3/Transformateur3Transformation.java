@@ -1,5 +1,8 @@
 
 package abstraction.eq6Transformateur3;
+import abstraction.eq4Transformateur1.Transformateur1Stock;
+import abstraction.eqXRomu.filiere.Filiere;
+
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -338,8 +341,10 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
                + " | qualité perçue = " + qualitePercue
                + " | péremption = " + dureePeremption(pourcentageCacao) + " mois"
                + " | coût estimé = " + cout + " €");
+        Filiere.LA_FILIERE.getBanque().payerCout(this, this.cryptogramme,"couts totaux", cout);
 
        return chocolatProduit;
+
 }
     /**
      * Version simple appelée à chaque étape.
