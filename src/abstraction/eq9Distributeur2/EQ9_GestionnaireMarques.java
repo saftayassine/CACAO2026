@@ -9,13 +9,12 @@ import abstraction.eqXRomu.general.Journal;
 
 /**
 
-
  */
 public class EQ9_GestionnaireMarques {
     
     private Journal journal;
     
-    // Marques reconnaissables par transformateur
+    // Marques par transformateur
     private Map<String, MarqueTransformateur> marques = new HashMap<>();
     
     // Stock par marque (en kg)
@@ -32,9 +31,7 @@ public class EQ9_GestionnaireMarques {
         initialiserMarques();
     }
     
-    /**
-     * Initialise les marques de transformateurs connues
-     */
+    // Initialise les marques de transformateurs connues
     private void initialiserMarques() {
         // EQ4 - Prontella
         marques.put("Prontella", new MarqueTransformateur(
@@ -64,7 +61,7 @@ public class EQ9_GestionnaireMarques {
             0.10  // 10%
         ));
         
-        // EQ9 - NOTRE MARQUE PROPRE
+        // EQ9 - NOTRE MARQUE
         marques.put("EQ9", new MarqueTransformateur(
             "EQ9",
             "EQ9",
@@ -74,16 +71,15 @@ public class EQ9_GestionnaireMarques {
         journal.ajouter("Gestionnaire marques initialisé : " + marques.size() + " marques");
     }
     
-    /**
-     * Obtient les marques disponibles
-     */
+
+    //marques disponibles
     public List<String> obtenirNomMarques() {
         return new ArrayList<>(marques.keySet());
     }
     
-    /**
-     * Enregistre le stock pour une marque
-     */
+
+    //maj stock par marque
+
     public void mettreAJourStock(String nomMarque, double quantiteKg) {
         if (marques.containsKey(nomMarque)) {
             stockParMarque.put(nomMarque, quantiteKg);
@@ -92,58 +88,44 @@ public class EQ9_GestionnaireMarques {
         }
     }
     
-    /**
-     * Enregistre le prix de vente pour une marque
-     */
+    // maj prix par marque
     public void mettreAJourPrix(String nomMarque, double prixEuroParTonne) {
         if (marques.containsKey(nomMarque)) {
             prixParMarque.put(nomMarque, prixEuroParTonne);
         }
     }
     
-    /**
-     * Enregistre la demande estimée pour une marque
-     */
+    // demande par marque
     public void mettreAJourDemande(String nomMarque, double demandeEstimeeKg) {
         if (marques.containsKey(nomMarque)) {
             demandeParMarque.put(nomMarque, demandeEstimeeKg);
         }
     }
     
-    /**
-     * Retourne le stock pour une marque
-     */
+    // stock par marque
     public double obtenirStock(String nomMarque) {
         return stockParMarque.getOrDefault(nomMarque, 0.0);
     }
     
-    /**
-     * Retourne la demande pour une marque
-     */
+    // demande par marque
     public double obtenirDemande(String nomMarque) {
         return demandeParMarque.getOrDefault(nomMarque, 0.0);
     }
     
-    /**
-     * Retourne la part de marché (%) pour une marque
-     */
+    // part de marché par marque    
     public double obtenirPartMarche(String nomMarque) {
         MarqueTransformateur marque = marques.get(nomMarque);
         return (marque != null) ? marque.partMarchePercent : 0;
     }
     
-    /**
-     * Retourne le stock total toutes marques
-     */
+    // stock total toutes marques
     public double obtenirStockTotal() {
         return stockParMarque.values().stream()
             .mapToDouble(Double::doubleValue)
             .sum();
     }
     
-    /**
-     * Retourne le prix moyen toutes marques (pondéré par stock)
-     */
+    // prix moyen toutes marques (pondéré par stock)
     public double obtenirPrixMoyen() {
         double stockTotal = obtenirStockTotal();
         if (stockTotal == 0) return 0;
@@ -157,9 +139,7 @@ public class EQ9_GestionnaireMarques {
         return prixPondere;
     }
     
-    /**
-     * Rapport : composition stock par marque
-     */
+    //composition stock par marque
     public void afficherCompositionStock() {
         double total = obtenirStockTotal();
         journal.ajouter("=== COMPOSITION STOCK EQ9 ===");
@@ -175,9 +155,7 @@ public class EQ9_GestionnaireMarques {
         journal.ajouter("  TOTAL : " + String.format("%.0f", total/1000) + "T");
     }
     
-    /**
-     * Classe interne : représente une marque
-     */
+    //Représente une marque
     private static class MarqueTransformateur {
         String nom;
         String transformateur;  // EQ4, EQ5, etc.
