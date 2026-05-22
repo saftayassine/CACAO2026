@@ -141,11 +141,13 @@ public class TransformateurXActeur  implements IActeur, IMarqueChocolat, IFabric
 			this.journal.ajouter(Romu.COLOR_LLGRAY, Romu.COLOR_BROWN,"Stock de "+Journal.texteSurUneLargeurDe(c+"", 15)+" = "+this.stockChoco.get(c));
 		}
 		if (this.stockChocoMarque.keySet().size()>0) {
+			double totalStockMarque=0.0;
 			for (ChocolatDeMarque cm : this.stockChocoMarque.keySet()) {
 				this.journal.ajouter(Romu.COLOR_LLGRAY, Romu.COLOR_BROWN,"Stock de "+Journal.texteSurUneLargeurDe(cm+"", 15)+" = "+this.stockChocoMarque.get(cm));
+				totalStockMarque+=this.stockChocoMarque.get(cm);
 			}
+			totalStocksChocoMarque.setValeur(this, totalStockMarque,this.cryptogramme);
 		}
-
 		Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Stockage", (this.totalStocksFeves.getValeur(cryptogramme)+this.totalStocksChoco.getValeur(cryptogramme)+this.totalStocksChocoMarque.getValeur(cryptogramme))*this.coutStockage);
 
 		for (Feve f : this.pourcentageTransfo.keySet()) {
@@ -261,8 +263,14 @@ public class TransformateurXActeur  implements IActeur, IMarqueChocolat, IFabric
 			for (Chocolat c : Chocolat.values()) {
 				int pourcentageCacao =  (int) (Filiere.LA_FILIERE.getParametre("pourcentage min cacao "+c.getGamme()).getValeur());
 				this.chocosProduits.add(new ChocolatDeMarque(c, "Villors", pourcentageCacao));
+				for (String m : Filiere.LA_FILIERE.getMarquesChocolat()) {
+					if (Filiere.LA_FILIERE.getProprietaireMarque(m) instanceof IDistributeurChocolatDeMarque) {
+						this.chocosProduits.add(new ChocolatDeMarque(c, m, pourcentageCacao));
+					}
+				}
 			}
 		}
+		//System.out.println("Chocos produits eqxt : "+this.chocosProduits);
 		return this.chocosProduits;
 	}
 }
