@@ -61,4 +61,7 @@ public class GestionCouts3 {
             }
         return c ;
     }
+    public double getSeuilDefenseParFeve(){
+        return this.seuilDefenseParFeve;
+    }
 }
