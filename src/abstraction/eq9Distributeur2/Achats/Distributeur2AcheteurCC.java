@@ -61,7 +61,6 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         if (produits != null && !produits.isEmpty()) {
             // Frais de stockage : 120 €/T par étape (16x le coût producteur de 7.5€/T)
             payerFraisStockage();
-            // --- V2 : Ajustement dynamique des prix de vente ---
             ajusterPrixDynamiques();
             fairePropositionCC();
         }
@@ -86,9 +85,32 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
     /**
      * Ajuste les prix de vente de manière dynamique
      */
+    @Override
     protected void ajusterPrixDynamiques() {
-        // mettre en place en V2
+        int etape = Filiere.LA_FILIERE.getEtape();
+        if (etape < 1) return;
+
+        for (ChocolatDeMarque choco : Filiere.LA_FILIERE.getChocolatsProduits()) {
+
+            double coutAchat = obtenirCoutAchat(choco);
+            double stockT = this.stock.getOrDefault(choco, 0.0);
+            double dos = this.indicateurDOS.getValeur();
+            double demande = estimerDemandeClients(choco);
+            double prixConcurrent = estimerPrixConcurrent(choco);
+            double partMarche = this.indicateurPartMarche.getValeur();
+            double cash = getSolde();
+
+            double prixFinal = this.pricingService.calculerPrix(
+                choco, coutAchat, stockT, dos, demande, prixConcurrent, partMarche, cash
+            );
+
+            this.prix.put(choco, prixFinal);
+
+            this.journal.ajouter("Prix EQ9 " + choco.getNom() + " = " + prixFinal
+                + "€/T (coût=" + coutAchat + ", DOS=" + dos + ", marché=" + prixConcurrent + ")");
+        }
     }
+    
 
     //         IMPLEMENTATION DE L'INTERFACE IAcheteurContratCadre
 

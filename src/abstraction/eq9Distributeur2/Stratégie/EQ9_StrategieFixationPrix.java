@@ -10,8 +10,6 @@ import abstraction.eqXRomu.general.Journal;
  */
 public class EQ9_StrategieFixationPrix {
     
-    private Journal journal;
-    
     // Marges de base par gamme de produit
     private static final double MARGE_GAMME_BASSE = 12.0;    
     private static final double MARGE_GAMME_MOYENNE = 18.0;  
@@ -24,7 +22,6 @@ public class EQ9_StrategieFixationPrix {
     private static final double SEUIL_SURSTOCK = 75000.0;      
     
     public EQ9_StrategieFixationPrix(Journal j) {
-        this.journal = j;
     }
     
     /**

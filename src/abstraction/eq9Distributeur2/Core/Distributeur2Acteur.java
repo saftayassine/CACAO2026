@@ -346,7 +346,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
      * Obtient le coût d'achat pour un produit (estimation)
      * @author Anass Ouisrani
      */
-    private double obtenirCoutAchat(ChocolatDeMarque choco) {
+    protected double obtenirCoutAchat(ChocolatDeMarque choco) {
         int etape = Filiere.LA_FILIERE.getEtape();
         if (etape < 1)
             return prix(choco) * 0.75; // estimation par défaut
@@ -364,7 +364,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
     /**
      * Estime la demande clients pour un produit (placeholder)
      */
-    private double estimerDemandeClients(ChocolatDeMarque choco) {
+    protected double estimerDemandeClients(ChocolatDeMarque choco) {
         int etape = Filiere.LA_FILIERE.getEtape();
         if (etape < 1)
             return 50000.0; // Pas de données : estimation par défaut
@@ -374,7 +374,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
     /**
      * Estime le prix concurrent direct (placeholder)
      */
-    private double estimerPrixConcurrent(ChocolatDeMarque choco) {
+    public double estimerPrixConcurrent(ChocolatDeMarque choco) {
         int etape = Filiere.LA_FILIERE.getEtape();
         if (etape < 1)
             return 0;
