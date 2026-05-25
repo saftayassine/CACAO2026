@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import abstraction.eqXRomu.filiere.IMarqueChocolat;
 import abstraction.eq9Distributeur2.Config.EQ9Config;
+import abstraction.eq9Distributeur2.Prix.EQ9_Pricing;
 import abstraction.eq9Distributeur2.Stratégie.EQ9_StrategieConcurrentielle;
 import abstraction.eq9Distributeur2.Stratégie.EQ9_StrategieFixationPrix;
 import abstraction.eqXRomu.clients.ClientFinal;
@@ -42,6 +43,8 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
     protected Variable indicateurTauxRupture;
     protected Variable indicateurCashBuffer;
     protected EQ9_StrategieConcurrentielle strategieConcurrentielle;
+    protected EQ9_Pricing pricingService;
+
 
 
 
@@ -64,7 +67,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         this.indicateurTauxRupture = new Variable("EQ9_taux_rupture", this, 0.0);
         this.indicateurCashBuffer = new Variable("EQ9_cash_buffer", this, 0.0);
         this.strategieConcurrentielle = new EQ9_StrategieConcurrentielle();
-
+        this.pricingService = new EQ9_Pricing();
     }
 
     // Ajoute 100 tonnes d'un produit en rayon
@@ -316,36 +319,27 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         int etape = Filiere.LA_FILIERE.getEtape();
         if (etape < 1) return;
 
-        List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
-        if (produits == null || produits.isEmpty()) return;
+        for (ChocolatDeMarque choco : Filiere.LA_FILIERE.getChocolatsProduits()) {
 
-        double profitBrutTotal = 0;
-        double margeTotal = 0;
-
-        for (ChocolatDeMarque choco : produits) {
             double coutAchat = obtenirCoutAchat(choco);
-            double stock = this.stock.getOrDefault(choco, 0.0);
+            double stockT = this.stock.getOrDefault(choco, 0.0);
+            double dos = this.indicateurDOS.getValeur();
             double demande = estimerDemandeClients(choco);
             double prixConcurrent = estimerPrixConcurrent(choco);
+            double partMarche = this.indicateurPartMarche.getValeur();
+            double cash = getSolde();
 
-            double prixBase = strategieFixationPrix.calculerPrixVente(
-                coutAchat, choco.getNom(), stock * 1000.0, demande, prixConcurrent);
-
-            double prixFinal = strategieConcurrentielle.ajusterSelonConcurrence(prixBase, prixConcurrent);
+            double prixFinal = pricingService.calculerPrix(
+                choco, coutAchat, stockT, dos, demande, prixConcurrent, partMarche, cash
+            );
 
             this.prix.put(choco, prixFinal);
-            this.journal.ajouter("Prix ajusté " + choco.getNom()
-                + " : " + prixFinal + "€/T (coût=" + coutAchat + ", marché=" + prixConcurrent + ")");
 
-            if (stock > 0 && coutAchat > 0) {
-                profitBrutTotal += (prixFinal - coutAchat) * (stock / 1000.0);
-                margeTotal += ((prixFinal - coutAchat) / coutAchat) * 100;
-            }
+            this.journal.ajouter("Prix EQ9 " + choco.getNom() + " = " + prixFinal
+                + "€/T (coût=" + coutAchat + ", DOS=" + dos + ", marché=" + prixConcurrent + ")");
         }
-
-        this.indicateurProfitBrutEtape.setValeur(this, profitBrutTotal);
-        this.indicateurMargeMoyenne.setValeur(this, margeTotal / produits.size());
     }
+
 
 
     /**
