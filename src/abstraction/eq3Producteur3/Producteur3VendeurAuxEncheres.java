@@ -68,7 +68,9 @@ public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implemen
 				}
 				
 				if (coutParTonne > 0) {
-					this.prixMin = coutParTonne * 1.15; // Coût de revient + 15% de marge
+					double ratioRemplissage = stockActuel / this.gestionCouts.getSeuilDefenseParFeve(); // Proche de 1.0 si stock critique
+					double marge = 1.25 - (ratioRemplissage * 0.15); // La marge varie entre +25% (stock vide) et +10% (stock plein)
+					this.prixMin = coutParTonne * marge;
 				} else {
 					this.prixMin = 1500.0; // Prix de secours
 				}
