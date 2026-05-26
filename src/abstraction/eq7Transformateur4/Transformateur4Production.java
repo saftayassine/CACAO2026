@@ -67,7 +67,7 @@ public class Transformateur4Production extends Transformateur4Marques implements
         if (Filiere.LA_FILIERE.getEtape()>0 && this.StockChoco_BQ.getValeur()<1000000){
             quantity = get_LQ().getValeur()*2.2222;
         }
-        else if (this.StockChoco_BQ.getValeur()>1000000){
+        else if (this.StockChoco_BQ.getValeur()>500000){
             quantity = 0.;
         }
         else{
@@ -85,8 +85,6 @@ public class Transformateur4Production extends Transformateur4Marques implements
         double totalChoco = this.get_StockChoco_BQ().getValeur() + this.get_StockChoco_MQ().getValeur() + this.get_StockChoco_HQ().getValeur();
         double coutStockageU = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur()*4;
         double coutStockage = totalChoco * coutStockageU ;
-        System.out.println(Filiere.LA_FILIERE.getBanque().getSolde(this,cryptogramme));
-        System.out.println(coutStockage>0.);
         if(coutStockage > 0.){
             Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de stockage du chocolat", coutStockage);
         }
@@ -94,7 +92,6 @@ public class Transformateur4Production extends Transformateur4Marques implements
         //Auteur  : Paul
         //Coûts de main d'oeuvre
          if (quantity > 0){
-            System.out.println("test");
             double nb_ouvriers_nécessaires = quantity/8.4;
             if (this.nb_ouvriers.getValeur() > nb_ouvriers_nécessaires*1.3){
                 Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de licenciement pour la production de chocolat", 3500*(this.nb_ouvriers.getValeur()-nb_ouvriers_nécessaires));

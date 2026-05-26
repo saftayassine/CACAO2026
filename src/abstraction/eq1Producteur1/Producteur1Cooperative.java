@@ -8,46 +8,34 @@ public class Producteur1Cooperative extends Producteur1Planteur {
     HashMap<String, Double> coopNonEq = new HashMap<>();
     HashMap<String, Double> coopEq = new HashMap<>();
 
-    // 50% de la force de travail non équitable est faite par des enfants
+    // On simule qu'une partie du travail sur les terres conventionnelles est effectuée par des enfants.
     double pourcentageEnfant = 0.5;
 
-    // PART DE LA SURFACE ÉQUITABLE (0 = tout non équitable)
+    // Ratio de nos terres converties au commerce équitable (0 signifie 100% conventionnel).
     double partEquitable = 0.0;
 
     public Producteur1Cooperative() {
         super();
 
-        //-----------------------------
-        // SALAIRES
-        //-----------------------------
+        // --- Grille des salaires ---
         coopEq.put("salaire adultes", 2.0);
-
         coopNonEq.put("salaire adultes", 0.5);
         coopNonEq.put("salaire enfants", 0.2);
 
-        //-----------------------------
-        // RÉPARTITION DES TERRES
-        //-----------------------------
+        // --- Répartition des terres ---
         double surfaceTotale = 1000000;
-
         double surfaceEq = surfaceTotale * partEquitable;
         double surfaceNonEq = surfaceTotale - surfaceEq;
 
         coopEq.put("taille", surfaceEq);
         coopNonEq.put("taille", surfaceNonEq);
 
-        //-----------------------------
-        // COOP ÉQUITABLE (100% adultes)
-        //-----------------------------
+        // Sur la partie équitable, la main-d'œuvre est exclusivement adulte.
         double forceEq = surfaceEq * 3;
-
         coopEq.put("nombre adultes", forceEq);
 
-        //-----------------------------
-        // COOP NON ÉQUITABLE
-        //-----------------------------
+        // Sur la partie conventionnelle, la charge de travail est partagée selon notre paramètre.
         double forceNonEq = surfaceNonEq * 3;
-
         double travailEnfant = forceNonEq * pourcentageEnfant;
         double travailAdulte = forceNonEq - travailEnfant;
 
@@ -58,9 +46,6 @@ public class Producteur1Cooperative extends Producteur1Planteur {
         coopNonEq.put("nombre adultes", nbAdulte);
     }
 
-    // -----------------------------
-    // GETTERS
-    // -----------------------------
     public double getSalaireAdulte(boolean equitable) {
         return equitable
                 ? coopEq.get("salaire adultes")
@@ -81,13 +66,9 @@ public class Producteur1Cooperative extends Producteur1Planteur {
         return coopNonEq.get("salaire enfants");
     }
 
-    // -----------------------------
-    // POURCENTAGE ENFANTS
-    // -----------------------------
+    // Permet de faire évoluer nos pratiques sociales en modifiant la part du travail infantile.
     public void setPourcentageEnfants(double p) {
-
         if (p >= 0 && p <= 1) {
-
             this.pourcentageEnfant = p;
 
             double surfaceNonEq = coopNonEq.get("taille");
@@ -101,11 +82,8 @@ public class Producteur1Cooperative extends Producteur1Planteur {
         }
     }
 
-    // -----------------------------
-    // SALAIRES
-    // -----------------------------
+    // Rémunère l'ensemble de notre main-d'œuvre en puisant dans nos fonds.
     public void payerSalaire() {
-
         double montantJournalier =
                 coopEq.get("nombre adultes") * coopEq.get("salaire adultes")
                         +
@@ -130,7 +108,6 @@ public class Producteur1Cooperative extends Producteur1Planteur {
     }
 
     public void setSalaire(boolean adulte, boolean equitable, double salaire) {
-
         if (equitable) {
             coopEq.put("salaire adultes", salaire);
         }
