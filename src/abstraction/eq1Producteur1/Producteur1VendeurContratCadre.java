@@ -207,10 +207,13 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 						contrat = contratAct;
 					}
 				}
-				int tempsRestant = Filiere.LA_FILIERE.getEtape()-contrat.getEcheancier().getStepFin();
-				if(Filiere.LA_FILIERE.getEtape()%24 >= tempsRestant){
-					this.renouvellementContratCadre(acheteur, f,contrat);
-				}
+				// On calcule combien de steps il reste avant la fin du contrat
+					int tempsRestant = contrat.getEcheancier().getStepFin() - Filiere.LA_FILIERE.getEtape();
+					
+					// Si le contrat se termine dans moins d'un an (et qu'il n'est pas déjà fini), on le renouvelle
+					if (tempsRestant >= 0 && tempsRestant <= 24) {
+						this.renouvellementContratCadre(acheteur, f, contrat);
+					}
 			}
 			else{
 				this.propositionContratCadre(acheteur, f);
