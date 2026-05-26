@@ -70,7 +70,6 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         this.pricingService = new EQ9_Pricing();
     }
 
-    // Ajoute 100 tonnes d'un produit en rayon
     /**
      * @author Anass Ouisrani et Paul Juhel
      */
@@ -78,8 +77,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         this.stock.clear();
         List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
 
-        // Initialiser le stock pour TOUS les produits disponibles (pas seulement le
-        // premier)
+        // Initialiser le stock pour tous les produits disponibles
         if (produits != null && !produits.isEmpty()) {
             for (ChocolatDeMarque choco : produits) {
 
