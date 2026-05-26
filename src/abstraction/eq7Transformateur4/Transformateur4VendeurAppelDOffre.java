@@ -28,12 +28,13 @@ public class Transformateur4VendeurAppelDOffre extends Transformateur4VendeurAux
         if (!marque.contains("cacao+")) {
             return null;
         }
-
+        double quantiteT= offre.getQuantiteT();
         double stockDispo = this.get_StockChoco_BQ().getValeur()+this.get_StockChoco_MQ().getValeur()+this.get_StockChoco_HQ().getValeur();
         if (stockDispo < offre.getQuantiteT()) {
-            return null; 
+            quantiteT = stockDispo/1.5; 
         }
 
+        AppelDOffre nouv_offre = new AppelDOffre(offre.getAcheteur(),offre.getProduit(), quantiteT, offre.getTeteGondole() );
         double prixTonne;
         switch (cdm.getChocolat()) {
             case C_HQ: 
@@ -52,7 +53,7 @@ public class Transformateur4VendeurAppelDOffre extends Transformateur4VendeurAux
                 prixTonne = 5000.0;
                 this.journal_vente_AO.ajouter("Proposition de vente de "+offre.getQuantiteT()+" T de "+cdm+" à "+prixTonne+" €/T par "+offre.getAcheteur().getNom());}
     
-			return new OffreVente(offre, this, cdm, prixTonne);
+			return new OffreVente(nouv_offre, this, cdm, prixTonne);
 	
 			}
 
