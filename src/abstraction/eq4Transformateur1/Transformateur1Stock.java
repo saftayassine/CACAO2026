@@ -481,7 +481,7 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         double MatieresPremieresH= ChocoHObtenu-F_HQ_ATransfo;
         double ChocoHEObtenu= F_HQ_E_ATransfo/0.65;
         double MatieresPremieresHE= ChocoHEObtenu-F_HQ_E_ATransfo;
-        double MatieresPremieresTotales= MatieresPremieresB+MatieresPremieresBE+MatieresPremieresM+MatieresPremieresH+MatieresPremieresHE;
+        this.MatieresPremieresTotales= MatieresPremieresB+MatieresPremieresBE+MatieresPremieresM+MatieresPremieresH+MatieresPremieresHE;
         this.ChocoProduit=ChocoBObtenu+ChocoBEObtenu+ChocoMObtenu+ChocoHObtenu+ChocoHEObtenu;  
         this.setStocksProduit(Feve.F_BQ, this.getStocksProduit(Feve.F_BQ)-F_BQ_ATransfo);
         this.setStocksProduit(ProntellaB, this.getStocksProduit(ProntellaB)+ChocoBObtenu);
