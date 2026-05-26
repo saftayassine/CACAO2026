@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import abstraction.eqXRomu.appelDOffre.AppelDOffre;
+import abstraction.eqXRomu.appelDOffre.IAcheteurAO;
+import abstraction.eqXRomu.appelDOffre.OffreVente;
+import abstraction.eqXRomu.appelDOffre.SuperviseurVentesAO;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
@@ -155,7 +159,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
 
         for (int i = 0; i < liste.size(); i++) {
             ChocolatDeMarque actuel = liste.get(i);
-            double prixCible = this.prixDAchat.getOrDefault(actuel, 15.0);
+            double prixCible = this.prixDAchat.getOrDefault(actuel, 1000.0);
             double prixMax = prixCible * 1.3;
 
             if (i < liste.size() - 1) {
@@ -196,7 +200,36 @@ public class Approvisionnement extends ChocolatDistributeur1 {
 
     protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
         methodeIntermediaireAchatCC(cdm, besoin, prixCible, prixMax, TG);
+    
+        if (besoin < AppelDOffre.AO_QUANTITE_MIN) return;
+
+    // Récupération du superviseur AO via son nom dans la filière
+    SuperviseurVentesAO superviseur = (SuperviseurVentesAO) Filiere.LA_FILIERE.getActeur("Sup.AO");
+
+        if (superviseur == null) {
+            this.journal5.ajouter("ERREUR : SuperviseurVentesAO introuvable");
+            return;
+        }
+
+        OffreVente retenue = superviseur.acheterParAO(
+        (IAcheteurAO) this,
+        this.cryptogramme,
+        cdm,
+        besoin,
+        TG
+    );
+
+    if (retenue != null) {
+        this.journal3.ajouter(
+            "AO retenu : " + retenue.getQuantiteT() + " T de " + cdm
+            + " à " + retenue.getPrixT() + " €/T"
+            + (TG ? " [TG]" : "")
+        );
+    } else {
+        this.journal3.ajouter("AO sans résultat pour " + cdm);
     }
+}
+
 
     /**
      * Correction : Création d'une nouvelle Map pour le stock prédit afin d'éviter
@@ -243,7 +276,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
             IProduit p = (IProduit) nouveauContrat.getProduit();
             if (p instanceof ChocolatDeMarque) {
                 ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-                int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+                int etapeActuelle = Filiere.LA_FILIERE.getEtape() + 1;
                 double livraisonImmediate = nouveauContrat.getEcheancier().getQuantite(etapeActuelle);
             
                 // 1. Stock Predit Global
