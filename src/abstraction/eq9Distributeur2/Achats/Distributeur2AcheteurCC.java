@@ -197,8 +197,8 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
 
 
     /**
-     * @author Anass Ouisrani
-     * @author Paul Juhel (pour correctifs)
+     * @author Anass Ouisrani V1
+     * @author Paul Juhel V2
      */
     @Override
     public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
@@ -209,47 +209,58 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         double solde = getSolde();
         double quantiteTotale = contrat.getQuantiteTotale();
 
-        // prix déjà acceptable : on accepte
-        if (prixPropose <= prixMax) {
-            journalCC.ajouter("CC : prix acceptable → acceptation directe (" + prixPropose + ")");
-            return prixPropose;
-        }
-
-        //négociations
         List<Double> historique = contrat.getListePrix();
         int tours = historique.size();
 
-        // contre-proposition
-        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
-        if (ratio > 0.90) ratio = 0.90;     // on ne dépasse jamais 90%
+        // PRIX ACCEPTABLE MAIS ON TENTE UNE NÉGO
+        if (prixPropose <= prixMax) {
+
+            // On tente une petite réduction (-3%)
+            double tentative = prixPropose * 0.97;
+
+            // On ne descend pas trop bas (90% du prix max)
+            double seuilMini = prixMax * 0.90;
+            if (tentative < seuilMini) {
+                tentative = seuilMini;
+            }
+
+            // Si on est déjà très proche : on accepte
+            if (tours >= 2) {
+                journalCC.ajouter("CC : prix acceptable → acceptation (" + prixPropose + ")");
+                return prixPropose;
+            }
+
+            journalCC.ajouter("CC : prix acceptable mais tentative de négo → " + tentative);
+            return tentative;
+        }
+
+        // PRIX TROP HAUT : NÉGO "CLASSIQUE"
+        double ratio = 0.70 + 0.05 * tours;
+        if (ratio > 0.90) ratio = 0.90;
 
         double contreProp = prixPropose * ratio;
 
-        // Vérification du prix max
         if (contreProp > prixMax) {
             contreProp = prixMax;
         }
 
-        //Vérification financière
         double coutTotal = contreProp * quantiteTotale;
         if (solde < coutTotal) {
             journalCC.ajouter("CC : abandon → fonds insuffisants pour " + contreProp);
             return -1.0;
         }
 
-        // contre-proposition est proche du prix vendeur : on accepte
+        // Si on est très proche du prix vendeur et que c'est acceptable : on accepte
         if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
             journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
             return prixPropose;
         }
 
-        //on continue la négociation
         journalCC.ajouter("CC : contre-proposition " + contreProp
             + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
 
         return contreProp;
     }
-
 
 
     @Override
