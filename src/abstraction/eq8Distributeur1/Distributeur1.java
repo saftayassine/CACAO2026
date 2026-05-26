@@ -68,8 +68,9 @@ public class Distributeur1 extends MiseEnRayon {
 		for (int j=0; j<p.size(); j++){
 			double f=this.getQuantiteEnRayon(p.get(j),this.cryptogramme);
 		}
-		this.actualiserPrixDeVente();
+		
 		this.actualiserPrixDachatParContrats();
+		this.actualiserPrixDeVente();
 		this.stockPredit = initialiserStockPredit();
 
 		//JournalActions
