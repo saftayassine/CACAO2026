@@ -1,5 +1,6 @@
 package abstraction.eq9Distributeur2;
 
+import abstraction.eq9Distributeur2.Achats.Distributeur2AcheteurCC;
 import abstraction.eqXRomu.appelDOffre.IAcheteurAO;
 
 /**
@@ -19,7 +20,6 @@ public class Distributeur2 extends Distributeur2AcheteurCC implements IAcheteurA
 	public void next() {
 		super.next();
 
-		// Appels d'offres après la politique CC et prévention des ruptures
 		faireUnAppelDOffre();
 
 		journal.ajouter("Distributeur2 - Next complet CC+AO");

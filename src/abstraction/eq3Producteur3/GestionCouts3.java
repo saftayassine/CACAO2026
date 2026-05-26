@@ -11,13 +11,15 @@ import abstraction.eqXRomu.produits.Gamme;
 public class GestionCouts3 {
 
     private double coutHectare;
-    private double coutStockageTonne;
+    public double coutStockageTonne;
     private double coutLabelHappyWorker;
+    private double seuilDefenseParFeve;
 
     public GestionCouts3(){
-        this.coutHectare= 7.8;
-        this.coutLabelHappyWorker=1000;
-        this.coutStockageTonne=7.5;
+        this.coutHectare= 7.8; // cout de l'hectare de plantation
+        this.coutLabelHappyWorker=1000; // le cout du label a payer a chaque fois pour chaque fève que l'on veut
+        this.coutStockageTonne=0; // est initialiser dans notre acteur 
+        this.seuilDefenseParFeve = 100000.0; // seuil de stockage maximal que l'on autorise par fève
     }
 
     public void nextCout(Producteur3Acteur acteur) {
@@ -25,6 +27,9 @@ public class GestionCouts3 {
         double coutPlantation = acteur.plantationeq3.getNbHectareTotal() * this.coutHectare;
         acteur.journal_cout_periode.ajouter("Période " + Filiere.LA_FILIERE.getEtape() + " : coût plantation = " + coutPlantation);
         Filiere.LA_FILIERE.getBanque().payerCout(acteur, acteur.cryptogramme, "Coût des plantations", coutPlantation);
+
+        //Seuil de défense dans le cas ou nos stocks dépassent une certaine quantité
+        acteur.stock.donnerAuxEnfantsMalades(this.seuilDefenseParFeve);
 
         // Coût stockage (7.5 par unité)
         double coutStock = acteur.stock.getCoutStockage(this.coutStockageTonne);
@@ -55,5 +60,8 @@ public class GestionCouts3 {
                 c+= this.coutLabelHappyWorker;
             }
         return c ;
+    }
+    public double getSeuilDefenseParFeve(){
+        return this.seuilDefenseParFeve;
     }
 }
