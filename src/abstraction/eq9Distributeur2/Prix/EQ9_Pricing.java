@@ -34,6 +34,12 @@ public class EQ9_Pricing {
         prix *= facteurEntreprise(partMarche);
         prix *= facteurEQ9(stockT, cash);
 
+        double prixPlancher = coutAchat * 1.05 + EQ9Config.FRAIS_STOCKAGE_EUR_PAR_T;
+    
+        if (prix < prixPlancher) {
+            prix = prixPlancher;
+    }
+
         return prix;
     }
 

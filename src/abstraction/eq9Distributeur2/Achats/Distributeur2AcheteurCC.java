@@ -404,6 +404,10 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         if (stock < EQ9Config.SEUIL_MIN_T) {
             prixMax *= 1.10; // on paye plus cher pour éviter la rupture
         }
+        double limiteSurvie = prixVentePrevu / 1.05;
+        if (prixMax > limiteSurvie) {
+            prixMax = limiteSurvie;
+        }
 
         return prixMax;
     }
