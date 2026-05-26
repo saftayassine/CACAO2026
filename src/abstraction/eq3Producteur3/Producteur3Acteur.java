@@ -52,6 +52,7 @@ public class Producteur3Acteur implements IActeur {
 	
 	public void initialiser() {
 		this.superviseur = (SuperviseurVentesAuxEncheres)(Filiere.LA_FILIERE.getActeur("Sup.Encheres"));
+		this.gestionCouts.coutStockageTonne = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur();
 	}
 
 	public String getNom() {// NE PAS MODIFIER
