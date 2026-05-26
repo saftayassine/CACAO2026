@@ -29,10 +29,6 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AchatAppelO
             return null;
         }
 
-        double stockDispo = this.getStock_chocolatDeMarque(cdm);
-        if (stockDispo < offre.getQuantiteT()) {
-            return null; 
-        }
 
         double prixTonne;
         switch (cdm.getChocolat()) {
@@ -50,7 +46,19 @@ public class Transformateur2VendeurAppelOffre extends Transformateur2AchatAppelO
                 break;
         }
 
-        return new OffreVente(offre, this, cdm, prixTonne);
+        double stockDispo = this.getStock_chocolatDeMarque(cdm);
+        if (stockDispo < offre.getQuantiteT()) {
+            if(stockDispo>10000){
+                AppelDOffre nouvelleOffre = new AppelDOffre(offre.getAcheteur(),cdm,stockDispo*0.3,offre.getTeteGondole());
+                return new OffreVente(nouvelleOffre, this, cdm, prixTonne);
+            }
+            else{
+                return null;
+            }
+        }
+        else{
+            return new OffreVente(offre, this, cdm, prixTonne);
+        }
     }
 
 	public void notifierVenteAO(OffreVente propositionRetenue){

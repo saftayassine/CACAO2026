@@ -208,16 +208,17 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
                     for (IVendeurContratCadre vendeur : vendeurs) {
                         
                         Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 10, quantiteAManquer/10.0 );
-                        
-                        // On stocke le résultat de la demande dans une variable
-                        ExemplaireContratCadre nouveauContrat = ((SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre")).demandeAcheteur(this, vendeur, f, echeancier, cryptogramme, false);
-                        
-                        // Si le contrat a été accepté et signé (il n'est pas null)
-                        if (nouveauContrat != null) {
-                            break; // SUCCÈS ! On quitte la boucle des vendeurs, inutile de demander aux autres.
-                        }
+                        if(echeancier.echeancierAcceptable()){
+							// On stocke le résultat de la demande dans une variable
+							ExemplaireContratCadre nouveauContrat = ((SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre")).demandeAcheteur(this, vendeur, f, echeancier, cryptogramme, false);
+							
+							// Si le contrat a été accepté et signé (il n'est pas null)
+
+							if (nouveauContrat != null){
+								this.notificationNouveauContratCadre(nouveauContrat);
+							}; // SUCCÈS ! On quitte la boucle des vendeurs, inutile de demander aux autres.
+						}
                     }
-                    // ---------------------------------------------
                 }
             }
         }

@@ -19,7 +19,7 @@ public class GestionCouts3 {
         this.coutHectare= 7.8; // cout de l'hectare de plantation
         this.coutLabelHappyWorker=1000; // le cout du label a payer a chaque fois pour chaque fève que l'on veut
         this.coutStockageTonne=0; // est initialiser dans notre acteur 
-        this.seuilDefenseParFeve = 200000.0; // seuil de stockage maximal que l'on autorise par fève
+        this.seuilDefenseParFeve = 100000.0; // seuil de stockage maximal que l'on autorise par fève
     }
 
     public void nextCout(Producteur3Acteur acteur) {

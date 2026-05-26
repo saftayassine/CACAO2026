@@ -91,6 +91,12 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
 
             // On garde quand même un plafond absolu (ex: 150 000T) pour ne pas saturer l'usine si on a trop de fèves
             double PLAFOND_CARNET_COMMANDE = 50000.0;
+            if (Filiere.LA_FILIERE.getEtape() <= 10){
+                PLAFOND_CARNET_COMMANDE = 50000.0;
+            }
+            else {
+                PLAFOND_CARNET_COMMANDE = 150000.0;
+            }
             espaceLibre = Math.min(espaceLibre, Math.max(0.0, PLAFOND_CARNET_COMMANDE - quantiteDejaPromise));
             // -------------------------------------------------------------
 
@@ -178,7 +184,6 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         }
         
         if (contrat.getPrix() >= prixPlancherTonne) {
-            this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
             return contrat.getPrix();
         }
 
@@ -192,9 +197,7 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         
         double offreFinale = Math.max(nouvelleOffre, prixPlancherTonne);
         
-        if (contrat.getPrix() >= offreFinale) {
-            this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
-            return contrat.getPrix();
+        if (contrat.getPrix() >= offreFinale) {            return contrat.getPrix();
         } else {
             return offreFinale;
         }
@@ -235,6 +238,12 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
 
         // LE CARNET DE COMMANDES : On s'autorise 150 000 T de promesses en cours par gamme
         double PLAFOND_CARNET_COMMANDE = 50000.0;
+            if (Filiere.LA_FILIERE.getEtape() <= 10){
+                PLAFOND_CARNET_COMMANDE = 50000.0;
+            }
+            else {
+                PLAFOND_CARNET_COMMANDE = 150000.0;
+            }
 
         for (ChocolatDeMarque choco : mesChocolats) {
             
@@ -302,7 +311,10 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                     double quantiteParTour = quantiteAProposer / 5.0;
                     
                     Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 5, quantiteParTour);
-                    supCC.demandeVendeur(acheteur, this, choco, echeancier, cryptogramme, false);
+                    ExemplaireContratCadre Contrat = supCC.demandeVendeur(acheteur, this, choco, echeancier, cryptogramme, false);
+                    if (Contrat != null){
+                        this.notificationNouveauContratCadre(Contrat);
+                    }
                 }
             }
             }

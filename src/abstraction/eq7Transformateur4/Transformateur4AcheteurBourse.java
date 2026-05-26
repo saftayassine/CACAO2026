@@ -23,7 +23,7 @@ public class Transformateur4AcheteurBourse extends Transformateur4Acteur impleme
             BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
             double max = bourse.getCours(f).getMax();
             double min = bourse.getCours(f).getMin();
-            if (max > min) {
+            if (max > min && this.StockChoco_BQ.getValeur()<2000000) {
                 double pourcentage = (max - cours) / (max - min);
                 double maxDemand = 200000; // Quantité maximale à demander
                 return maxDemand * pourcentage;
