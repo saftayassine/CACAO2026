@@ -24,6 +24,9 @@ public class Transformateur1Couts extends Transformateur1Stock {
         }
         ;
         Filiere.LA_FILIERE.getBanque().payerCout(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme,"couts fixes",  2000000);
+        if (this.getTotalStocks()>0){
+            Filiere.LA_FILIERE.getBanque().payerCout(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme,"couts de stockage", this.getTotalStocks()*Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur()*4 );
+        }
         if (Filiere.LA_FILIERE.getEtape() ==0){
             Filiere.LA_FILIERE.getBanque().payerCout(Filiere.LA_FILIERE.getActeur(getNom()), this.cryptogramme,"achat machines init",  13500000);
         };

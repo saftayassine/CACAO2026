@@ -15,6 +15,7 @@ import abstraction.eqXRomu.produits.ChocolatDeMarque;
 
 public class Transformateur1Stock extends Transformateur1Acteur implements IFabricantChocolatDeMarque, IMarqueChocolat{
 
+    public Journal journalStock;
     private HashMap<IProduit, Double> stock;
     private HashMap<IProduit, Double> stockPrévu;
     public double ChocoProduit;
@@ -49,6 +50,7 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         this.PeremptionProntellaH.put(0, new ArrayList<Double>());
         this.PeremptionProntellaBE.put(0, new ArrayList<Double>());
         this.PeremptionProntellaHE.put(0, new ArrayList<Double>());
+        this.journalStock = new Journal("Journal "+this.getNom()+ " Stock", this);
 
     }
     public List<ChocolatDeMarque> getChocolatsProduits(){
@@ -416,25 +418,43 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         }
     }
 
-    public Double getFirstPeremptionDouble (IProduit p){
+    public Integer getFirstPeremptionDouble (IProduit p){
         if (p.equals(ProntellaB) && !this.PeremptionProntellaB.isEmpty()){
-            return this.PeremptionProntellaB.get(this.NumLotMinB).get(0);
+            Set<Integer> numLotsB= this.PeremptionProntellaB.keySet();
+            if(!numLotsB.isEmpty()){
+                Integer numLotB= Collections.min(numLotsB);
+                return numLotB;
+            }
         }
         else if (p.equals(ProntellaM) && !this.PeremptionProntellaM.isEmpty()){
-            return this.PeremptionProntellaM.get(this.NumLotMinM).get(0);
+            Set<Integer> numLotsM= this.PeremptionProntellaM.keySet();
+            if(!numLotsM.isEmpty()){
+                Integer numLotM= Collections.min(numLotsM);
+                return numLotM;
+            }
         }
         else if (p.equals(ProntellaH) && !this.PeremptionProntellaH.isEmpty()){
-            return this.PeremptionProntellaH.get(this.NumLotMinH).get(0);
+            Set<Integer> numLotsH= this.PeremptionProntellaH.keySet();
+            if(!numLotsH.isEmpty()){
+                Integer numLotH= Collections.min(numLotsH);
+                return numLotH;
+            }
         }
         else if (p.equals(ProntellaBE) && !this.PeremptionProntellaBE.isEmpty()){
-            return this.PeremptionProntellaBE.get(this.NumLotMinBE).get(0);
+            Set<Integer> numLotsBE= this.PeremptionProntellaBE.keySet();
+            if(!numLotsBE.isEmpty()){
+                Integer numLotBE= Collections.min(numLotsBE);
+                return numLotBE;
+            }
         }
         else if (p.equals(ProntellaHE) && !this.PeremptionProntellaHE.isEmpty()){
-            return this.PeremptionProntellaHE.get(this.NumLotMinHE).get(0);
+            Set<Integer> numLotsHE= this.PeremptionProntellaHE.keySet();
+            if(!numLotsHE.isEmpty()){
+                Integer numLotHE= Collections.min(numLotsHE);
+                return numLotHE;
+            }
         }
-        else{
-            return null;
-        }
+        return null;
     }
 
 
@@ -517,5 +537,73 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
             this.PeremptionProntellaHE.remove(Collections.min(this.PeremptionProntellaHE.keySet()));
             // NumLotMinHE++;
         }}}
+        this.journalStock.ajouter("=== ETAPE " + Filiere.LA_FILIERE.getEtape() + " ===");
+
+this.journalStock.ajouter("Fèves BQ : " + this.getStocksProduit(Feve.F_BQ) + " t");
+this.journalStock.ajouter("Fèves MQ : " + this.getStocksProduit(Feve.F_MQ) + " t");
+this.journalStock.ajouter("Fèves HQ : " + this.getStocksProduit(Feve.F_HQ) + " t");
+this.journalStock.ajouter("Fèves BQ BIO : " + this.getStocksProduit(Feve.F_BQ_E) + " t");
+this.journalStock.ajouter("Fèves HQ BIO : " + this.getStocksProduit(Feve.F_HQ_E) + " t");
+
+this.journalStock.ajouter("Stock Prontella BQ : " + this.getStocksProduit(ProntellaB) + " t");
+this.journalStock.ajouter("Stock Prontella MQ : " + this.getStocksProduit(ProntellaM) + " t");
+this.journalStock.ajouter("Stock Prontella HQ : " + this.getStocksProduit(ProntellaH) + " t");
+this.journalStock.ajouter("Stock Prontella BQ BIO : " + this.getStocksProduit(ProntellaBE) + " t");
+this.journalStock.ajouter("Stock Prontella HQ BIO : " + this.getStocksProduit(ProntellaHE) + " t");
+
+this.journalStock.ajouter("Stock prévu Prontella BQ : " + this.getStocksPrevuProduit(ProntellaB) + " t");
+this.journalStock.ajouter("Stock prévu Prontella MQ : " + this.getStocksPrevuProduit(ProntellaM) + " t");
+this.journalStock.ajouter("Stock prévu Prontella HQ : " + this.getStocksPrevuProduit(ProntellaH) + " t");
+this.journalStock.ajouter("Stock prévu Prontella BQ BIO : " + this.getStocksPrevuProduit(ProntellaBE) + " t");
+this.journalStock.ajouter("Stock prévu Prontella HQ BIO : " + this.getStocksPrevuProduit(ProntellaHE) + " t");
+
+this.journalStock.ajouter("Chocolat produit cette étape : " + this.ChocoProduit + " t");
+
+this.journalStock.ajouter("Total stock fèves : " + this.getTotalStocksFeves() + " t");
+this.journalStock.ajouter("Total stock chocolat : " + this.getTotalStocksChocoMarque() + " t");
+this.journalStock.ajouter("Total stock global : " + this.getTotalStocks() + " t");
+Integer lotB = this.getFirstPeremptionDouble(ProntellaB);
+Integer lotH = this.getFirstPeremptionDouble(ProntellaH);
+Integer lotM = this.getFirstPeremptionDouble(ProntellaM);
+Integer lotBE = this.getFirstPeremptionDouble(ProntellaBE);
+Integer lotHE = this.getFirstPeremptionDouble(ProntellaHE);
+
+
+if (lotB != null
+    && this.PeremptionProntellaB.containsKey(lotB)
+    && this.PeremptionProntellaB.get(lotB) != null
+    && this.PeremptionProntellaB.get(lotB).size() > 0) {
+
+    this.journalStock.ajouter("Prochaine péremption Prontella BQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaB)+"à la date :"+this.PeremptionProntellaB.get(this.getFirstPeremptionDouble(ProntellaB)).get(0));
+}
+if (lotM != null
+    && this.PeremptionProntellaM.containsKey(lotM)&& this.PeremptionProntellaM.get(lotM) != null
+    && this.PeremptionProntellaM.get(lotM).size() > 0){
+    this.journalStock.ajouter("Prochaine péremption Prontella MQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaM)+"à la date :"+this.PeremptionProntellaM.get(this.getFirstPeremptionDouble(ProntellaM)).get(0));
+}
+
+if (lotH != null
+    && this.PeremptionProntellaH.containsKey(lotH)
+    && this.PeremptionProntellaH.get(lotH) != null
+    && this.PeremptionProntellaH.get(lotH).size() > 0) {
+    this.journalStock.ajouter("Prochaine péremption Prontella HQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaH)+"à la date :"+this.PeremptionProntellaH.get(this.getFirstPeremptionDouble(ProntellaH)).get(0));
+}
+if (lotBE != null
+    && this.PeremptionProntellaBE.containsKey(lotBE)
+    && this.PeremptionProntellaBE.get(lotBE) != null
+    && this.PeremptionProntellaBE.get(lotBE).size() > 0) {
+    this.journalStock.ajouter("Prochaine péremption Prontella BQ E pour le lot: " + this.getFirstPeremptionDouble(ProntellaBE)+"à la date :"+this.PeremptionProntellaBE.get(this.getFirstPeremptionDouble(ProntellaBE)).get(0));
+}
+if (lotHE != null
+    && this.PeremptionProntellaHE.containsKey(lotHE)
+    && this.PeremptionProntellaHE.get(lotHE) != null
+    && this.PeremptionProntellaHE.get(lotHE).size() > 0) {
+    this.journalStock.ajouter("Prochaine péremption Prontella HQ E pour le lot: " + this.getFirstPeremptionDouble(ProntellaHE)+"à la date :"+this.PeremptionProntellaHE.get(this.getFirstPeremptionDouble(ProntellaHE)).get(0));
+}
+    }
+    public List<Journal> getJournaux() {
+		List<Journal> jx=super.getJournaux();
+		jx.add(this.journalStock);
+		return jx;
     }
 }
