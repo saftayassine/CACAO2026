@@ -41,12 +41,8 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
         Echeancier echeancier = contrat.getEcheancier();
 
-        // --- LE VERROU INDUSTRIEL ULTIME (Couverture des risques) ---
-            
-            // 1. Chocolat physique déjà en stock
             double chocoDispo = this.getStock_chocolatDeMarque(choco);
-            
-            // 2. Fèves physiques en stock (converties en capacité chocolat)
+
             double prodPossibleStock = 0.0;
             if (choco.getChocolat() == Chocolat.C_HQ) {
                 prodPossibleStock = Math.min(this.getStock_feve(Feve.F_HQ)/0.49, this.getStock_feve(Feve.F_MQ)/0.51);
@@ -56,7 +52,7 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 prodPossibleStock = this.getStock_feve(Feve.F_BQ)/0.45;
             }
 
-            // 3. Fèves promises par NOS fournisseurs dans nos contrats d'ACHAT (Le Juste-à-Temps)
+
             double fevesHQAvenir = 0.0;
             double fevesMQAvenir = 0.0;
             double fevesBQAvenir = 0.0;
@@ -77,7 +73,6 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 prodPossibleAvenir = fevesBQAvenir/0.45;
             }
 
-            // 4. Chocolat qu'on doit déjà livrer à nos clients (Ventes)
             double quantiteDejaPromise = 0.0;
             for (ExemplaireContratCadre c : this.mesContratsEnCours) {
                 if (c.getVendeur().equals(this) && c.getProduit().equals(choco)) {
@@ -85,11 +80,11 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 }
             }
 
-            // 5. Le vrai espace libre couvert par des approvisionnements !
+  
             double capaciteSecuriseeTotale = chocoDispo + prodPossibleStock + prodPossibleAvenir;
             double espaceLibre = Math.max(0.0, capaciteSecuriseeTotale - quantiteDejaPromise);
 
-            // On garde quand même un plafond absolu (ex: 150 000T) pour ne pas saturer l'usine si on a trop de fèves
+  
             double PLAFOND_CARNET_COMMANDE = 50000.0;
             if (Filiere.LA_FILIERE.getEtape() <= 10){
                 PLAFOND_CARNET_COMMANDE = 50000.0;
@@ -98,9 +93,9 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 PLAFOND_CARNET_COMMANDE = 150000.0;
             }
             espaceLibre = Math.min(espaceLibre, Math.max(0.0, PLAFOND_CARNET_COMMANDE - quantiteDejaPromise));
-            // -------------------------------------------------------------
 
-        // Si le carnet est plein, on refuse
+
+        // On refuse si on a déjà trop de contrats
         if (espaceLibre <= 100.0) {
             return null;
         }
@@ -109,8 +104,6 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         boolean modification = false;
         int nbEcheancesPropose = Math.min(echeancier.getNbEcheances(), 5);
 
-        // Sécurité : On accepte de gros contrats, mais on limite à 20 000 T d'un coup max 
-        // pour ne pas saturer brutalement la chaîne logistique
         double limiteParContrat = espaceLibre;
 
         if (quantiteDemandee > limiteParContrat) {
@@ -132,7 +125,10 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
             for (int i = 0; i < nbEcheancesPropose; i++) {
                 nouvelEcheancier.ajouter(quantiteParEcheance);
             }
-            return nouvelEcheancier;
+            if(nouvelEcheancier.echeancierAcceptable()){
+                return nouvelEcheancier;
+            }
+            else{return null;}
         } else {
             return echeancier; 
         }
@@ -210,17 +206,15 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
             ChocolatDeMarque choco = (ChocolatDeMarque) produit;
             double stockActuel = this.getStock_chocolatDeMarque(choco);
             
-            // DYNAMIQUE : On livre ce que le contrat demande (quantite), 
-            // mais bridé par ce qu'on a vraiment en stock pour ne pas passer en négatif
+            // On livre au max ce qu'il y a en stock
             quantiteALivrer = Math.min(quantite, stockActuel);
             
-            // On retire UNIQUEMENT ce qu'on met dans le camion
+
             if (quantiteALivrer > 0) {
                 this.remove_chocolatDeMarque(choco, quantiteALivrer); 
             }
         }
         
-        // On renvoie la vraie quantité livrée au superviseur
         return quantiteALivrer;
     }
 
@@ -236,7 +230,6 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         
         ChocolatDeMarque[] mesChocolats = {chocoHQ, chocoMQ, chocoBQ};
 
-        // LE CARNET DE COMMANDES : On s'autorise 150 000 T de promesses en cours par gamme
         double PLAFOND_CARNET_COMMANDE = 50000.0;
             if (Filiere.LA_FILIERE.getEtape() <= 10){
                 PLAFOND_CARNET_COMMANDE = 50000.0;
@@ -246,13 +239,12 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
             }
 
         for (ChocolatDeMarque choco : mesChocolats) {
+        
             
-            // --- LE VERROU INDUSTRIEL ULTIME (Couverture des risques) ---
-            
-            // 1. Chocolat physique déjà en stock
+            //Chocolat physique déjà en stock
             double chocoDispo = this.getStock_chocolatDeMarque(choco);
             
-            // 2. Fèves physiques en stock (converties en capacité chocolat)
+            // 2. Fèves en stock
             double prodPossibleStock = 0.0;
             if (choco.getChocolat() == Chocolat.C_HQ) {
                 prodPossibleStock = Math.min(this.getStock_feve(Feve.F_HQ)/0.49, this.getStock_feve(Feve.F_MQ)/0.51);
@@ -262,7 +254,7 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 prodPossibleStock = this.getStock_feve(Feve.F_BQ)/0.45;
             }
 
-            // 3. Fèves promises par NOS fournisseurs dans nos contrats d'ACHAT (Le Juste-à-Temps)
+            // Fèves promises que nous allons recevoir
             double fevesHQAvenir = 0.0;
             double fevesMQAvenir = 0.0;
             double fevesBQAvenir = 0.0;
@@ -283,7 +275,7 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 prodPossibleAvenir = fevesBQAvenir/0.45;
             }
 
-            // 4. Chocolat qu'on doit déjà livrer à nos clients (Ventes)
+            //Chocolat qu'on doit déjà livrer à nos clients
             double quantiteDejaPromise = 0.0;
             for (ExemplaireContratCadre c : this.mesContratsEnCours) {
                 if (c.getVendeur().equals(this) && c.getProduit().equals(choco)) {
@@ -291,15 +283,15 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
                 }
             }
 
-            // 5. Le vrai espace libre couvert par des approvisionnements !
+
             double capaciteSecuriseeTotale = chocoDispo + prodPossibleStock + prodPossibleAvenir;
             double espaceLibre = Math.max(0.0, capaciteSecuriseeTotale - quantiteDejaPromise);
 
-            // On garde quand même un plafond absolu (ex: 150 000T) pour ne pas saturer l'usine si on a trop de fèves
-            espaceLibre = Math.min(espaceLibre, Math.max(0.0, PLAFOND_CARNET_COMMANDE - quantiteDejaPromise));
-            // -------------------------------------------------------------
 
-            // Si on a de la place, on démarche !
+            espaceLibre = Math.min(espaceLibre, Math.max(0.0, PLAFOND_CARNET_COMMANDE - quantiteDejaPromise));
+
+
+            //On propose un contrat si on peut se le permettre
             if (espaceLibre > 2000.0) {
                 List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(choco);
 

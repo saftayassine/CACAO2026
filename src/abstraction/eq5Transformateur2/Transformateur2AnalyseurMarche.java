@@ -18,7 +18,8 @@ public class Transformateur2AnalyseurMarche extends Transformateur2Acteur{
         this.prixDernieresEncheres.add(0.0);
         this.prixDernieresEncheres.add(0.0);
     }
-
+    
+    //Renvoie une hashmap contenant les chocolats de marque et leur demande moyenne depuis l'initialisation
     public HashMap<ChocolatDeMarque,Double> DemandeMarque(){
         HashMap<ChocolatDeMarque,Double> demandeMarque=new HashMap<>();
         int etapeActuelle=Filiere.LA_FILIERE.getEtape();
@@ -46,7 +47,7 @@ public class Transformateur2AnalyseurMarche extends Transformateur2Acteur{
         }
         return demandeChocolat;
     }
-
+    //Les méthodes suivantes servent à traquer le prix de vente aux enchères pour affiner la stratégie (pas encore utilisé)
     public void updatePrixEnchere(Integer indice, Double prixTonne){
         /*indice 0:FerraraHQ, 1:FerraraMQ, 2:FerraraBQ  */
         this.prixDernieresEncheres.set(indice,prixTonne);
