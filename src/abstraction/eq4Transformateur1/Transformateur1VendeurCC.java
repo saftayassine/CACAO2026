@@ -80,20 +80,60 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){
         IProduit produit = contrat.getProduit();
         double prix= contrat.getPrix();
-            if (produit == this.ProntellaM && prix>=9500){
+            if (produit == this.ProntellaM){
+                if (prix>=9000){
                 return prix;
             }
-            else if (produit == this.ProntellaB && prix>=7500){
-                return prix;
+                else if (prix<9000 && prix>=8000){
+                    return prix;
+                }
+                else{
+                    return 9000;
+                }
             }
-            else if (produit == this.ProntellaH && prix>=11000){
+            else if (produit == this.ProntellaB){
+                if (prix>=7500){
                 return prix;
+                }               
+                else if (prix<7500 && prix>=6750){
+                    return prix;
+                } 
+                else{
+                    return 7500;
+                }
             }
-            else if (produit == this.ProntellaBE && prix>=8500){
+            else if (produit == this.ProntellaH){
+                if (prix>=11000){
                 return prix;
+                }           
+                else if (prix<11000 && prix>=10000){
+                    return prix;
+                }     
+                else{
+                    return 11000;
+                }
             }
-            else if (produit == this.ProntellaHE && prix>=12000){
+            else if (produit == this.ProntellaBE){
+                if (prix>=8500){
                 return prix;
+                }               
+                else if (prix<8500 && prix>=7500){
+                    return prix;
+                }
+                else{
+                    return 8500;
+                }
+            }
+            else if (produit == this.ProntellaHE){
+                if (prix>=12000){
+                    return prix;
+                }
+                else if (prix<12000 && prix>=11000){
+                    return prix;
+                }
+                else{
+                    return 12000;
+                }
             }
             else{
                 return 0.0;
@@ -134,7 +174,9 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
         if (this.getStocksProduit(cm)>200 && this.getStocksPrevuProduit(cm)>200 && this.getStocksPrevuProduit(cm)<200000){
         Echeancier e= new Echeancier(Filiere.LA_FILIERE.getEtape()+1,2,(Double.min(this.getStocksProduit(cm),this.getStocksPrevuProduit(cm)))/2);
         if (!acheteurs.isEmpty()) {
-        ExemplaireContratCadre contrat=sup.demandeVendeur(acheteurs.get(0), this, cm, e, cryptogramme, true);
+        int nbAcheteurs= acheteurs.size();
+        int index= ThreadLocalRandom.current().nextInt(0, nbAcheteurs);
+        ExemplaireContratCadre contrat=sup.demandeVendeur(acheteurs.get(index), this, cm, e, cryptogramme, true);
         if (! (contrat==null)){
             this.setStocksPrevuProduit(contrat.getProduit(),this.getStocksPrevuProduit(contrat.getProduit())-contrat.getQuantiteTotale());
         }
