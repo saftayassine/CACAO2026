@@ -92,7 +92,7 @@ public class Producteur3Acteur implements IActeur {
 			pourcentage_eq.put(Gamme.HQ, 0.60);
 		}
 
-		this.journal_plantation.ajouter("Ajustement dynamique des quotas - MQ_E: " 
+		this.journal_plantation.ajouter("Ajustement dynamique des quotas : " 
 			+ (pourcentage_eq.get(Gamme.MQ)*100) + "% | HQ_E: " + (pourcentage_eq.get(Gamme.HQ)*100) + "%");
 
 		this.plantationeq3.nextStep(pourcentage_eq); // permet de gérer nos hectares de plantation
