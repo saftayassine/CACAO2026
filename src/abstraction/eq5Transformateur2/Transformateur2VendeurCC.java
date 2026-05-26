@@ -184,7 +184,6 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         }
         
         if (contrat.getPrix() >= prixPlancherTonne) {
-            this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
             return contrat.getPrix();
         }
 
@@ -198,9 +197,7 @@ public class Transformateur2VendeurCC extends Transformateur2AchatCC implements 
         
         double offreFinale = Math.max(nouvelleOffre, prixPlancherTonne);
         
-        if (contrat.getPrix() >= offreFinale) {
-            this.getJournaux().get(4).ajouter(contrat.toString()+ "\n");
-            return contrat.getPrix();
+        if (contrat.getPrix() >= offreFinale) {            return contrat.getPrix();
         } else {
             return offreFinale;
         }
