@@ -21,6 +21,9 @@ public class EQ9_StrategieFixationPrix {
     double objectifT   = EQ9Config.STOCK_CIBLE_T;
     double seuilBasT   = EQ9Config.SEUIL_SOUS_STOCK_T;
     double seuilHautT  = EQ9Config.SEUIL_SURSTOCK_T;
+
+    // Seuil prix
+    double margeSecurite = EQ9Config.MARGE_SECURITE_MIN; // +2% sur le coût d'achat
      
     
     public EQ9_StrategieFixationPrix(Journal j) {
@@ -40,34 +43,38 @@ public class EQ9_StrategieFixationPrix {
     public double calculerPrixVente(
         double coutAchatEuroPT,
         String nomProduit,
-        double inventaireKg,
+        double inventaireT,      // ⚠ tu travailles en TONNES, pas en kg
         double demandeClients,
         double prixConcurrentEuro
     ) {
-        //DÉTERMINER LA MARGE DE BASE
         double margePercent = obtenirMargeBasePourProduit(nomProduit);
         double prixBase = coutAchatEuroPT * (1.0 + margePercent / 100.0);
-        
-        //FACTEUR DEMANDE/OFFRE
-        double offre = inventaireKg;
+
+        double offre = inventaireT; // cohérent : tout en tonnes
         double ratioDemandeOffre = (offre > 0) ? demandeClients / offre : 2.0;
         double facteurDemande = obtenirFacteurDemande(ratioDemandeOffre);
-        
-        //FACTEUR INVENTAIRE
-        double facteurInventaire = obtenirFacteurInventaire(inventaireKg);
-        
-        //FACTEUR COMPÉTITION DIRECTE
+
+        double facteurInventaire = obtenirFacteurInventaire(inventaireT);
+
         double facteurCompetition = obtenirFacteurCompetition(
-            prixBase * facteurDemande * facteurInventaire, 
+            prixBase * facteurDemande * facteurInventaire,
             prixConcurrentEuro
         );
-        
-        //CALCUL FINAL
+
         double prixFinal = prixBase * facteurDemande * facteurInventaire * facteurCompetition;
-        
+
+        double prixPlancher = coutAchatEuroPT * margeSecurite;
+
+        if (prixFinal < prixPlancher) {
+            return prixPlancher;
+        }
+
         return prixFinal;
     }
+
     
+    
+
     /**
      marge de base selon le type de produit
      */

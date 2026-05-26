@@ -242,10 +242,12 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         double contreProp = prixPropose * ratio;
         if (contreProp > prixMax) contreProp = prixMax;
 
-        // Vérification fonds
+        // FIX : vérification fonds en tenant compte des engagements déjà contractés
         double coutTotal = contreProp * quantiteTotale;
-        if (solde < coutTotal) {
-            journalCC.ajouter("CC : abandon → fonds insuffisants");
+        double soldeDisponible = solde - getTotalEngagementsFinanciersFuturs();
+        if (soldeDisponible < coutTotal) {
+            journalCC.ajouter("CC : abandon → fonds insuffisants (disponible=" 
+                + soldeDisponible + "€, besoin=" + coutTotal + "€)");
             return -1.0;
         }
 
@@ -304,8 +306,35 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
     }
 
     /**
+     * Calcule le total des paiements futurs engagés sur tous les contrats en cours.
+     * Utilisé pour évaluer la solvabilité réelle avant tout nouvel engagement.
+     */
+    private double getTotalEngagementsFinanciersFuturs() {
+        double total = 0.0;
+        for (ExemplaireContratCadre contrat : this.contratsEnCours) {
+            total += contrat.getQuantiteRestantALivrer() * contrat.getPrix();
+        }
+        return total;
+    }
+
+    /**
+     * Vérifie si un CC est déjà en cours pour ce produit.
+     * Évite de signer plusieurs contrats cumulatifs pour le même chocolat.
+     */
+    private boolean aDejaContratEnCours(ChocolatDeMarque choco) {
+        for (ExemplaireContratCadre contrat : this.contratsEnCours) {
+            if (contrat.getProduit().equals(choco)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Méthode pour initier des propositions de contrats cadres
      * @author Paul JUHEL
+     * CORRECTIF : quantité bornée au manque réel, vérif financière sur engagements totaux,
+     *             un seul CC actif par produit à la fois.
      */
     public void fairePropositionCC() {
         EQ9_GestionStocks gs = new EQ9_GestionStocks(this.stock, this::restantDu);
@@ -319,27 +348,45 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
             if (!gs.doitAcheter(choco)) continue;
             if (!gs.prefererCC(choco)) continue;
 
-            double quantiteCC = gs.quantiteAacheter(choco);
-            if (quantiteCC < EQ9Config.CC_QUANTITE_MIN_T) continue;
-
             double stockActuel = this.stock.getOrDefault(choco, 0.0);
             double enCours = restantDu(choco);
             double stockProjete = stockActuel + enCours;
 
-            // si on n'est pas vraiment en tension, on évite de lancer un CC
+            // FIX 1 : ne pas commander si le stock projeté (actuel + en cours de livraison)
+            // couvre déjà l'objectif. Évite l'accumulation explosive de contrats.
             if (stockProjete >= EQ9Config.SEUIL_MIN_T) {
+                journalCC.ajouter("CC ignoré pour " + choco.getNom()
+                    + " : stock projeté " + stockProjete + "t >= seuil " + EQ9Config.SEUIL_MIN_T + "t");
                 continue;
             }
 
-            double quantiteAcheter = Math.max(quantiteCC, EQ9Config.CC_QUANTITE_MIN_T);
+            // FIX 2 : un seul contrat actif par produit à la fois.
+            // Sans cette garde, chaque appel à next() empile un nouveau CC sur les précédents.
+            if (aDejaContratEnCours(choco)) {
+                journalCC.ajouter("CC ignoré pour " + choco.getNom()
+                    + " : un contrat est déjà en cours de livraison");
+                continue;
+            }
+
+            // FIX 3 : la quantité à commander = UNIQUEMENT ce qui manque pour atteindre STOCK_CIBLE,
+            // en tenant compte du stock projeté. Jamais plus que STOCK_CIBLE.
+            double manque = EQ9Config.STOCK_CIBLE_T - stockProjete;
+            if (manque <= 0) continue;
+            double quantiteAcheter = Math.min(
+                Math.max(manque, EQ9Config.CC_QUANTITE_MIN_T),
+                EQ9Config.STOCK_CIBLE_T   // plafond absolu : jamais plus d'un STOCK_CIBLE par contrat
+            );
 
             double prixEstime = getPrixMaxAcceptable(choco);
             double coutEstime = quantiteAcheter * prixEstime;
 
-            // sécurité financière
-            if (getSolde() < coutEstime * 1.2) {
+            // FIX 4 : vérification financière réaliste = solde - engagements déjà contractés.
+            // L'ancien check ignorait les paiements futurs des CC déjà signés.
+            double soldeDisponible = getSolde() - getTotalEngagementsFinanciersFuturs();
+            if (soldeDisponible < coutEstime * 1.2) {
                 this.journalCC.ajouter("Fonds insuffisants pour CC " + choco.getNom()
-                    + " : besoin " + coutEstime + "€, solde " + getSolde() + "€");
+                    + " : besoin " + (coutEstime * 1.2) + "€, solde disponible (engagements déduits) "
+                    + soldeDisponible + "€");
                 continue;
             }
 
@@ -353,7 +400,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
             for (IVendeurContratCadre vendeur : vendeurs) {
 
                 int stepDebut = Filiere.LA_FILIERE.getEtape() + 1;
-                int nbSteps = 6; // durée fixe, stable, sans limite d'étapes
+                int nbSteps = 6;
                 double quantiteParStep = quantiteAcheter / nbSteps;
 
                 Echeancier echeancierPropose = new Echeancier(stepDebut, nbSteps, quantiteParStep);
