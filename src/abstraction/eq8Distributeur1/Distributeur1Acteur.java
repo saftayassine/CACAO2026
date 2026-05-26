@@ -89,7 +89,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 				this.Prix.put((IProduit)(p.get(i)), 30000.0);
 			}
 
-			this.Stock.put((IProduit)(p.get(i)),1000.0);
+			this.Stock.put((IProduit)(p.get(i)),0.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);
 			this.volumeStock.ajouter(this,getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme));
 		}
