@@ -89,8 +89,26 @@ public class Transformateur4Production extends Transformateur4Marques implements
             Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de stockage du chocolat", coutStockage);
         }
 
+        //Auteur  : Paul
         //Coûts de main d'oeuvre
-        double totalHR = 0;
+         if (quantity > 0){
+            double nb_ouvriers_nécessaires = quantity/8.4;
+            if (this.nb_ouvriers.getValeur() > nb_ouvriers_nécessaires*1.3){
+                Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de licenciement pour la production de chocolat", 3500*(this.nb_ouvriers.getValeur()-nb_ouvriers_nécessaires));
+                this.journal_RH.ajouter("Licenciement de " + String.valueOf(this.nb_ouvriers.getValeur()-nb_ouvriers_nécessaires) + " ouvriers pour la production de chocolat");
+                this.nb_ouvriers.setValeur(this,nb_ouvriers_nécessaires);
+            }
+            if (this.nb_ouvriers.getValeur() < nb_ouvriers_nécessaires){
+                    Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de recrutement pour la production de chocolat", 5000*(nb_ouvriers_nécessaires-this.nb_ouvriers.getValeur()));
+                    this.journal_RH.ajouter("Recrutement de " + String.valueOf(nb_ouvriers_nécessaires-this.nb_ouvriers.getValeur()) + " ouvriers pour la production de chocolat");
+                    this.nb_ouvriers.setValeur(this,nb_ouvriers_nécessaires);
+                }
+            }
+
+        double totalHR = this.nb_ouvriers.getValeur() * 1250;
+        if(totalHR > 0){
+            Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de main d'oeuvre pour la production de chocolat", totalHR);
+        }
     }
         
     // Coûts de production 
