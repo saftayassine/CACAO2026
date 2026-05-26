@@ -31,8 +31,8 @@ public class Producteur1Stock extends Producteur1Acteur{
         this.stock.put(Feve.F_HQ,0.);
         this.stock.put(Feve.F_HQ_E,0.);
 
-        this.add_lot(Feve.F_BQ, 2125000,0);
-        this.add_lot(Feve.F_MQ, 875000,0);
+        this.add_lot(Feve.F_BQ, 8500,0);
+        this.add_lot(Feve.F_MQ, 1500,0);
 
 
         this.stockTot.setValeur(this, totalStock, this.cryptogramme);
@@ -139,6 +139,7 @@ public class Producteur1Stock extends Producteur1Acteur{
 	///////////////////////////////////
     
     public void loyer(){
+        this.journalBanque.ajouter("total stock : " + this.totalStock);
         double montant = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur() * this.totalStock;
         Banque banque=Filiere.LA_FILIERE.getBanque();
         banque.payerCout(this, this.cryptogramme, "Loyer Stockage" , montant);

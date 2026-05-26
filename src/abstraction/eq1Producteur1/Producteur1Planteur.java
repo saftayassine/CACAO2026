@@ -102,7 +102,6 @@ public class Producteur1Planteur extends Producteur1Stock {
             else if (gamme == Feve.F_BQ)   { lot_BQ   += cacao; }
             else if (gamme == Feve.F_BQ_E) { lot_BQ_E += cacao; }
 
-            this.stock.put(gamme,cacao);
         }
  
         this.add_lot(Feve.F_HQ,   lot_HQ);
@@ -118,6 +117,8 @@ public class Producteur1Planteur extends Producteur1Stock {
      */
     public void gererRotation() { // Gère la rotation des plantations
         int etape = Filiere.LA_FILIERE.getEtape();
+
+        if (etape % 24 != 0 || etape == 0) return; // ← bloquer l'étape 0
         
         if (etape % 24 != 0) return;
         int annee = etape / 24;
@@ -200,8 +201,8 @@ public class Producteur1Planteur extends Producteur1Stock {
         super.next();
         int etape = Filiere.LA_FILIERE.getEtape();
         this.impots();
-        this.gererRotation(); // coupe les morts + replante + journalise la capacité
-        if (etape % 24 == 0) { // Une collecte tous les ans
+        this.gererRotation();
+        if (etape % 24 == 0 && etape > 0) { // ← ajouter && etape > 0
             this.collecter();
             this.charge();
         }

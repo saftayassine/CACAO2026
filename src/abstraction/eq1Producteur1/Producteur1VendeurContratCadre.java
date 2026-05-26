@@ -49,13 +49,13 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
         this.prixTonne.put(Feve.F_HQ,4500.);
         this.prixTonne.put(Feve.F_HQ_E,5000.);
 
-		this.prixMin();
-
     }
 
 	public void initialiser() {
 		super.initialiser();
 		this.supCC = (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
+		this.prixMin();
+
 	}
 
 	public void prixMin(){
@@ -64,20 +64,14 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	
 		double prix = b.getCours(Feve.F_BQ).getValeur();
 		this.prixMinTonne.put(Feve.F_BQ, prix*0.9);
-
-		prix = b.getCours(Feve.F_BQ_E).getValeur();
 		this.prixMinTonne.put(Feve.F_BQ_E, prix*0.9);
 
 		prix = b.getCours(Feve.F_MQ).getValeur();
 		this.prixMinTonne.put(Feve.F_MQ, prix*0.9);
-
-		prix = b.getCours(Feve.F_MQ_E).getValeur();
 		this.prixMinTonne.put(Feve.F_MQ_E, prix*0.9);
 
 		prix = b.getCours(Feve.F_HQ).getValeur();
 		this.prixMinTonne.put(Feve.F_HQ, prix*0.9);
-
-		prix = b.getCours(Feve.F_HQ_E).getValeur();
 		this.prixMinTonne.put(Feve.F_HQ_E, prix*0.9);
 	}
 
@@ -111,30 +105,32 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	 * d'accord avec cet echeancier. Sinon, retourne un autre echeancier qui est une contreproposition.
 	 */
 	public Echeancier contrePropositionDuVendeur(ExemplaireContratCadre contrat){
-		Echeancier e = contrat.getEcheancier();
-		Feve f = (Feve) contrat.getProduit();
+    Echeancier e = contrat.getEcheancier();
+    Feve f = (Feve) contrat.getProduit();
 
-		// on regarde si on peut vendre
-		if(this.onPeutVendre(f, e)){
-			return e;
-
-		}
-
-		// on regarde si c'est 3 fois la même proposition en face
-		List<Echeancier> lastEcheanchiers = contrat.getEcheanciers();
-
-		if(lastEcheanchiers.size() > 6
-				&& lastEcheanchiers.get(lastEcheanchiers.size()-3) == e
-				&& lastEcheanchiers.get(lastEcheanchiers.size()-5) == e){
-			return null;
-		}
-
-
-		// On propose une alternative que l'on peut tenir
-		Echeancier newEcheancier = this.correctionEcheancier(e, f);
-        return newEcheancier;
+    // on regarde si on peut vendre tel quel
+    if(this.onPeutVendre(f, e)){
+        return e;
     }
 
+    // on regarde si c'est 3 fois la même proposition en face
+    List<Echeancier> lastEcheanciers = contrat.getEcheanciers();
+    if(lastEcheanciers.size() > 6
+            && lastEcheanciers.get(lastEcheanciers.size()-3) == e
+            && lastEcheanciers.get(lastEcheanciers.size()-5) == e){
+        return null;
+    }
+
+    // On propose une alternative que l'on peut tenir
+    Echeancier newEcheancier = this.correctionEcheancier(e, f);
+
+    // 🚨 Si la correction donne un échéancier vide, on abandonne proprement
+    if(newEcheancier.getQuantiteTotale() < 1.0){
+        return null;
+    }
+
+    return newEcheancier;
+}
 
 	/**
 	 * Methode appele par le SuperviseurVentesContratCadre apres une negociation reussie
@@ -359,36 +355,41 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public Echeancier correctionEcheancier(Echeancier echeancier, Feve f){
-
 		int etape = Filiere.LA_FILIERE.getEtape();
-		int tempsRestant = 23 - etape%24;
-		double quantiteRestante = echeancier.getQuantiteJusquA(tempsRestant);
-		double pourcent = (quantiteRestante/this.getStock(f))*100;
+		int tempsRestant = 24 - etape % 24; // steps restants dans l'année courante
 
-		double CetteAnnee = Math.min(quantiteRestante,(this.getStock(f))*(95-this.pourcentageAVendre.get(f))/100);
+		// Quantité max qu'on peut encore s'engager à livrer cette année
+		double stockDispo = this.getStock(f);
+		double pourcentDispo = Math.max(0, 70 - this.pourcentageAVendre.get(f));
+		double maxCetteAnnee = stockDispo * pourcentDispo / 100;
 
-		double quantiteApres = echeancier.getQuantiteAPartirDe(etape +tempsRestant + 1) ;
-		if(echeancier.getStepFin()> etape + 48 - etape%24){
-			quantiteApres +=  - echeancier.getQuantiteAPartirDe(etape + 48 - etape%24) ;
+		// Quantité demandée sur cette année par l'échéancier de l'acheteur
+		double demandeCetteAnnee = echeancier.getQuantiteJusquA(tempsRestant);
+
+		// On plafonne à ce qu'on peut livrer
+		double CetteAnnee = Math.min(demandeCetteAnnee, maxCetteAnnee);
+
+		// Quantité sur l'année suivante (on accepte ce que l'acheteur demande)
+		double quantiteApres = echeancier.getQuantiteAPartirDe(etape + tempsRestant + 1);
+		if (echeancier.getStepFin() > etape + 48 - etape % 24) {
+			quantiteApres -= echeancier.getQuantiteAPartirDe(etape + 48 - etape % 24);
 		}
-
-		double quantiteSurAnnee = Math.min(quantiteApres,100000000); // b: this.pourcentage next year
+		double quantiteSurAnnee = Math.max(0, quantiteApres);
 
 		List<Double> quantites = new ArrayList<>();
-		for (int i = 0; i < tempsRestant; i++) { // on ajoute pour cette année
-			quantites.add(CetteAnnee/tempsRestant);
+
+		// Répartition uniforme sur cette année
+		for (int i = 0; i < tempsRestant; i++) {
+			quantites.add(tempsRestant > 0 ? CetteAnnee / tempsRestant : 0.0);
 		}
 
-		for (int i = Math.max(etape + tempsRestant,echeancier.getStepDebut()); i < echeancier.getStepFin(); i++) { // on ajoute pour cette année
-			quantites.add(quantiteSurAnnee/24);
+		// Répartition uniforme sur l'année suivante
+		int stepDebutApres = Math.max(etape + tempsRestant, echeancier.getStepDebut());
+		for (int i = stepDebutApres; i < echeancier.getStepFin(); i++) {
+			quantites.add(quantiteSurAnnee / 24);
 		}
 
-
-
-		Echeancier newEcheancier = new Echeancier(echeancier.getStepDebut(),quantites);
-
-		return newEcheancier;
-
+		return new Echeancier(echeancier.getStepDebut(), quantites);
 	}
 	
 
