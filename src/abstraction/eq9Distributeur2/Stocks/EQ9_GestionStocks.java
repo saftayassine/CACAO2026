@@ -1,6 +1,5 @@
 package abstraction.eq9Distributeur2.Stocks;
 
-import abstraction.eq9Distributeur2.Config.EQ9Config;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import java.util.Map;
@@ -47,21 +46,40 @@ public class EQ9_GestionStocks {
     }
 
     public boolean doitAcheter(ChocolatDeMarque choco) {
+        int etape = Filiere.LA_FILIERE.getEtape();
         double sp = stockProjete(choco);
-        return sp < EQ9Config.STOCK_CIBLE_T;
+        double ventes = ventesMoyennes(choco);
+        
+        
+        if (etape < 3) {
+            return sp < 10.0; 
+        }
+        
+        
+        if (ventes <= 0.0) {
+            return false;
+        }
+
+    
+        double cibleDynamique = ventes * 3.0; 
+        return sp < cibleDynamique;
     }
 
     public double quantiteAacheter(ChocolatDeMarque choco) {
+        int etape = Filiere.LA_FILIERE.getEtape();
         double sp = stockProjete(choco);
-        double cible = EQ9Config.STOCK_CIBLE_T;
-
-        if (sp < EQ9Config.SEUIL_MIN_T) {
-            return cible - sp;
+        double ventes = ventesMoyennes(choco);
+        
+        if (etape < 3 && sp < 10.0) {
+            return 10.0 - sp; // 10 Tonnes d'amorçage max
         }
-        if (sp < cible) {
-            return (cible - sp) * 0.7;
+        
+        if (ventes <= 0.0) {
+            return 0.0; // 
         }
-        return 0.0;
+        
+        double cibleDynamique = ventes * 3.0;
+        return Math.max(0.0, cibleDynamique - sp);
     }
 
     public boolean prefererCC(ChocolatDeMarque choco) {
