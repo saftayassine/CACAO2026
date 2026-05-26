@@ -51,9 +51,10 @@ public class Transformateur4AcheteurCC extends Transformateur4AcheteurBourse imp
         BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
         this.journal_CC_achat.ajouter("[NEGOCIATIONS]");
         this.journal_CC_achat.ajouter("[PROPOSITION VENDEUR] Proposition de " + contrat.getVendeur() + " pour un prix de "+ contrat.getPrix() + " et une quantitée totale de " + contrat.getQuantiteTotale());
+        this.journal_CC_achat.ajouter("[COUR BOURSE] "+ bourse.getCours(Feve.F_BQ).getValeur());
         if (contrat.getPrix()>2*bourse.getCours(Feve.F_BQ).getValeur()){
             this.journal_CC_achat.ajouter("[PROPOSITION ACHETEUR] Proposition d'un prix de "+ contrat.getPrix()/(2*contrat.getQuantiteTotale()) + " la tonne" );
-            return contrat.getPrix()/2;
+            return contrat.getPrix()/1.5;
         }
         if (contrat.getPrix()>bourse.getCours(Feve.F_BQ).getValeur()){
             this.journal_CC_achat.ajouter("[PROPOSITION ACHETEUR] Proposition d'un prix de "+ contrat.getPrix()*0.8/contrat.getQuantiteTotale() + " la tonne" );
@@ -67,7 +68,12 @@ public class Transformateur4AcheteurCC extends Transformateur4AcheteurBourse imp
 
     @Override
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
-        this.journal_CC_achat.ajouter("[CONTRAT ACCEPTE] Contrat avec "+ contrat.getVendeur() + " pour un prix de " + contrat.getPrix() + " et une quantitée de " + contrat.getQuantiteTotale());
+        if (contrat.getVendeur().equals(this)){
+           this.journal_vente_CC.ajouter("[CONTRAT ACCEPTE] Contrat accepté avec " + contrat.getAcheteur() +" de numero de contrat " + contrat.getNumero() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
+            this.journal_negociation_CC.ajouter("[CONTRAT ACCEPTE] Contrat accepté avec " + contrat.getAcheteur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne"); }
+        else {
+            this.journal_CC_achat.ajouter("[CONTRAT ACCEPTE] Contrat avec "+ contrat.getVendeur() + " pour un prix de " + contrat.getPrix() + " et une quantitée de " + contrat.getQuantiteTotale());
+        }
     }
 
     @Override
