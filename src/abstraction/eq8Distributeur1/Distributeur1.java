@@ -21,9 +21,7 @@ public class Distributeur1 extends MiseEnRayon {
 		super.next();
 		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
 		Banque b=Filiere.LA_FILIERE.getBanque();
-		Variable v=this.getvolumestock();
 		this.getvolumerayon();
-		double v1=v.getValeur();
 		double volumeCibleTotal = 3600000.0;
 
 		// On remet tout les produits du rayon en stock pour simplifier les calculs
@@ -33,10 +31,7 @@ public class Distributeur1 extends MiseEnRayon {
             this.Rayon.put(p.get(i),0.0);
 			this.Stock.put(p.get(i),q+f);
         }
-
-
 		
-		//Choix de l'acteur
 		this.trierChocolatsParPrix();
 		if (Filiere.LA_FILIERE.getEtape() == 1) {
 			this.initialiser();
@@ -45,6 +40,9 @@ public class Distributeur1 extends MiseEnRayon {
 		this.lancerApprovisionnementGeneral(volumeCibleTotal);
 		this.lancement_CC = false;
 
+		Variable v=this.getvolumestock();
+		double v1=v.getValeur();
+		
 		//Journal Stock
 		this.journal2.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
 		for (int i=0; i<p.size(); i++){
@@ -67,8 +65,9 @@ public class Distributeur1 extends MiseEnRayon {
 		for (int j=0; j<p.size(); j++){
 			double f=this.getQuantiteEnRayon(p.get(j),this.cryptogramme);
 		}
-		this.actualiserPrixDeVente();
+		
 		this.actualiserPrixDachatParContrats();
+		this.actualiserPrixDeVente();
 		this.stockPredit = initialiserStockPredit();
 
 		//JournalActions

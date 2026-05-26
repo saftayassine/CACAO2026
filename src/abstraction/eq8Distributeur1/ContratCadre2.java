@@ -88,17 +88,18 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
         Echeancier echVendeur = contrat.getEcheancier();
         Echeancier echReponse = new Echeancier(echVendeur.getStepDebut());
+        int nbSteps = echVendeur.getStepFin() - echVendeur.getStepDebut() + 1;
 
         for (int step = echVendeur.getStepDebut(); step <= echVendeur.getStepFin(); step++) {
             double qteVendeur = echVendeur.getQuantite(step);
 
             if (qteVendeur > this.besoinCourant) {
-                echReponse.set(step, this.besoinCourant);
-            } else if (Math.abs(qteVendeur - this.besoinCourant) < 0.01) {
+                echReponse.set(step, this.besoinCourant/nbSteps); // On répartit notre besoin sur les étapes restantes
+            } else if (Math.abs(qteVendeur - this.besoinCourant/nbSteps) < 0.01) {
                 echReponse.set(step, qteVendeur);
             } else {
                 // Stratégie du milieu
-                echReponse.set(step, (qteVendeur + this.besoinCourant) / 2.0);
+                echReponse.set(step, (qteVendeur + this.besoinCourant/nbSteps) / 2.0);
             }
         }
         return echReponse;
@@ -117,7 +118,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
         
         // Si le prix max est inférieur au prix du vendeur, on l'ajuste pour laisser une chance à la négociation
         if (this.prixMaxCourant < debutNego) {
-            this.prixMaxCourant = debutNego * 1.4;
+            this.prixMaxCourant = this.prixCibleCourant * 1.4;
         }
         
         double margeTotale = this.prixMaxCourant - debutNego;
@@ -126,10 +127,6 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
         // Augmentation progressive de notre offre à chaque tour
         double nouvelleOffre = debutNego + (tourDeNego * (margeTotale / 12.0));
 
-        // Au-delà de 10-12 tours de table, on applique le verdict final
-        if (tourDeNego >= 10) {
-            return (pVendeur <= this.prixMaxCourant) ? pVendeur : -1.0;
-        }
 
         // Si notre calcul mathématique dépasse l'offre du vendeur, on accepte son prix
         if (nouvelleOffre >= pVendeur) {

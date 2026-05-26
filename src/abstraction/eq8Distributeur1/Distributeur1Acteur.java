@@ -40,6 +40,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	protected HashMap<ChocolatDeMarque, Double> ChocolatsAchetes;/** @author Lucas Levillain */
 	protected double CoutParArticle; /** @author Lucas Levillain */
 	protected HashMap<ChocolatDeMarque, Double> prixDAchat; /** @author Lucas Levillain */
+	
 	/**
          * @author Alexandre Cornet
 		 * @author Ewen Landron
@@ -77,19 +78,25 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		for (int i=0; i<p.size(); i++){
 			if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.BQ && !p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 22000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.MQ && !p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 14000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.HQ && !p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 27000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.BQ && p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 25000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.MQ && p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 16000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.HQ && p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 30000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
 			}
 
-			this.Stock.put((IProduit)(p.get(i)),1000.0);
+			this.Stock.put((IProduit)(p.get(i)),40000.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);
 			this.volumeStock.ajouter(this,getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme));
 		}
