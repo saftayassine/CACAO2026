@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import abstraction.eqXRomu.bourseCacao.BourseCacao;
+import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.encheres.Enchere;
 import abstraction.eqXRomu.encheres.IVendeurAuxEncheres;
 import abstraction.eqXRomu.encheres.SuperviseurVentesAuxEncheres;
@@ -13,17 +14,15 @@ import abstraction.eqXRomu.produits.Feve;
 
 public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implements IVendeurAuxEncheres{
 	private HashMap<Feve, List<Double>> prixRetenus;
-	private SuperviseurVentesAuxEncheres supEncheres;
-	protected Journal journalEncheres;
+	private double prixMin;
 
 	public Producteur3VendeurAuxEncheres() {
 		super();
-		this.journalEncheres = new Journal(" journal Encheres EQ3", this);
+		this.prixMin=0;
 	}
 
 	public void initialiser() {
 		super.initialiser();
-		this.supEncheres = (SuperviseurVentesAuxEncheres)(Filiere.LA_FILIERE.getActeur("Sup.Encheres"));
 		this.prixRetenus = new HashMap<Feve, List<Double>>();
 		for (Feve f : this.stock.getStockMap().keySet()) {
 			this.prixRetenus.put(f, new LinkedList<Double>());
@@ -32,64 +31,84 @@ public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implemen
 
 	public void next() {
 		super.next();
-		this.journalEncheres.ajouter("=== STEP "+Filiere.LA_FILIERE.getEtape()+" ====================");
+		/*int stepActuel = Filiere.LA_FILIERE.getEtape();
+		this.journalEncheres.ajouter("=== STEP "+stepActuel+" ====================");
 		for (Feve f : this.stock.getStockMap().keySet()) {
-			if (this.stock.getStock(f)>5000) { // on ne lance pas une enchere pour moins de 5000 T
-				Double quantite = 5000.0  ; // il faudrait aussi tenir compte des contrats cadres en cours afin de ne pas vendre ce qu'on s'est engage a livrer
-				Enchere enchere = supEncheres.vendreAuxEncheres(this, cryptogramme, f, quantite);
-				journalEncheres.ajouter("   Je lance une enchere de "+quantite+" T de "+f);
+			if (f.isEquitable()) continue; // à modifier si les autres équipes peuvent acheter de l'équitable
+
+			double stockActuel = this.stock.getStock(f);
+			
+			// Calcul des livraisons obligatoires pour le PROCHAIN STEP (stepActuel + 1)
+			double livraisonsCCProchainStep = 0;
+			for (ExemplaireContratCadre c : this.contratsEnCours) {
+				if (c.getProduit().equals(f)) {
+					// On regarde ce que l'échéancier impose pour le prochain step
+					livraisonsCCProchainStep += c.getEcheancier().getQuantite(stepActuel + 1);
+				}
+			}
+			
+			// Récupération de la production estimée pour le prochain step
+			double productionEstimeeProchainStep = this.plantationeq3.getProductionFeve(f); 
+			
+			// Définir un stock de sécurité
+			double stockDeSecurite = 1000.0;
+			
+			// Calcul de la quantité maximale théorique vendable sans risque
+			double quantiteMaxVendable = stockActuel + productionEstimeeProchainStep - livraisonsCCProchainStep - stockDeSecurite;
+			
+			// Décision de lancement de l'enchère
+			// On ne lance une enchère que si on a un surplus réel et conséquent à évacuer
+			if (quantiteMaxVendable > 5000.0) {
+				double quantiteAVendre = 5000.0; // On vend par blocs fixes sûrs
+				
+				double coutParTonne = 0;
+				if (productionEstimeeProchainStep > 0) {
+					double coutGlobalFeve = this.gestionCouts.getCoutFeve(f, this);
+					coutParTonne = coutGlobalFeve / productionEstimeeProchainStep;
+				}
+				
+				if (coutParTonne > 0) {
+					double ratioRemplissage = stockActuel / this.gestionCouts.getSeuilDefenseParFeve(); // Proche de 1.0 si stock critique
+					double marge = 1.25 - (ratioRemplissage * 0.15); // La marge varie entre +25% (stock vide) et +10% (stock plein)
+					this.prixMin = coutParTonne * marge;
+				} else {
+					this.prixMin = 1500.0; // Prix de secours
+				}
+				Enchere enchere = superviseur.vendreAuxEncheres(this, cryptogramme, f, quantiteAVendre);
+				journalEncheres.ajouter("   Je lance une enchere de "+quantiteAVendre+" T de "+f);
 				if (enchere!=null) { // on a retenu l'une des encheres faites
-					journalEncheres.ajouter("   Enchere finalisee : on retire "+quantite+" T de "+f+" du stock");
-					this.stock.retireStock(f, quantite);
+					journalEncheres.ajouter("   Enchere finalisee : on retire "+quantiteAVendre+" T de "+f+" du stock");
+					this.stock.retireStock(f, quantiteAVendre);
 					prixRetenus.get(f).add(enchere.getPrixTonne());
 					if (prixRetenus.get(f).size()>10) {
 						prixRetenus.get(f).remove(0); // on ne garde que les dix derniers prix
 						journalEncheres.ajouter("   Les derniers prix pour "+f+" sont "+prixRetenus.get(f));
 					}
 				}
+			}else {
+				journalEncheres.ajouter("   Pas assez de marge sur la fève " + f + " pour risquer une enchère (Max vendable calculé : " + quantiteMaxVendable + "t)");
 			}
-		}
-
+		}*/
 		// On archive les contrats termines
 		this.journalEncheres.ajouter("=================================");
 	}
 
-	public double prixMoyen(Feve f) {
-		List<Double> prix=prixRetenus.get(f);
-		if (prix.size()>0) {
-			double somme =0.0;
-			
-			for (Double d : prix) {
-				somme+=d;
-			}
-			return somme/prix.size();
-		} else {
-			return 0.0;
-		}
-	}
 
 	
-	public Enchere choisir(List<Enchere> propositions) {
-		double prix = propositions.get(0).getPrixTonne();
-		double prixMoyen = prixMoyen((Feve)(propositions.get(0).getMiseAuxEncheres().getProduit()));
-		BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
-		double cours = bourse.getCours(Feve.F_MQ).getValeur();
-		if (prixMoyen==0) {
-			if (prix>=cours*2.5) {
-				return propositions.get(0);
-			}
+	public Enchere choisir(List<Enchere> encheres) {
+		this.journalEncheres.ajouter("encheres : "+encheres);
+		if (encheres==null) {
+			return null;
 		} else {
-			if (prix>=0.95*prixMoyen && prix>cours*1.5) {
-				return propositions.get(0);
+			Enchere retenue = encheres.get(0);
+			if (retenue.getPrixTonne()>this.prixMin) {
+				this.journalEncheres.ajouter("  --> je choisis "+retenue);
+				return retenue;
+			} else {
+				this.journalEncheres.ajouter("  --> je ne retiens rien");
+				return null;
 			}
 		}
-		return null;
-	}
-	
-	public List<Journal> getJournaux() {
-		List<Journal> jx=super.getJournaux();
-		jx.add(journalEncheres);
-		return jx;
 	}
 
 }

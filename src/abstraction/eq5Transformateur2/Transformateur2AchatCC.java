@@ -63,28 +63,31 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	 * @author Pierre et Maxence
 	 */
 	public Echeancier contrePropositionDeLAcheteur(ExemplaireContratCadre contrat){
-			Echeancier echeancier=contrat.getEcheancier();
-			superviseurCC.recapitulerContratsEnCours();;
-			if(echeancier.getNbEcheances()<6 && echeancier.getQuantiteTotale() > 5*10000){
-				return echeancier;
+		Double stockTotal = this.getStock_feve_total();
+		if (stockTotal > 650000.0) {
+            return null;
+        }
+		Echeancier echeancier=contrat.getEcheancier();
+		superviseurCC.recapitulerContratsEnCours();
+		if(echeancier.getNbEcheances()<6 && echeancier.getQuantiteTotale() > 5*10000){
+			return echeancier;
+		}
+		else{
+			Integer debut = echeancier.getStepDebut();
+			Echeancier proposition = new Echeancier(debut);
+			for (int index = debut; index < debut+5; index++) {
+				if(echeancier.getQuantite(index)<10000){
+					proposition.ajouter(10000);
+				}
+				else{proposition.ajouter(echeancier.getQuantite(index));}
+			}
+			if(proposition.echeancierAcceptable()){
+				return proposition;
 			}
 			else{
-				Integer debut = echeancier.getStepDebut();
-				Echeancier proposition = new Echeancier(debut);
-				for (int index = debut; index < debut+5; index++) {
-					if(echeancier.getQuantite(index)<10000){
-						proposition.ajouter(10000);
-					}
-					else{proposition.ajouter(echeancier.getQuantite(index));}
-				}
-				if(proposition.echeancierAcceptable()){
-					return proposition;
-				}
-				else{
-					return null;
-				}
+				return null;
 			}
-
+		}
 	}
 
 	/**

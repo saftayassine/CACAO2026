@@ -41,6 +41,10 @@ public class Producteur2couts extends Producteur2Stock {
                 coutUnitaire = 500.0;
             else if (f == Feve.F_HQ_E)
                 coutUnitaire = 1000.0;
+            else if (f == Feve.F_MQ_E)
+                coutUnitaire = 740.0;
+            else if (f == Feve.F_BQ_E)
+                coutUnitaire = 600.0;
 
             cout_unit_t.put(f, coutUnitaire);
             JournalCout.ajouter("Step " + etape + " : Coût unitaire de production estimé pour " + f + " = "
