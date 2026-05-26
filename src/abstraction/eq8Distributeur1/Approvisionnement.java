@@ -296,17 +296,27 @@ public class Approvisionnement extends ChocolatDistributeur1 {
      * de modifier le stock réel pendant les simulations de calcul.
      */
     protected Map<ChocolatDeMarque, Double> initialiserStockPredit() {
+
+        // On remet tout les produits du rayon en stock pour simplifier les calculs
+        List<ChocolatDeMarque> pro=Filiere.LA_FILIERE.getChocolatsProduits();
+		for (int i = 0; i < pro.size(); i++) {
+            double q = this.getQuantiteEnStock(pro.get(i), this.cryptogramme);
+			double f = this.getQuantiteEnRayon(pro.get(i), this.cryptogramme);
+            this.Rayon.put(pro.get(i),0.0);
+			this.Stock.put(pro.get(i),q+f);
+        }
+		
         Map<ChocolatDeMarque, Double> predit = new HashMap<>();
         this.ChocolatsAchetes = new HashMap<>(); 
         this.stockPreditTG = new HashMap<>(); // Initialisation du dictionnaire TG
         
-        int etapeActuelle = Filiere.LA_FILIERE.getEtape() + 1;
+        int etapeActuelle = Filiere.LA_FILIERE.getEtape();
 
         // 1. Initialisation à 0 pour tous les chocolats de la filière
         for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsProduits()) {
             predit.put(cdm, this.getQuantiteEnStock(cdm, this.cryptogramme));
-            this.ChocolatsAchetes.put(cdm, 0.0);
-            this.stockPreditTG.put(cdm, 0.0);
+            this.ChocolatsAchetes.put(cdm, Stock.getOrDefault(cdm, 0.0)); // On part du stock actuel pour le suivi des achats
+            this.stockPreditTG.put(cdm, Stock.getOrDefault(cdm, 0.0)); // On part du stock actuel pour le suivi TG
         }
 
         // 2. Prise en compte des contrats CADRES EXISTANTS (Livraisons + TG)

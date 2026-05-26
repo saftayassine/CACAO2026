@@ -22,8 +22,8 @@ public class Producteur1Planteur extends Producteur1Stock {
      */
     public Producteur1Planteur() {
         super();
-        Plantation BQ = new Plantation(Feve.F_BQ, 850000, -600);
-        Plantation MQ = new Plantation(Feve.F_MQ, 150000, -600);
+        Plantation BQ = new Plantation(Feve.F_BQ, 850000, -360);
+        Plantation MQ = new Plantation(Feve.F_MQ, 150000, -360);
         this.plantations.add(BQ);
         this.plantations.add(MQ);
         this.journalPlantation = new Journal("Journal "+this.getNom()+ " plantation", this);
@@ -96,11 +96,12 @@ public class Producteur1Planteur extends Producteur1Stock {
             Feve gamme = plantation.getGamme();
  
             if (gamme == Feve.F_HQ)   { lot_HQ   += cacao; }
-            if (gamme == Feve.F_HQ_E) { lot_HQ_E += cacao; }
-            if (gamme == Feve.F_MQ)   { lot_MQ   += cacao; }
-            if (gamme == Feve.F_MQ_E) { lot_MQ_E += cacao; }
-            if (gamme == Feve.F_BQ)   { lot_BQ   += cacao; }
-            if (gamme == Feve.F_BQ_E) { lot_BQ_E += cacao; }
+            else if (gamme == Feve.F_HQ_E) { lot_HQ_E += cacao; }
+            else if (gamme == Feve.F_MQ)   { lot_MQ   += cacao; }
+            else if (gamme == Feve.F_MQ_E) { lot_MQ_E += cacao; }
+            else if (gamme == Feve.F_BQ)   { lot_BQ   += cacao; }
+            else if (gamme == Feve.F_BQ_E) { lot_BQ_E += cacao; }
+
         }
  
         this.add_lot(Feve.F_HQ,   lot_HQ);
@@ -116,6 +117,8 @@ public class Producteur1Planteur extends Producteur1Stock {
      */
     public void gererRotation() { // Gère la rotation des plantations
         int etape = Filiere.LA_FILIERE.getEtape();
+
+        if (etape % 24 != 0 || etape == 0) return; // ← bloquer l'étape 0
         
         if (etape % 24 != 0) return;
         int annee = etape / 24;
@@ -186,8 +189,8 @@ public class Producteur1Planteur extends Producteur1Stock {
  
     public void charge() {
         Banque banque = Filiere.LA_FILIERE.getBanque();
-        banque.payerCout(this, this.cryptogramme, "Masse salariale", 617.65);
-        this.journalBanque.ajouter("Charges payées : " + 617.65);
+        banque.payerCout(this, this.cryptogramme, "Masse salariale", 217.65);
+        this.journalBanque.ajouter("Charges payées : " + 217.65);
     }
  
     /**
@@ -198,10 +201,10 @@ public class Producteur1Planteur extends Producteur1Stock {
         super.next();
         int etape = Filiere.LA_FILIERE.getEtape();
         this.impots();
-        this.gererRotation(); // coupe les morts + replante + journalise la capacité
-        if (etape % 24 == 0) { // Une collecte tous les ans
-            this.collecter();
+        if (etape % 24 == 0 && etape > 0) {
+            this.collecter();  // collecter d'abord
             this.charge();
         }
+        this.gererRotation(); // couper et replanter ensuite
     }
 }

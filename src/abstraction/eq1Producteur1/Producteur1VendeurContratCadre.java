@@ -1,5 +1,6 @@
 package abstraction.eq1Producteur1;
 
+import abstraction.eqXRomu.bourseCacao.BourseCacao;
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
@@ -16,7 +17,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 public class Producteur1VendeurContratCadre extends Producteur1Cooperative implements IVendeurContratCadre{
-	private HashMap<Feve , Double > pourcentageAVendre = new HashMap<Feve , Double>();
+	// Passage en protected pour y accéder depuis Producteur1VendeurBourse
+	protected HashMap<Feve , Double > pourcentageAVendre = new HashMap<Feve , Double>();
 	private SuperviseurVentesContratCadre supCC;
 	protected List<ExemplaireContratCadre> contratsEnCours;
 	private List<ExemplaireContratCadre> contratsTermines;
@@ -25,7 +27,9 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	protected HashMap<Feve , Double > prixTonne = new HashMap<Feve , Double>();
 	protected HashMap<Feve , Double > prixMinTonne = new HashMap<Feve , Double>();
 	protected Journal journallivraisonCC ;
-
+	
+	// NOUVEAU : Stock de référence sauvegardé en début de cycle (période 0)
+	protected HashMap<Feve, Double> stockDebutAnnee = new HashMap<Feve, Double>();
 
 
     public Producteur1VendeurContratCadre(){
@@ -48,30 +52,34 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
         this.prixTonne.put(Feve.F_HQ,4500.);
         this.prixTonne.put(Feve.F_HQ_E,5000.);
 
-		this.prixMinTonne.put(Feve.F_BQ, 2800.);
-		this.prixMinTonne.put(Feve.F_BQ_E,3300.);
-        this.prixMinTonne.put(Feve.F_MQ,3300.);
-        this.prixMinTonne.put(Feve.F_MQ_E,4000.);
-        this.prixMinTonne.put(Feve.F_HQ,4000.);
-        this.prixMinTonne.put(Feve.F_HQ_E,4000.);
-
     }
 
 	public void initialiser() {
 		super.initialiser();
 		this.supCC = (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
+		this.prixMin();
+		
+		// NOUVEAU : Initialisation du stock de référence à la période 0
+		for (Feve f : this.pourcentageAVendre.keySet()) {
+			this.stockDebutAnnee.put(f, this.getStock(f));
+		}
 	}
 
+	public void prixMin(){
+		BourseCacao b =(BourseCacao) Filiere.LA_FILIERE.getActeur("BourseCacao");
 
-    /**
-	 * Methode appelee par le superviseur afin de savoir si l'acheteur
-	 * est pret a faire un contrat cadre sur le produit indique.
-	 * @param produit
-	 * @return Retourne false si le vendeur ne souhaite pas etablir de contrat 
-	 * a cette etape pour ce type de produit (retourne true si il est pret a
-	 * negocier un contrat cadre pour ce type de produit).
-	 */
+		double prix = b.getCours(Feve.F_BQ).getValeur();
+		this.prixMinTonne.put(Feve.F_BQ, prix*0.9);
+		this.prixMinTonne.put(Feve.F_BQ_E, prix*0.9);
 
+		prix = b.getCours(Feve.F_MQ).getValeur();
+		this.prixMinTonne.put(Feve.F_MQ, prix*0.9);
+		this.prixMinTonne.put(Feve.F_MQ_E, prix*0.9);
+
+		prix = b.getCours(Feve.F_HQ).getValeur();
+		this.prixMinTonne.put(Feve.F_HQ, prix*0.9);
+		this.prixMinTonne.put(Feve.F_HQ_E, prix*0.9);
+	}
 
 	public boolean vend(IProduit produit){
 		if(produit == Feve.F_BQ || produit == Feve.F_MQ){
@@ -80,65 +88,38 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		return false;
 	}
 
-
-	/**
-	 * Methode appelee par le SuperviseurVentesContratCadre lors de la phase de negociation
-	 * sur l'echeancier afin de connaitre la contreproposition du vendeur. Le vendeur
-	 * peut connaitre les precedentes propositions d'echeanciers via un appel a la methode
-	 * getEcheanciers() sur le contrat. Un appel a getEcheancier() sur le contrat retourne 
-	 * le dernier echeancier que l'acheteur a propose.
-	 * @param contrat
-	 * @return Retourne null si le vendeur souhaite mettre fin aux negociations en renoncant a
-	 * ce contrat. Retourne l'echeancier courant du contrat (contrat.getEcheancier()) si il est
-	 * d'accord avec cet echeancier. Sinon, retourne un autre echeancier qui est une contreproposition.
-	 */
 	public Echeancier contrePropositionDuVendeur(ExemplaireContratCadre contrat){
 		Echeancier e = contrat.getEcheancier();
 		Feve f = (Feve) contrat.getProduit();
 
-		// on regarde si on peut vendre
+		// on regarde si on peut vendre tel quel
 		if(this.onPeutVendre(f, e)){
 			return e;
-
 		}
 
 		// on regarde si c'est 3 fois la même proposition en face
-		List<Echeancier> lastEcheanchiers = contrat.getEcheanciers();
-
-		if(lastEcheanchiers.size() > 6
-				&& lastEcheanchiers.get(lastEcheanchiers.size()-3) == e
-				&& lastEcheanchiers.get(lastEcheanchiers.size()-5) == e){
+		List<Echeancier> lastEcheanciers = contrat.getEcheanciers();
+		if(lastEcheanciers.size() > 6
+				&& lastEcheanciers.get(lastEcheanciers.size()-3) == e
+				&& lastEcheanciers.get(lastEcheanciers.size()-5) == e){
 			return null;
 		}
 
-
 		// On propose une alternative que l'on peut tenir
 		Echeancier newEcheancier = this.correctionEcheancier(e, f);
-        return newEcheancier;
-    }
 
+		// 🚨 Si la correction donne un échéancier vide, on abandonne proprement
+		if(newEcheancier.getQuantiteTotale() < 1.0){
+			return null;
+		}
 
-	/**
-	 * Methode appele par le SuperviseurVentesContratCadre apres une negociation reussie
-	 * sur l'echeancier afin de connaitre le prix a la tonne que le vendeur propose.
-	 * @param contrat
-	 * @return La proposition initale du prix a la tonne.
-	 */
+		return newEcheancier;
+	}
+
 	public double propositionPrix(ExemplaireContratCadre contrat){
-	
         return this.prixTonne.get((Feve) contrat.getProduit());
     }
 
-	/**
-	 * Methode appelee par le SuperviseurVentesContratCadre apres une contreproposition
-	 * de prix different de la part de l'acheteur, afin de connaitre la contreproposition
-	 * de prix du vendeur.
-	 * @param contrat
-	 * @return Retourne un nombre inferieur ou egal a 0.0 si le vendeur souhaite mettre fin
-	 * aux negociation en renoncant a ce contrat. Retourne le prix actuel a la tonne du 
-	 * contrat (contrat.getPrix()) si le vendeur est d'accord avec ce prix.
-	 * Sinon, retourne une contreproposition de prix.
-	 */
 	public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat){
 		Feve f =(Feve) contrat.getProduit();
 
@@ -150,42 +131,21 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 					&& lastEcheanchiers.get(lastEcheanchiers.size()-3) == e
 					&& lastEcheanchiers.get(lastEcheanchiers.size()-5) == e){
 			return 0.;
-		}
-
+			}
 			return this.prixMinTonne.get(f);
 		}
 
         return contrat.getPrix();
     }
 
-
-	/**
-	 * Methode appelee par le SuperviseurVentesContratCadre afin de notifier le
-	 * vendeur de la reussite des negociations sur le contrat precise en parametre
-	 * qui a ete initie par l'acheteur.
-	 * Le superviseur veillera a l'application de ce contrat (des appels a livrer(...) 
-	 * seront effectues lorsque le vendeur devra livrer afin d'honorer le contrat, et
-	 * des transferts d'argent auront lieur lorsque l'acheteur paiera les echeances prevues)..
-	 * @param contrat
-	 */
 	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
 
     }
 
-	/**
-	 * Methode appelee par le SuperviseurVentesContratCadre lorsque le vendeur doit livrer 
-	 * quantite tonnes de produit afin d'honorer le contrat precise en parametre. 
-	 * @param produit
-	 * @param quantite
-	 * @param contrat
-	 * @return Retourne la quantite livree. Une penalite est prevue si cette quantite
-	 *  est inferieure a celle precisee en parametre
-	 */
 	public double livrer(IProduit produit, double quantite, ExemplaireContratCadre contrat){
-        
         double vrai_quantite= Math.min(quantite,getStock((Feve)produit));
         this.takeFeve((Feve)produit, vrai_quantite);
-		this.journallivraisonCC.ajouter("livraison de" + vrai_quantite + "tonnes de" + produit + "pour le contrat avec" + contrat.getAcheteur().getNom());
+		this.journallivraisonCC.ajouter("livraison de " + vrai_quantite + " tonnes de " + produit + " pour le contrat avec " + contrat.getAcheteur().getNom());
         return vrai_quantite;
     }
 
@@ -216,7 +176,6 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 					this.renouvellementContratCadre(acheteur, f,contrat);
 				}
 			}
-
 			else{
 				this.propositionContratCadre(acheteur, f);
 			}
@@ -226,26 +185,26 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	}
 
 
-
-
 	public void propositionContratCadre(IAcheteurContratCadre acheteur, Feve f){
 		double quantiteTot = 0;
 
 		if (null == f) {
 			return;
 		} else {
+			// NOUVEAU : On utilise stockDebutAnnee
+			double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
 			switch (f) {
 				case F_BQ:
-					quantiteTot = Math.min(255000, this.stock.get(f) * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
+					quantiteTot = Math.min(255000, stockRef * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
 					break;
 				case F_MQ:
-					quantiteTot = Math.min(45000, this.stock.get(f) * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
+					quantiteTot = Math.min(45000, stockRef * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
 					break;
 				default:
 					return;
 			}
 
-			if (quantiteTot <= 0) return;
+			if (quantiteTot < 1.0) return;
 		}
 
 		int temps = 24 + this.periode - Filiere.LA_FILIERE.getEtape() % 24;
@@ -256,13 +215,15 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		}
 
 		Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, quantites);
-		if (this.onPeutVendre(f, echeancier)) {
+		if (this.onPeutVendre(f, echeancier) && quantiteTot >=1) {
 			ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur, this, f, echeancier, this.cryptogramme, false);
-			if (contrat == null) {
+			if (contrat == null || quantiteTot < 1.0) {
 				journalCC.ajouter(Color.RED, Color.white, "   echec des negociations");
 			} else {
 				this.contratsEnCours.add(contrat);
-				double pourcent = (quantiteTot / this.getStock(f)) * 100;
+				// NOUVEAU : On utilise stockDebutAnnee pour le calcul du pourcentage
+				double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
+				double pourcent = stockRef > 0 ? (quantiteTot / stockRef) * 100 : 0;
 				this.pourcentageAVendre.put(f, pourcent + this.pourcentageAVendre.get(f));
 				this.logContratSigne(contrat, f, quantiteTot, acheteur);
 			}
@@ -270,13 +231,12 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	}
 
 
-	
-
-
-
 	public void renouvellementContratCadre(IAcheteurContratCadre acheteur, Feve f, ExemplaireContratCadre contrat){
 		int temps = 24; // durée fixe d'un renouvellement, comme dans propositionContratCadre
-		double quantiteTot = Math.min(contrat.getQuantiteTotale(), this.stock.get(f) * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
+		
+		// NOUVEAU : On utilise stockDebutAnnee
+		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
+		double quantiteTot = Math.min(contrat.getQuantiteTotale(), stockRef * (100 - this.pourcentageAVendre.get(f) - 5) / 100);
 
 		if (quantiteTot <= 0) {
 			journalCC.ajouter(Color.RED, Color.white, "   renouvellement annulé : quantité disponible nulle pour " + f);
@@ -294,7 +254,8 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 			journalCC.ajouter(Color.RED, Color.white, "   echec des negociations");
 		} else {
 			this.contratsEnCours.add(contratAct);
-			double pourcent = (quantiteTot / this.getStock(f)) * 100;
+			// NOUVEAU : On utilise stockDebutAnnee
+			double pourcent = stockRef > 0 ? (quantiteTot / stockRef) * 100 : 0;
 			this.pourcentageAVendre.put(f, pourcent + this.pourcentageAVendre.get(f));
 			this.logContratSigne(contratAct, f, quantiteTot, acheteur);
 		}
@@ -302,7 +263,6 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	/////////////////////////////////
 	//         Indicateurs         //
 	/////////////////////////////////
-
 
 	public boolean isContratdEnCours(IAcheteurContratCadre acheteur, Feve f){ //vérifie si l'acheteur a un conctract avec nous en cours sur un certain produit
 		for (int i = 0; i < this.contratsEnCours.size(); i++) {
@@ -315,12 +275,14 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	}
 
 
-
 	public boolean onPeutVendre(Feve f, Echeancier e){ //on regarde si on peut vendre sur les 2 prochaines années
 		int etape = Filiere.LA_FILIERE.getEtape();
 		int tempsRestant = 24 - etape%24;
 		double quantiteRestante = e.getQuantiteJusquA(tempsRestant);
-		double pourcent = (quantiteRestante/this.getStock(f))*100;
+		
+		// NOUVEAU : On utilise stockDebutAnnee
+		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
+		double pourcent = stockRef > 0 ? (quantiteRestante/stockRef)*100 : 0;
 
 		boolean cetteAnnee = pourcent < 100 - this.pourcentageAVendre.get(f);
 
@@ -341,36 +303,36 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public Echeancier correctionEcheancier(Echeancier echeancier, Feve f){
-
 		int etape = Filiere.LA_FILIERE.getEtape();
-		int tempsRestant = 23 - etape%24;
-		double quantiteRestante = echeancier.getQuantiteJusquA(tempsRestant);
-		double pourcent = (quantiteRestante/this.getStock(f))*100;
+		int finAnnee = etape + 23 - (etape % 24);
 
-		double CetteAnnee = Math.min(quantiteRestante,(this.getStock(f))*(95-this.pourcentageAVendre.get(f))/100);
+		double stockDispo = this.stockDebutAnnee.getOrDefault(f, 0.0);
+		double pourcentDispo = Math.max(0, 70 - this.pourcentageAVendre.getOrDefault(f, 0.0));
+		double maxCetteAnnee = stockDispo * (pourcentDispo / 100.0);
 
-		double quantiteApres = echeancier.getQuantiteAPartirDe(etape +tempsRestant + 1) ;
-		if(echeancier.getStepFin()> etape + 48 - etape%24){
-			quantiteApres +=  - echeancier.getQuantiteAPartirDe(etape + 48 - etape%24) ;
+		double demandeCetteAnnee = this.getQuantiteCetteAnnee(echeancier);
+		
+		// On calcule un ratio de réduction si on ne peut pas satisfaire toute la demande de l'année
+		double ratioCetteAnnee = 1.0;
+		if (demandeCetteAnnee > maxCetteAnnee && demandeCetteAnnee > 0) {
+			ratioCetteAnnee = maxCetteAnnee / demandeCetteAnnee;
 		}
-
-		double quantiteSurAnnee = Math.min(quantiteApres,100000000); // b: this.pourcentage next year
 
 		List<Double> quantites = new ArrayList<>();
-		for (int i = 0; i < tempsRestant; i++) { // on ajoute pour cette année
-			quantites.add(CetteAnnee/tempsRestant);
+		
+		// On reconstruit l'échéancier en gardant les bons index (stepDebut à stepFin)
+		for (int step = echeancier.getStepDebut(); step <= echeancier.getStepFin(); step++) {
+			double qteDemandee = echeancier.getQuantite(step);
+			if (step <= finAnnee) {
+				// On applique la réduction si besoin pour cette année
+				quantites.add(qteDemandee * ratioCetteAnnee);
+			} else {
+				// On accepte la quantité telle quelle pour l'année prochaine
+				quantites.add(qteDemandee);
+			}
 		}
 
-		for (int i = Math.max(etape + tempsRestant,echeancier.getStepDebut()); i < echeancier.getStepFin(); i++) { // on ajoute pour cette année
-			quantites.add(quantiteSurAnnee/24);
-		}
-
-
-
-		Echeancier newEcheancier = new Echeancier(echeancier.getStepDebut(),quantites);
-
-		return newEcheancier;
-
+		return new Echeancier(echeancier.getStepDebut(), quantites);
 	}
 	
 
@@ -383,22 +345,46 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	}
 
 
-
 	private void logContratSigne(ExemplaireContratCadre contrat, Feve f, double quantiteTot, IAcheteurContratCadre acheteur) {
-    int stepDebut = contrat.getEcheancier().getStepDebut();
-    int stepFin   = contrat.getEcheancier().getStepFin();
-    int duree     = stepFin - stepDebut;
-    double stock  = this.getStock(f);
-    double pourcent = stock > 0 ? (quantiteTot / stock) * 100 : 0;
+		int stepDebut = contrat.getEcheancier().getStepDebut();
+		int stepFin   = contrat.getEcheancier().getStepFin();
+		int duree     = stepFin - stepDebut;
+		
+		// NOUVEAU : On utilise stockDebutAnnee
+		double stock  = this.stockDebutAnnee.getOrDefault(f, 0.0);
+		double pourcent = stock > 0 ? (quantiteTot / stock) * 100 : 0;
 
-    journalCC.ajouter(Color.GREEN, acheteur.getColor(), "   contrat signé avec " + acheteur.getNom());
-    journalCC.ajouter(Color.GREEN, acheteur.getColor(),
-        "     produit : " + f
-        + " | qté totale : " + String.format("%.1f", quantiteTot) + " t"
-        + " | période : étape " + stepDebut + " → " + stepFin + " (" + duree + " steps)"
-        + " | % du stock engagé : " + String.format("%.1f", pourcent) + "%"
-        + " | % engagé cumulé : " + String.format("%.1f", this.pourcentageAVendre.get(f)) + "%");
-}
+		journalCC.ajouter(Color.GREEN, acheteur.getColor(), "   contrat signé avec " + acheteur.getNom());
+		journalCC.ajouter(Color.GREEN, acheteur.getColor(),
+			"     produit : " + f
+			+ " | qté totale : " + String.format("%.1f", quantiteTot) + " t"
+			+ " | période : étape " + stepDebut + " → " + stepFin + " (" + duree + " steps)"
+			+ " | % du stock engagé : " + String.format("%.1f", pourcent) + "%"
+			+ " | % engagé cumulé : " + String.format("%.1f", this.pourcentageAVendre.get(f)) + "%");
+	}
+
+
+	/**
+	 * Calcule la quantité exacte prévue par un échéancier sur l'année en cours
+	 */
+	protected double getQuantiteCetteAnnee(Echeancier echeancier) {
+		int etape = Filiere.LA_FILIERE.getEtape();
+		int finAnnee = etape + 23 - (etape % 24);
+		double qteFin = echeancier.getQuantiteJusquA(finAnnee);
+		double qteDebut = etape > 0 ? echeancier.getQuantiteJusquA(etape - 1) : 0;
+		return Math.max(0.0, qteFin - qteDebut);
+	}
+
+	/**
+	 * Calcule la quantité exacte prévue par un échéancier sur l'année suivante
+	 */
+	protected double getQuantiteAnneeProchaine(Echeancier echeancier) {
+		int etape = Filiere.LA_FILIERE.getEtape();
+		int finAnnee = etape + 23 - (etape % 24);
+		double qteFinNext = echeancier.getQuantiteJusquA(finAnnee + 24);
+		double qteFinThis = echeancier.getQuantiteJusquA(finAnnee);
+		return Math.max(0.0, qteFinNext - qteFinThis);
+	}
 
 
 	//////////////////////////////////////////
@@ -413,6 +399,11 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		// Réinitialisation annuelle du pourcentage à vendre
 		if(etape % 24 == 0){
 			journalCC.ajouter("=== Bilan annuel des contrats cadres (étape "+etape+") ===");
+
+			// NOUVEAU : On actualise le stock de référence pour la nouvelle année qui commence
+			for(Feve f : this.pourcentageAVendre.keySet()){
+				this.stockDebutAnnee.put(f, this.getStock(f));
+			}
 
 			for(Feve f : this.pourcentageAVendre.keySet()){
 				double quantiteEngagee = 0;
@@ -433,12 +424,13 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 					}
 				}
 
-				double stock = this.getStock(f);
+				// NOUVEAU : On utilise le stock mis à jour
+				double stock = this.stockDebutAnnee.getOrDefault(f, 0.0);
 				double pourcent = stock > 0 ? (quantiteEngagee / stock) * 100 : 0;
 				this.pourcentageAVendre.put(f, pourcent);
 
 				journalCC.ajouter("  ["+f+"] quantité engagée cette année : "+quantiteEngagee+" t"
-					+" | stock : "+stock+" t"
+					+" | stock de référence : "+stock+" t"
 					+" | % engagé : "+String.format("%.1f", pourcent)+"%"
 					+" | % disponible : "+String.format("%.1f", Math.max(0, 70 - pourcent))+"%");
 			}
@@ -450,5 +442,4 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		}
 	}
 }
-
 

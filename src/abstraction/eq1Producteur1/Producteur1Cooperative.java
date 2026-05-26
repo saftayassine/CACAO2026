@@ -39,14 +39,14 @@ public class Producteur1Cooperative extends Producteur1Planteur {
         //-----------------------------
         // COOP ÉQUITABLE (100% adultes)
         //-----------------------------
-        double forceEq = surfaceEq * 30;
+        double forceEq = surfaceEq * 3;
 
         coopEq.put("nombre adultes", forceEq);
 
         //-----------------------------
         // COOP NON ÉQUITABLE
         //-----------------------------
-        double forceNonEq = surfaceNonEq * 30;
+        double forceNonEq = surfaceNonEq * 3;
 
         double travailEnfant = forceNonEq * pourcentageEnfant;
         double travailAdulte = forceNonEq - travailEnfant;
