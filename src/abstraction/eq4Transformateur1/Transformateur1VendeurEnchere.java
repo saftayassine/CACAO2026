@@ -40,7 +40,7 @@ public class Transformateur1VendeurEnchere extends Transformateur1VendeurCC impl
 		this.journalVendeurEncheres.ajouter("=== STEP "+Filiere.LA_FILIERE.getEtape()+" ====================");
 		for (ChocolatDeMarque cm : this.getChocolatsProduits()) {
 			if (this.getStock().get(cm)>5000 && this.getStocksPrevuProduit(cm)>5000) { // on ne lance pas une enchere pour moins de 5000 T
-				int quantite = 5000 + Filiere.random.nextInt((int)(this.getStock().get(cm)-5000)); // il faudrait aussi tenir compte des contrats cadres en cours afin de ne pas vendre ce qu'on s'est engage a livrer
+				int quantite = 5000 + Filiere.random.nextInt((int)(this.getStock().get(cm)-5002)); // il faudrait aussi tenir compte des contrats cadres en cours afin de ne pas vendre ce qu'on s'est engage a livrer
 				if (quantite>this.getStocksPrevuProduit(cm) || quantite>this.getStocksProduit(cm)){
 					quantite= (int) Math.round(Double.min(this.getStocksPrevuProduit(cm),this.getStocksProduit(cm)))-1;
 				}
