@@ -212,19 +212,13 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         List<Double> historique = contrat.getListePrix();
         int tours = historique.size();
 
-        // PRIX ACCEPTABLE MAIS ON TENTE UNE NÉGO
+        // --- 1) Si le prix est acceptable, on tente une petite baisse ---
         if (prixPropose <= prixMax) {
-
-            // On tente une petite réduction (-3%)
-            double tentative = prixPropose * 0.97;
-
-            // On ne descend pas trop bas (90% du prix max)
+            double tentative = prixPropose * 0.97; // -3%
             double seuilMini = prixMax * 0.90;
-            if (tentative < seuilMini) {
-                tentative = seuilMini;
-            }
+            if (tentative < seuilMini) tentative = seuilMini;
 
-            // Si on est déjà très proche : on accepte
+            // Si on a déjà négocié plusieurs fois, on accepte
             if (tours >= 2) {
                 journalCC.ajouter("CC : prix acceptable → acceptation (" + prixPropose + ")");
                 return prixPropose;
@@ -234,15 +228,15 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
             return tentative;
         }
 
-        // PRIX TROP HAUT : NÉGO "CLASSIQUE"
-        double ratio = 0.70 + 0.05 * tours;
+        // --- 2) Si le prix est trop haut, on descend ---
+        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
         if (ratio > 0.90) ratio = 0.90;
 
+        // ⚠️ On descend, pas on monte
         double contreProp = prixPropose * ratio;
 
-        if (contreProp > prixMax) {
-            contreProp = prixMax;
-        }
+        // On ne dépasse jamais notre prix max
+        if (contreProp > prixMax) contreProp = prixMax;
 
         double coutTotal = contreProp * quantiteTotale;
         if (solde < coutTotal) {
@@ -250,7 +244,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
             return -1.0;
         }
 
-        // Si on est très proche du prix vendeur et que c'est acceptable : on accepte
+        // Si on est très proche du prix vendeur et que c'est acceptable → on accepte
         if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
             journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
             return prixPropose;
@@ -261,6 +255,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
 
         return contreProp;
     }
+
 
 
     @Override
