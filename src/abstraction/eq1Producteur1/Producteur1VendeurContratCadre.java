@@ -1,5 +1,6 @@
 package abstraction.eq1Producteur1;
 
+import abstraction.eqXRomu.bourseCacao.BourseCacao;
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
@@ -48,12 +49,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
         this.prixTonne.put(Feve.F_HQ,4500.);
         this.prixTonne.put(Feve.F_HQ_E,5000.);
 
-		this.prixMinTonne.put(Feve.F_BQ, 2800.);
-		this.prixMinTonne.put(Feve.F_BQ_E,3300.);
-        this.prixMinTonne.put(Feve.F_MQ,3300.);
-        this.prixMinTonne.put(Feve.F_MQ_E,4000.);
-        this.prixMinTonne.put(Feve.F_HQ,4000.);
-        this.prixMinTonne.put(Feve.F_HQ_E,4000.);
+		this.prixMin();
 
     }
 
@@ -62,6 +58,28 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		this.supCC = (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
 	}
 
+	public void prixMin(){
+		BourseCacao b =(BourseCacao) Filiere.LA_FILIERE.getActeur("BourseCacao");
+
+	
+		double prix = b.getCours(Feve.F_BQ).getValeur();
+		this.prixMinTonne.put(Feve.F_BQ, prix*0.9);
+
+		prix = b.getCours(Feve.F_BQ_E).getValeur();
+		this.prixMinTonne.put(Feve.F_BQ_E, prix*0.9);
+
+		prix = b.getCours(Feve.F_MQ).getValeur();
+		this.prixMinTonne.put(Feve.F_MQ, prix*0.9);
+
+		prix = b.getCours(Feve.F_MQ_E).getValeur();
+		this.prixMinTonne.put(Feve.F_MQ_E, prix*0.9);
+
+		prix = b.getCours(Feve.F_HQ).getValeur();
+		this.prixMinTonne.put(Feve.F_HQ, prix*0.9);
+
+		prix = b.getCours(Feve.F_HQ_E).getValeur();
+		this.prixMinTonne.put(Feve.F_HQ_E, prix*0.9);
+	}
 
     /**
 	 * Methode appelee par le superviseur afin de savoir si l'acheteur
@@ -245,7 +263,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 					return;
 			}
 
-			if (quantiteTot <= 0) return;
+			if (quantiteTot < 1.0) return;
 		}
 
 		int temps = 24 + this.periode - Filiere.LA_FILIERE.getEtape() % 24;
@@ -256,9 +274,9 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		}
 
 		Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, quantites);
-		if (this.onPeutVendre(f, echeancier)) {
+		if (this.onPeutVendre(f, echeancier) && quantiteTot >=1) {
 			ExemplaireContratCadre contrat = supCC.demandeVendeur(acheteur, this, f, echeancier, this.cryptogramme, false);
-			if (contrat == null) {
+			if (contrat == null || quantiteTot < 1.0) {
 				journalCC.ajouter(Color.RED, Color.white, "   echec des negociations");
 			} else {
 				this.contratsEnCours.add(contrat);

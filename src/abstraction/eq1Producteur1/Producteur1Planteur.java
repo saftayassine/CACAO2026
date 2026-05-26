@@ -96,11 +96,13 @@ public class Producteur1Planteur extends Producteur1Stock {
             Feve gamme = plantation.getGamme();
  
             if (gamme == Feve.F_HQ)   { lot_HQ   += cacao; }
-            if (gamme == Feve.F_HQ_E) { lot_HQ_E += cacao; }
-            if (gamme == Feve.F_MQ)   { lot_MQ   += cacao; }
-            if (gamme == Feve.F_MQ_E) { lot_MQ_E += cacao; }
-            if (gamme == Feve.F_BQ)   { lot_BQ   += cacao; }
-            if (gamme == Feve.F_BQ_E) { lot_BQ_E += cacao; }
+            else if (gamme == Feve.F_HQ_E) { lot_HQ_E += cacao; }
+            else if (gamme == Feve.F_MQ)   { lot_MQ   += cacao; }
+            else if (gamme == Feve.F_MQ_E) { lot_MQ_E += cacao; }
+            else if (gamme == Feve.F_BQ)   { lot_BQ   += cacao; }
+            else if (gamme == Feve.F_BQ_E) { lot_BQ_E += cacao; }
+
+            this.stock.put(gamme,cacao);
         }
  
         this.add_lot(Feve.F_HQ,   lot_HQ);
@@ -186,8 +188,8 @@ public class Producteur1Planteur extends Producteur1Stock {
  
     public void charge() {
         Banque banque = Filiere.LA_FILIERE.getBanque();
-        banque.payerCout(this, this.cryptogramme, "Masse salariale", 617.65);
-        this.journalBanque.ajouter("Charges payées : " + 617.65);
+        banque.payerCout(this, this.cryptogramme, "Masse salariale", 217.65);
+        this.journalBanque.ajouter("Charges payées : " + 217.65);
     }
  
     /**

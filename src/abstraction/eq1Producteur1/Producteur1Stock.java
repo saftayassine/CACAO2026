@@ -31,8 +31,8 @@ public class Producteur1Stock extends Producteur1Acteur{
         this.stock.put(Feve.F_HQ,0.);
         this.stock.put(Feve.F_HQ_E,0.);
 
-        this.add_lot(Feve.F_BQ, 4000,0);
-        this.add_lot(Feve.F_MQ, 6000,0);
+        this.add_lot(Feve.F_BQ, 2125000,0);
+        this.add_lot(Feve.F_MQ, 875000,0);
 
 
         this.stockTot.setValeur(this, totalStock, this.cryptogramme);
@@ -139,7 +139,7 @@ public class Producteur1Stock extends Producteur1Acteur{
 	///////////////////////////////////
     
     public void loyer(){
-        double montant = 180 * this.totalStock;
+        double montant = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur() * this.totalStock;
         Banque banque=Filiere.LA_FILIERE.getBanque();
         banque.payerCout(this, this.cryptogramme, "Loyer Stockage" , montant);
         this.journalBanque.ajouter("Loyer Stockage : " + montant);
@@ -167,10 +167,8 @@ public class Producteur1Stock extends Producteur1Acteur{
 
 
         // Loyer
-        int etape = Filiere.LA_FILIERE.getEtape();
-        if(etape%24 == 0){ //Une collecte tous les ans, a une dâte arbitraire pour l'instant
-            this.loyer();
-        }
+        this.loyer();
+        if(Filiere.LA_FILIERE.getEtape()%24==1){this.checkStock();}
 
     }
 
