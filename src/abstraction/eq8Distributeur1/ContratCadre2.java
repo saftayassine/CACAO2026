@@ -67,7 +67,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
         if (vendeurs != null && vendeurs.size() > 0) {
             // Création d'un échéancier sur 12 étapes
-            Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape(), 12, besoinParEtape);
+            Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, besoinParEtape);
             
             // On lance la négociation en précisant si on veut de la TG ou non
             // Le dernier paramètre 'TG' est celui que tu as calculé dans parcourirEtAcheter

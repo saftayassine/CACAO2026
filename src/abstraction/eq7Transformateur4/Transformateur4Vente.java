@@ -2,7 +2,13 @@ package abstraction.eq7Transformateur4;
 
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
+import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
 import abstraction.eqXRomu.contratsCadres.IVendeurContratCadre;
+import abstraction.eqXRomu.contratsCadres.SuperviseurVentesContratCadre;
+import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.filiere.IActeur;
+import abstraction.eqXRomu.produits.Chocolat;
+import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
 //Auteur -> Paul
@@ -10,7 +16,19 @@ public class Transformateur4Vente extends Transformateur4Production implements I
 
     @Override
     public boolean vend(IProduit produit) {
-        return this.getChocolatsProduits().contains(produit);
+        if (produit instanceof ChocolatDeMarque){
+            ChocolatDeMarque chocolat = (ChocolatDeMarque)produit;
+            if (chocolat.getChocolat()==Chocolat.C_BQ && chocolat.getMarque()=="CACAO+"){
+                return true;
+
+            }
+            else{
+                return false;
+            }
+        }
+        else{
+            return false;
+        }
     }
 
     @Override
@@ -26,8 +44,12 @@ public class Transformateur4Vente extends Transformateur4Production implements I
 
     @Override
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat) {
+        if (contrat.getProduit() instanceof ChocolatDeMarque){
         this.journal_negociation_CC.ajouter("[Prix]Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix());
-        return 6000.;
+        return 6000.;}
+        else{
+            return 0.;
+        }
     }
 
     @Override
@@ -45,4 +67,21 @@ public class Transformateur4Vente extends Transformateur4Production implements I
         return alivrer;
     }
     
+    public void next(){
+        super.next();
+        SuperviseurVentesContratCadre suppcc ;
+        suppcc = (SuperviseurVentesContratCadre)Filiere.LA_FILIERE.getActeur("Sup.CCadre");
+        double quantiteParTour = 10000;
+        ChocolatDeMarque chocolat = new ChocolatDeMarque(Chocolat.C_BQ, "CACAO+", 45);
+        Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 5, quantiteParTour);
+        for (IActeur acteur : suppcc.getAcheteurs(chocolat)) {
+			if (acteur!=this && (acteur instanceof IAcheteurContratCadre)) {
+                this.journal_vente_CC.ajouter("[DEMANDE] Demande de CC à " + acteur + " pour une quantité par tour de " + quantiteParTour);
+        
+				suppcc.demandeVendeur((IAcheteurContratCadre)acteur,this,chocolat, echeancier, cryptogramme, false);
+
+			}
+        }
+    }
+
 }

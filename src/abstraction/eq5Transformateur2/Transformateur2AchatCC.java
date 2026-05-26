@@ -1,8 +1,10 @@
 package abstraction.eq5Transformateur2;
 
 
+import abstraction.eqXRomu.bourseCacao.BourseCacao;
 import abstraction.eqXRomu.contratsCadres.*;
 import abstraction.eqXRomu.filiere.Filiere;
+import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.IProduit;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.Feve;
@@ -63,15 +65,15 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	public Echeancier contrePropositionDeLAcheteur(ExemplaireContratCadre contrat){
 			Echeancier echeancier=contrat.getEcheancier();
 			superviseurCC.recapitulerContratsEnCours();;
-			if(echeancier.getNbEcheances()<11){
+			if(echeancier.getNbEcheances()<6 && echeancier.getQuantiteTotale() > 5*10000){
 				return echeancier;
 			}
 			else{
 				Integer debut = echeancier.getStepDebut();
 				Echeancier proposition = new Echeancier(debut);
-				for (int index = debut; index < debut+10; index++) {
-					if(echeancier.getQuantite(index)<2000){
-						proposition.ajouter(2000);
+				for (int index = debut; index < debut+5; index++) {
+					if(echeancier.getQuantite(index)<10000){
+						proposition.ajouter(10000);
 					}
 					else{proposition.ajouter(echeancier.getQuantite(index));}
 				}
@@ -100,16 +102,20 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	 */
 	public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat){
 		List<Double> listePrix = contrat.getListePrix();
+		BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
+		Feve feve = (Feve)contrat.getProduit();
+		Variable coursBourse = bourse.getCours(feve);
+		Double coursActuel = coursBourse.getValeur();
         
         // SÉCURITÉ CRITIQUE : Évite le crash (IndexOutOfBoundsException) si c'est la première proposition
         if (listePrix.size() < 2) {
-            // Au premier tour de négociation, on tente de faire baisser le prix de 10%
-            return contrat.getPrix() * 0.90; 
+            // Au premier tour de négociation, on tente un prix 10% plus bas que celui de la bourse
+            return coursActuel * 0.90; 
         }
         
         // Ensuite, on négocie en faisant une moyenne entre son prix et notre ancienne offre
-        return ((contrat.getPrix() + listePrix.get(listePrix.size() - 2)) / 2) * 0.95;
-	}
+        return Math.min(((contrat.getPrix() + listePrix.get(listePrix.size() - 2)) / 2) * 0.95,coursActuel * 0.97);
+		}
 
 	/**
 	 * Methode appelee par le SuperviseurVentesContratCadre afin de notifier le

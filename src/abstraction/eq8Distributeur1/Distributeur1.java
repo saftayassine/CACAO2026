@@ -47,6 +47,7 @@ public class Distributeur1 extends MiseEnRayon {
 		}
 		this.actualiserPrixDeVente();
 		this.actualiserPrixDachatParContrats();
+		this.stockPredit = initialiserStockPredit();
 
 		//JournalActions
 		this.journal3.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());

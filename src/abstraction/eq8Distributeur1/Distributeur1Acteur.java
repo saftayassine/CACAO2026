@@ -27,12 +27,16 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	protected Journal journal5;/** @author Ewen Landron */
 	protected Variable volumeStock;/** @author Alexandre Cornet */
 	protected HashMap<IProduit, Double> Rayon;/** @author Alexandre Cornet */
+	protected HashMap<IProduit, Double> RayonTG;/** @author Ewen Landron */
 	protected HashMap<IProduit, Double> RayonPrecedent;/** @author Alexandre Cornet */
 	protected int cryptogramme;/** @author Alexandre Cornet */
 	protected HashMap<IProduit, Double> Stock;/** @author Alexandre Cornet */
 	protected HashMap<IProduit, Double> Prix;/** @author Alexandre Cornet */
+	protected double TailleRayonTotal;/** @author Ewen Landron */
 	protected double TailleRayon;/** @author Alexandre Cornet */
 	protected double volumerayon;/** @author Alexandre Cornet */
+	protected double TailleRayonTG;/** @author Ewen Landron */
+	protected double volumerayonTG;/** @author Ewen Landron */
 	protected HashMap<ChocolatDeMarque, Double> ChocolatsAchetes;/** @author Lucas Levillain */
 	protected double CoutParArticle; /** @author Lucas Levillain */
 	protected HashMap<ChocolatDeMarque, Double> prixDAchat; /** @author Lucas Levillain */
@@ -50,13 +54,17 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.journal5 = new Journal("Journal EQ8 Contrats ", this);
 		this.volumeStock=new Variable("EQ8 StockTotal", this); 
 		this.Rayon = new HashMap<IProduit, Double>(); 
+		this.RayonTG = new HashMap<IProduit, Double>();
 		
 		this.RayonPrecedent = new HashMap<IProduit, Double>(); 
 		this.Stock = new HashMap<IProduit, Double>();
 		this.Prix = new HashMap<IProduit, Double>();
 		this.ChocolatsAchetes = new HashMap<ChocolatDeMarque, Double>();
-		this.TailleRayon = 1000000.0;
+		this.TailleRayonTotal = 1000000.0;
+		this.TailleRayonTG = this.TailleRayonTotal * 0.1;
+		this.TailleRayon = this.TailleRayonTotal * 0.9;
 		this.volumerayon = 0.0;
+		this.volumerayonTG = 0.0;
 		this.CoutParArticle = 0.0;
 		this.prixDAchat = new HashMap<ChocolatDeMarque, Double>();
 	}
@@ -154,6 +162,16 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		return this.volumerayon;
 	}
 
+	/** @author Ewen Landron */
+	public double getvolumerayonTG(){
+		List<ChocolatDeMarque> p=Filiere.LA_FILIERE.getChocolatsProduits();
+		this.volumerayonTG=0.0;
+		for (int i=0; i<p.size(); i++){
+			this.volumerayonTG+=getQuantiteEnRayonTG((IProduit)(p.get(i)),this.cryptogramme);
+		}
+		return this.volumerayonTG;
+	}
+
 	/** @author Alexandre Cornet */
 	public String changerTailleRayon(double d){
 		//Banque b=Filiere.LA_FILIERE.getBanque();
@@ -192,6 +210,27 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 			this.Stock.put(p,q-d);
 			String s="Vous avez ajouté " + d + "T de " + p + " en rayon.";
 			this.volumerayon+=d;
+			this.volumeStock.ajouter(this, -d);
+			return s;
+		}
+	}
+
+	/** @author Ewen Landron */
+	public String AjoutenRayonTG(IProduit p ,double d){
+		double v = this.getvolumerayonTG();
+		double q = this.getQuantiteEnStock(p, this.cryptogramme);
+		double f = this.getQuantiteEnRayonTG(p, this.cryptogramme);
+		if(v+d>this.TailleRayonTG){
+			String  s="il n'y a pas assez de place dans le rayon TG";
+			return s;
+		}else if(q<d){
+			String s="vous n'avez pas assez de stock pour ajouter cette quantité";
+			return s;
+		}else{
+			this.RayonTG.put(p,f+d);
+			this.Stock.put(p,q-d);
+			String s="Vous avez ajouté " + d + "T de " + p + " en rayon TG.";
+			this.volumerayonTG+=d;
 			this.volumeStock.ajouter(this, -d);
 			return s;
 		}
@@ -307,6 +346,16 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
 		}
 	}
+
+	/** @author Alexandre Cornet */
+	public double getQuantiteEnRayonTG(IProduit p, int cryptogramme) {
+		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
+			return this.RayonTG.getOrDefault(p, 0.0);
+		} else {
+			return 0; // Les acteurs non assermentes n'ont pas a connaitre notre stock
+		}
+	}
+
 	/** @author Alexandre Cornet */
 	public double getPrixProduit(IProduit p, int cryptogramme) {
 		if (this.cryptogramme==cryptogramme) { // c'est donc bien un acteur assermente qui demande a consulter la quantite en stock
@@ -345,7 +394,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	/** @author Alexandre Cornet */
 	@Override
 	public double quantiteEnVenteTG(ChocolatDeMarque choco, int crypto) {
-		return 0.0;
+		return getQuantiteEnRayonTG(choco, crypto);
 		
 	}
 	/** @author Alexandre Cornet */
