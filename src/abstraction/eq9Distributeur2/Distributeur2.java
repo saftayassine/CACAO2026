@@ -1,4 +1,4 @@
-package abstraction.eq9Distributeur2.Core;
+package abstraction.eq9Distributeur2;
 
 import abstraction.eq9Distributeur2.Achats.Distributeur2AcheteurCC;
 import abstraction.eqXRomu.appelDOffre.IAcheteurAO;
