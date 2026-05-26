@@ -163,6 +163,33 @@ public class Récolte extends Producteur2Acteur {
         }
     }
 
+    /**
+     * Gère le paiement des charges fixes et des taxes foncières
+     */
+    public void payerTaxesEtCharges() {
+        int etape = Filiere.LA_FILIERE.getEtape();
+        // Charges fixes par an : 217.65 € -> par step (1/24 an) : 217.65 / 24
+        double chargesFixesStep = 217.65 / 24.0;
+        
+        // Impôt foncier par hectare et par an : 20 € (taux Amérique Latine) -> par step : 20 / 24
+        double impotHectareAn = 20.0; 
+        double impotStep = impotHectareAn / 24.0;
+        
+        double totalHectares = 0;
+        for (Plantation p : plantations) {
+            if (!p.estMorte()) {
+                totalHectares += p.getParcelles(); // 1 parcelle = 1 hectare
+            }
+        }
+        
+        double coutTotalTaxes = chargesFixesStep + (totalHectares * impotStep);
+        
+        if (coutTotalTaxes > 0) {
+            Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Taxes foncières et charges fixes", coutTotalTaxes);
+            JournalBanque.ajouter(etape + " : Taxes et charges fixes (" + totalHectares + " ha) = " + String.format("%.2f", coutTotalTaxes) + " €");
+        }
+    }
+
     public void action_replante() {
         int etapeActuelle = Filiere.LA_FILIERE.getEtape();
 
@@ -321,6 +348,7 @@ public class Récolte extends Producteur2Acteur {
         recolteParStep();
         cout_plantations();
         gererCoutsEquitables();
+        payerTaxesEtCharges();
         get_nb_plantations();
         for (Plantation p : plantations) {
             p.add_age();
