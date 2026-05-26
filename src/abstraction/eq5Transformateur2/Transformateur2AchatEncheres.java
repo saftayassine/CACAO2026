@@ -69,6 +69,7 @@ public class Transformateur2AchatEncheres extends Transformateur2VendeurAppelOff
 		Double quantiteEnT=propositionRetenue.getQuantiteT();
 		IProduit produit = propositionRetenue.getProduit();
 		Feve f=(Feve) produit;
+
 		this.getJournaux().get(5).ajouter("Achat effectué de: "+quantiteEnT+" fèves "+f+" au prix/tonne de "+prixTonne);
 
 		this.add_feve(quantiteEnT,f);

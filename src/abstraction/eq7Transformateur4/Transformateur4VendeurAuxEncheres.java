@@ -3,11 +3,9 @@ package abstraction.eq7Transformateur4;
 import java.util.List;
 
 import abstraction.eqXRomu.encheres.Enchere;
-import abstraction.eqXRomu.encheres.ExempleAbsVendeurAuxEncheres;
 import abstraction.eqXRomu.encheres.IVendeurAuxEncheres;
 import abstraction.eqXRomu.encheres.SuperviseurVentesAuxEncheres;
 import abstraction.eqXRomu.filiere.Filiere;
-import abstraction.eqXRomu.produits.Chocolat;
 
 //Auteur : Paul
 
