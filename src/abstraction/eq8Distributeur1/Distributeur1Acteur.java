@@ -61,7 +61,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.Stock = new HashMap<IProduit, Double>();
 		this.Prix = new HashMap<IProduit, Double>();
 		this.ChocolatsAchetes = new HashMap<ChocolatDeMarque, Double>();
-		this.TailleRayonTotal = 300000.0;
+		this.TailleRayonTotal = 1000000.0;
 		this.TailleRayonTG = this.TailleRayonTotal * 0.1;
 		this.TailleRayon = this.TailleRayonTotal * 0.9;
 		this.volumerayon = 0.0;
@@ -78,23 +78,24 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		for (int i=0; i<p.size(); i++){
 			if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.BQ && !p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 22000.0);
-				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 6000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.MQ && !p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 14000.0);
-				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 4000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.HQ && !p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 27000.0);
-				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 6000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.BQ && p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 25000.0);
-				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 6000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.MQ && p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 16000.0);
-				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 4000.0);
 			} else if (p.get(i).getGamme() == abstraction.eqXRomu.produits.Gamme.HQ && p.get(i).isEquitable()) {
 				this.Prix.put((IProduit)(p.get(i)), 30000.0);
-				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 3000.0);
+				this.prixDAchat.put((ChocolatDeMarque)(p.get(i)), 7500.0);
 			}
+			//System.out.println("initial "+p.get(i)+" a "+prixDAchat.get((ChocolatDeMarque)(p.get(i)))+" €/T");
 
 			this.Stock.put((IProduit)(p.get(i)),40000.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);

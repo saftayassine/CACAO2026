@@ -39,7 +39,10 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
             IProduit p = (IProduit) contrat.getProduit();
             
             // 1. Gestion du prix
+            //System.out.println(" exists "+this.prixDAchat.keySet().contains(p)+" p="+p+" keys = "+this.prixDAchat.keySet());
+            //System.out.println(" exists "+this.prixDAchat.get(p));
             this.prixCibleCourant = this.prixDAchat.getOrDefault(p, 1000.0);
+            //System.out.println("Prix cible calculé pour " + p + " : " + this.prixCibleCourant);
             this.prixMaxCourant = this.prixCibleCourant * 1.3;
             
             // 2. Gestion du besoin avec sécurité TG
@@ -154,7 +157,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
         
             double qteNouveauContrat = contrat.getQuantiteTotale();
             double nouveauPrixMoyen = ((ancienPrixMoyen * qteDejaAchetee) + (contrat.getPrix() * qteNouveauContrat)) / (qteDejaAchetee + qteNouveauContrat);
-
+//System.out.println("nouveau prix moyen pour "+cdm+" : "+nouveauPrixMoyen+" €/T basé sur "+qteDejaAchetee+"T à "+ancienPrixMoyen+" €/T et "+qteNouveauContrat+"T à "+contrat.getPrix()+" €/T");
             this.prixDAchat.put(cdm, nouveauPrixMoyen);
         
             // Actualisation du flux physique pour le tour en cours
