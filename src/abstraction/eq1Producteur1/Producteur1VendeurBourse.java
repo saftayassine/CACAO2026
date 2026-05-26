@@ -10,7 +10,7 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.general.Journal;
 import java.awt.Color;
 
-/** * @author Elise Dossal & Théophile Trillat
+/** * @author Elise Dossal & Théophile Trillat & Tristan Proust
  */
 public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre implements IVendeurBourse{
 
