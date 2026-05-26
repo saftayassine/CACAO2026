@@ -1,5 +1,6 @@
 package abstraction.eq9Distributeur2.Stratégie;
 
+import abstraction.eq9Distributeur2.Config.EQ9Config;
 import abstraction.eqXRomu.general.Journal;
 
 /**
@@ -17,9 +18,10 @@ public class EQ9_StrategieFixationPrix {
     private static final double MARGE_MARQUE_PROPRE = 35.0; 
     
     // Seuils d'inventaire
-    private static final double OBJECTIF_STOCK_KG = 50000.0;  
-    private static final double SEUIL_ALERTE_BAS = 10000.0;  
-    private static final double SEUIL_SURSTOCK = 75000.0;      
+    double objectifT   = EQ9Config.STOCK_CIBLE_T;
+    double seuilBasT   = EQ9Config.SEUIL_SOUS_STOCK_T;
+    double seuilHautT  = EQ9Config.SEUIL_SURSTOCK_T;
+     
     
     public EQ9_StrategieFixationPrix(Journal j) {
     }
@@ -116,16 +118,16 @@ public class EQ9_StrategieFixationPrix {
      * Pénalise ou récompense selon stock vs objectif
      */
     private double obtenirFacteurInventaire(double stockKg) {
-        if (stockKg > SEUIL_SURSTOCK) {
+        if (stockKg > seuilHautT) {
             // SURSTOCK massif → urgence déstockage
             return 0.90;  // -10% prix
-        } else if (stockKg > OBJECTIF_STOCK_KG * 1.5) {
+        } else if (stockKg > objectifT * 1.5) {
             // Surstock modéré
             return 0.95;  // -5% prix
-        } else if (stockKg < SEUIL_ALERTE_BAS * 0.5) {
+        } else if (stockKg < seuilBasT * 0.5) {
             // RUPTURE IMMINENTE → urgence réappro
             return 1.10;  // +10% prix
-        } else if (stockKg < SEUIL_ALERTE_BAS) {
+        } else if (stockKg < seuilBasT) {
             // Seuil de sécurité atteint
             return 1.05;  // +5% prix
         } else {

@@ -10,8 +10,10 @@ public class EQ9Config {
 
     // Stocks et seuils (en tonnes)
     public static final double SEUIL_MIN_T = 10.0;
-    public static final double STOCK_CIBLE_T = 500.0;
+    public static final double STOCK_CIBLE_T = 150.0;
     public static final double CC_QUANTITE_MIN_T = 100.0;
+    public static final double SEUIL_SOUS_STOCK_T = 50.0;    // tension
+    public static final double SEUIL_SURSTOCK_T = 220.0;     // surstock
 
     // Coûts et frais (€/tonne)
     public static final double FRAIS_STOCKAGE_EUR_PAR_T = 120.0;
@@ -29,4 +31,6 @@ public class EQ9Config {
 
     // Paramètres AO/CC
     public static final double MIN_ACHAT_AO_T = 1.0;
+    public static final double STOCK_CIBLE_KG = 0;
+    public static final double SEUIL_SOUS_STOCK_KG = 0;
 }
