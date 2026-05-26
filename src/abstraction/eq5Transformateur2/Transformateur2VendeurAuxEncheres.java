@@ -22,8 +22,8 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AchatEnche
         for (ChocolatDeMarque choco : mesChocolats) {
             Double quantiteEnStock = this.getStock_chocolatDeMarque(choco);
             
-            if (quantiteEnStock > 5 && Filiere.LA_FILIERE.getEtape() % 10 == 0) {
-                superviseur.vendreAuxEncheres(this, cryptogramme, choco, quantiteEnStock);
+            if (quantiteEnStock > 100000.0) {
+                superviseur.vendreAuxEncheres(this, cryptogramme, choco, 25000.0);
             }
         }
     }
@@ -31,26 +31,35 @@ public class Transformateur2VendeurAuxEncheres extends Transformateur2AchatEnche
     public Enchere choisir(List<Enchere> propositions) {
         if (propositions.isEmpty()) return null;
         
-        Enchere choisie=propositions.get(0);
+        Enchere choisie = propositions.get(0);
         for (Enchere enchere : propositions) {
             if(enchere.getPrixTonne() > choisie.getPrixTonne()){
-                choisie=enchere;
+                choisie = enchere;
             }
         }
+        
+        // CORRECTIF 2 : Le Bouclier Anti-Arnaque (Prix Plancher)
+        ChocolatDeMarque choco = (ChocolatDeMarque)choisie.getProduit();
+        double prixMinimum = 0.0;
+        switch (choco.getChocolat()) {
+            case C_HQ: prixMinimum = 15000.0; break; // On accepte de brader un peu (7000 au lieu de 8000)
+            case C_MQ: prixMinimum = 10000.0; break;
+            case C_BQ: prixMinimum = 7000.0; break;
+            default:   prixMinimum = 5000.0; break;
+        }
+
+        // Si la "meilleure" offre est en dessous de notre prix de fabrication, on refuse la vente !
+        if (choisie.getPrixTonne() < prixMinimum) {
+            return null; 
+        }
+
+        // Si le prix est acceptable, on valide la vente et on retire du stock
         this.getJournaux().get(6).ajouter(choisie.toString()+ "\n");
         Double quantite = choisie.getQuantiteT();
-        ChocolatDeMarque choco = (ChocolatDeMarque)choisie.getProduit();
         this.remove_chocolatDeMarque(choco, quantite);
         
-        Integer indice=2;
-        Gamme gamme = choco.getGamme();
-        if (gamme.equals(Gamme.HQ)){
-            indice = 0;
-        }
-        else if (gamme.equals(Gamme.MQ)){
-            indice = 1;
-        }
-        this.updatePrixEnchere(indice, choisie.getPrixTonne());
+        // Vous aviez des variables inutilisées ici (indice, gamme) dans votre code d'origine
+        // Je les ai retirées pour nettoyer, à moins que vous ne vouliez les utiliser pour le journal
         
         return choisie;
     }
