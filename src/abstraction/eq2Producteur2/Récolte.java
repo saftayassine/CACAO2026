@@ -53,12 +53,13 @@ public class Récolte extends Producteur2Acteur {
         double cout_MQ = 0;
         double cout_HQ = 0;
         double cout_HQ_E = 0;
-        
+
         double limiteStock = 500000.0;
         boolean stopRecolte = this.stockTotal.getValeur() > limiteStock;
-        
+
         if (stopRecolte) {
-            JournalRecolte.ajouter(Filiere.LA_FILIERE.getEtape() + " : [ALERTE] Stock critique (>500 000 T). Récolte suspendue pour éviter la ruine en taxes de stockage !");
+            JournalRecolte.ajouter(Filiere.LA_FILIERE.getEtape()
+                    + " : [ALERTE] Stock critique (>500 000 T). Récolte suspendue pour éviter la ruine en taxes de stockage !");
         }
 
         for (Plantation p : plantations) {
@@ -328,7 +329,9 @@ public class Récolte extends Producteur2Acteur {
             double production = prodTotale.get(f);
             if (production > 0) {
                 // Coût = coût de prod par tonne + 1 step de stockage en moyenne
-                double coutUnitaire = (coutTotalAmorti.get(f) / production) + this.cout_stockage;
+                double coutStockageFiliere = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur")
+                        .getValeur();
+                double coutUnitaire = (coutTotalAmorti.get(f) / production) + coutStockageFiliere;
                 // Ajouter le coût mensuel du label réparti par tonne si équitable (1 step sur
                 // 2)
                 if (f.isEquitable()) {

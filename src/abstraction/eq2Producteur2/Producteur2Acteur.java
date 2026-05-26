@@ -109,8 +109,10 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 		res.add(this.journal);
 		res.add(this.JournalBanque);
 		res.add(this.journalContratCadre);
-		if (this.JournalCout != null) res.add(this.JournalCout);
-		if (this.journalStock != null) res.add(this.journalStock);
+		if (this.JournalCout != null)
+			res.add(this.JournalCout);
+		if (this.journalStock != null)
+			res.add(this.journalStock);
 		return res;
 	}
 
@@ -143,7 +145,8 @@ public class Producteur2Acteur extends Producteur2couts implements IActeur {
 
 	@Override
 	public void TaxeStockage() {
-		double montant = this.stockTotal.getValeur(this.cryptogramme) * this.cout_stockage;
+		double coutStockageFiliere = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur();
+		double montant = this.stockTotal.getValeur(this.cryptogramme) * coutStockageFiliere;
 		if (montant > 0) {
 			Filiere.LA_FILIERE.getBanque().payerCout(this, this.cryptogramme, "Taxe de stockage", montant);
 			this.JournalBanque.ajouter("Paiement de la taxe de stockage : " + montant + "€ pour "

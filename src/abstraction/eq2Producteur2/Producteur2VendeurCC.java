@@ -42,7 +42,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
             double seuilCC = (f == Feve.F_HQ) ? 10.0 : 100.0;
             if (disponible > seuilCC) {
                 // --- SÉCURISATION : Limiter les engagements à notre capacité de production ---
-                // On évite la faillite due à la péremption : si on s'engage sur plus que notre 
+                // On évite la faillite due à la péremption : si on s'engage sur plus que notre
                 // production et que le stock pourrit, on ne peut plus livrer !
                 double productionStep = this.feve_recolte.getOrDefault(f, 0.0);
                 double engageParStep = 0.0;
@@ -54,10 +54,10 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
                         }
                     }
                 }
-                
+
                 double dispoParStep = Math.max(0.0, (productionStep - engageParStep) * 0.9); // 10% de marge de sécu
                 double parStep = Math.min(disponible / 12.0, dispoParStep);
-                
+
                 if (parStep >= 100.0) {
                     Echeancier e = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, parStep);
                     List<IAcheteurContratCadre> acheteurs = supCC.getAcheteurs(f);
@@ -72,8 +72,9 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
                                 if (!this.contratsEnCours.contains(contrat)) {
                                     this.contratsEnCours.add(contrat);
                                 }
-                                this.journalContratCadre.ajouter("Contrat signé avec " + acheteur.getNom() + " pour " + f
-                                        + " = " + contrat.getQuantiteTotale());
+                                this.journalContratCadre
+                                        .ajouter("Contrat signé avec " + acheteur.getNom() + " pour " + f
+                                                + " = " + contrat.getQuantiteTotale());
 
                                 disponible -= contrat.getQuantiteTotale();
                                 engageParStep += contrat.getQuantiteTotale() / e.getNbEcheances();
@@ -90,7 +91,8 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
                         this.journalContratCadre.ajouter("Pas d'acheteur pour " + f);
                     }
                 } else {
-                    this.journalContratCadre.ajouter("Capacité de production insuffisante pour proposer un CC pour " + f);
+                    this.journalContratCadre
+                            .ajouter("Capacité de production insuffisante pour proposer un CC pour " + f);
                 }
             }
         }
@@ -133,7 +135,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         if (disponible < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
             return null;
         }
-        
+
         // --- SÉCURISATION : Limiter les engagements à notre capacité de production ---
         double productionStep = this.feve_recolte.getOrDefault(f, 0.0);
         double engageParStep = 0.0;
@@ -145,15 +147,15 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
                 }
             }
         }
-        
+
         double dispoParStep = Math.max(0.0, (productionStep - engageParStep) * 0.9); // 10% de marge de sécu
-        
+
         int nbSteps = contrat.getEcheancier().getNbEcheances();
         if (nbSteps <= 0)
             nbSteps = 12; // Sécurité
-            
+
         double quantiteDemandeeParStep = contrat.getEcheancier().getQuantiteTotale() / nbSteps;
-        
+
         // On limite la proposition par step à dispoParStep ou disponible/nbSteps
         double quantiteParStepMax = Math.min(disponible / nbSteps, dispoParStep);
 
@@ -162,7 +164,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
         }
 
         double quantiteParStep = quantiteParStepMax;
-        
+
         if (quantiteParStep * nbSteps < SuperviseurVentesContratCadre.QUANTITE_MIN_ECHEANCIER) {
             return null;
         }
@@ -219,7 +221,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
 
         int ageMax = this.getAgeAnciennete(feve);
         double multiplicateurAge = 1.0;
-        
+
         if ((feve == Feve.F_HQ || feve == Feve.F_HQ_E) && ageMax >= 8) {
             multiplicateurAge = 0.90;
         } else if (feve == Feve.F_MQ && ageMax >= 18) {
