@@ -88,17 +88,18 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
         Echeancier echVendeur = contrat.getEcheancier();
         Echeancier echReponse = new Echeancier(echVendeur.getStepDebut());
+        int nbSteps = echVendeur.getStepFin() - echVendeur.getStepDebut() + 1;
 
         for (int step = echVendeur.getStepDebut(); step <= echVendeur.getStepFin(); step++) {
             double qteVendeur = echVendeur.getQuantite(step);
 
             if (qteVendeur > this.besoinCourant) {
-                echReponse.set(step, this.besoinCourant);
-            } else if (Math.abs(qteVendeur - this.besoinCourant) < 0.01) {
+                echReponse.set(step, this.besoinCourant/nbSteps); // On répartit notre besoin sur les étapes restantes
+            } else if (Math.abs(qteVendeur - this.besoinCourant/nbSteps) < 0.01) {
                 echReponse.set(step, qteVendeur);
             } else {
                 // Stratégie du milieu
-                echReponse.set(step, (qteVendeur + this.besoinCourant) / 2.0);
+                echReponse.set(step, (qteVendeur + this.besoinCourant/nbSteps) / 2.0);
             }
         }
         return echReponse;
