@@ -62,11 +62,12 @@ public class Transformateur4Production extends Transformateur4Marques implements
     }
 
     public void next(){
+        super.next();
         double quantity = 0.;
         if (Filiere.LA_FILIERE.getEtape()>0 && this.StockChoco_BQ.getValeur()<1000000){
             quantity = get_LQ().getValeur()*2.2222;
         }
-        else if (this.StockChoco_BQ.getValeur()>1000000){
+        else if (this.StockChoco_BQ.getValeur()>500000){
             quantity = 0.;
         }
         else{
@@ -74,7 +75,6 @@ public class Transformateur4Production extends Transformateur4Marques implements
         }
         this.production(quantity, Gamme.BQ,45);
         
-        super.next();
         BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
         this.cours_feves_bq.setValeur(this, bourse.getCours(Feve.F_BQ).getValeur());
         this.cout_prod.setValeur(this, 0.45*this.cours_feves_bq.getValeur()+0.55*1000);
@@ -85,7 +85,7 @@ public class Transformateur4Production extends Transformateur4Marques implements
         double totalChoco = this.get_StockChoco_BQ().getValeur() + this.get_StockChoco_MQ().getValeur() + this.get_StockChoco_HQ().getValeur();
         double coutStockageU = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur()*4;
         double coutStockage = totalChoco * coutStockageU ;
-        if(coutStockage > 0){
+        if(coutStockage > 0.){
             Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de stockage du chocolat", coutStockage);
         }
 

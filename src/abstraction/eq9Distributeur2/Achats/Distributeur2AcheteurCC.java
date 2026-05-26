@@ -2,7 +2,6 @@ package abstraction.eq9Distributeur2.Achats;
 
 import abstraction.eq9Distributeur2.Config.EQ9Config;
 import abstraction.eq9Distributeur2.Stocks.EQ9_GestionStocks;
-import abstraction.eq9Distributeur2.Stratégie.EQ9_StrategieFixationPrix;
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
@@ -140,6 +139,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      */
     @Override
     public Echeancier contrePropositionDeLAcheteur(ExemplaireContratCadre contrat) {
+
         Echeancier prop = contrat.getEcheancier();
         ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
 
@@ -152,55 +152,39 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         double enCours = restantDu(choco);
         double stockProjete = stock + enCours;
 
-        // Stock faible = livraisons rapides
+        // Stock faible : livraisons plus tôt 
         if (stockProjete < EQ9Config.SEUIL_MIN_T) {
             int debutSouhaite = stepCourant + 1;
             if (stepDebut > debutSouhaite) {
                 Echeancier cp = new Echeancier(debutSouhaite, nbSteps, quantiteTotale / nbSteps);
-                journalCC.ajouter("CC échéancier : stock faible → anticipation livraison à l'étape " + debutSouhaite);
+                journalCC.ajouter("CC échéancier : stock faible → anticipation à l'étape " + debutSouhaite);
                 return cp;
             }
         }
 
-        // Stock élevé = début plus tardif 
+        //  Stock élevé : livraisons plus tard 
         if (stockProjete > EQ9Config.STOCK_CIBLE_T * 1.2) {
             int debutSouhaite = stepCourant + 3;
             if (stepDebut < debutSouhaite) {
                 Echeancier cp = new Echeancier(debutSouhaite, nbSteps, quantiteTotale / nbSteps);
-                journalCC.ajouter("CC échéancier : stock élevé → décalage livraison à l'étape " + debutSouhaite);
+                journalCC.ajouter("CC échéancier : stock élevé → décalage à l'étape " + debutSouhaite);
                 return cp;
             }
         }
-
-        // Ajustement de la durée
-        // Trop court = étaler
-        if (nbSteps < 3) {
-            int nouvelleDuree = Math.min(6, 24 - stepDebut);
-            Echeancier cp = new Echeancier(stepDebut, nouvelleDuree, quantiteTotale / nouvelleDuree);
-            journalCC.ajouter("CC échéancier : durée trop courte → étalement sur " + nouvelleDuree + " étapes");
-            return cp;
-        }
-
-        // Trop long = raccourcir
-        if (nbSteps > 8) {
-            int nouvelleDuree = Math.max(4, nbSteps - 2);
-            Echeancier cp = new Echeancier(stepDebut, nouvelleDuree, quantiteTotale / nouvelleDuree);
-            journalCC.ajouter("CC échéancier : durée trop longue → réduction à " + nouvelleDuree + " étapes");
-            return cp;
-        }
-
-        // Tout est ok = acceptation 
+        // Tout est OK :
         journalCC.ajouter("CC échéancier : accepté pour " + choco.getNom());
         return prop;
     }
 
 
 
+
+
     /**
-     * @author Anass Ouisrani
-     * @author Paul Juhel (pour correctifs)
+     * @author Anass Ouisrani V1
+     * @author Paul Juhel V2
      */
-    @Override
+   @Override
     public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
 
         ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
@@ -209,46 +193,84 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         double solde = getSolde();
         double quantiteTotale = contrat.getQuantiteTotale();
 
-        // prix déjà acceptable : on accepte
-        if (prixPropose <= prixMax) {
-            journalCC.ajouter("CC : prix acceptable → acceptation directe (" + prixPropose + ")");
-            return prixPropose;
-        }
-
-        //négociations
         List<Double> historique = contrat.getListePrix();
         int tours = historique.size();
 
-        // contre-proposition
-        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
-        if (ratio > 0.90) ratio = 0.90;     // on ne dépasse jamais 90%
-
-        double contreProp = prixPropose * ratio;
-
-        // Vérification du prix max
-        if (contreProp > prixMax) {
-            contreProp = prixMax;
+        //refuser si prix ne couvre pas la marge minimale estimée
+        double coutUnitaireEstime = obtenirCoutAchat(choco);
+        double prixMinGaranti = coutUnitaireEstime * (1.0 + EQ9Config.MARGE_BRUTE_MIN);
+        if (prixPropose < prixMinGaranti) {
+            journalCC.ajouter("CC : refus → prix proposé (" + prixPropose + ") < prix minimum garanti (" + prixMinGaranti + ")");
+            return -1.0;
         }
 
-        //Vérification financière
+        // vérifier trésorerie nette après engagements existants
+        double engagementsFuturs = getTotalEngagementsFinanciersFuturs();
+        double soldeNet = solde - engagementsFuturs;
+        double besoinSiAccept = prixPropose * quantiteTotale;
+        if (soldeNet < besoinSiAccept * 1.2) { // garder 20% de marge de sécurité
+            journalCC.ajouter("CC : refus → trésorerie insuffisante après engagements (net=" + soldeNet + "€, besoin=" + besoinSiAccept + "€)");
+            return -1.0;
+        }
+
+        // 1) Si le prix est acceptable, on tente une petite baisse 
+        if (prixPropose <= prixMax) {
+            // Vérifier que l'on a les fonds pour couvrir la commande si on finit par accepter
+            double coutTotalSiAccept = prixPropose * quantiteTotale;
+            if (solde < coutTotalSiAccept) {
+                journalCC.ajouter("CC : refus → fonds insuffisants pour accepter à ce prix (" + prixPropose + ")");
+                return -1.0;
+            }
+
+            double tentative = prixPropose * 0.97; // -3%
+            double seuilMini = prixMax * 0.90;
+            if (tentative < seuilMini) tentative = seuilMini;
+
+            // Si on a déjà négocié plusieurs fois, on accepte (mais seulement si fonds ok)
+            if (tours >= 2) {
+                journalCC.ajouter("CC : prix acceptable → acceptation (" + prixPropose + ")");
+                return prixPropose;
+            }
+
+            journalCC.ajouter("CC : prix acceptable mais tentative de négo → " + tentative);
+            return tentative;
+        }
+
+        //  2) Si le prix est trop haut, on descend
+        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
+        if (ratio > 0.90) ratio = 0.90;
+
+        // On descend, pas on monte
+        double contreProp = prixPropose * ratio;
+
+        // On ne dépasse jamais notre prix max
+        if (contreProp > prixMax) contreProp = prixMax;
+
         double coutTotal = contreProp * quantiteTotale;
         if (solde < coutTotal) {
             journalCC.ajouter("CC : abandon → fonds insuffisants pour " + contreProp);
             return -1.0;
         }
 
-        // contre-proposition est proche du prix vendeur : on accepte
+        // Si on est très proche du prix vendeur et que c'est acceptable → on accepte
         if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
+            // double-check fonds avant acceptation finale
+            if (solde < prixPropose * quantiteTotale) {
+                journalCC.ajouter("CC : refus final → fonds insuffisants pour acceptation finale (" + prixPropose + ")");
+                return -1.0;
+            }
             journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
             return prixPropose;
         }
 
-        //on continue la négociation
         journalCC.ajouter("CC : contre-proposition " + contreProp
             + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
 
         return contreProp;
     }
+
+       
+    
 
 
 
@@ -298,8 +320,35 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
     }
 
     /**
+     * Calcule le total des paiements futurs engagés sur tous les contrats en cours.
+     * Utilisé pour évaluer la solvabilité réelle avant tout nouvel engagement.
+     */
+    private double getTotalEngagementsFinanciersFuturs() {
+        double total = 0.0;
+        for (ExemplaireContratCadre contrat : this.contratsEnCours) {
+            total += contrat.getQuantiteRestantALivrer() * contrat.getPrix();
+        }
+        return total;
+    }
+
+    /**
+     * Vérifie si un CC est déjà en cours pour ce produit.
+     * Évite de signer plusieurs contrats cumulatifs pour le même chocolat.
+     */
+    private boolean aDejaContratEnCours(ChocolatDeMarque choco) {
+        for (ExemplaireContratCadre contrat : this.contratsEnCours) {
+            if (contrat.getProduit().equals(choco)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Méthode pour initier des propositions de contrats cadres
      * @author Paul JUHEL
+     * CORRECTIF : quantité bornée au manque réel, vérif financière sur engagements totaux,
+     *             un seul CC actif par produit à la fois.
      */
     public void fairePropositionCC() {
         EQ9_GestionStocks gs = new EQ9_GestionStocks(this.stock, this::restantDu);
@@ -311,28 +360,47 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
 
         for (ChocolatDeMarque choco : produitsFiliere) {
             if (!gs.doitAcheter(choco)) continue;
-            if (!gs.prefererCC(choco)) continue; // AO gère le reste
-
-            double quantiteCC = gs.quantiteAacheter(choco);
-            if (quantiteCC < EQ9Config.CC_QUANTITE_MIN_T) continue;
+            if (!gs.prefererCC(choco)) continue;
 
             double stockActuel = this.stock.getOrDefault(choco, 0.0);
             double enCours = restantDu(choco);
-            double seuilDeSecurite = EQ9Config.SEUIL_MIN_T;
             double stockProjete = stockActuel + enCours;
 
-            if (stockProjete >= seuilDeSecurite) {
+            // FIX 1 : ne pas commander si le stock projeté (actuel + en cours de livraison)
+            // couvre déjà l'objectif. Évite l'accumulation explosive de contrats.
+            if (stockProjete >= EQ9Config.SEUIL_MIN_T) {
+                journalCC.ajouter("CC ignoré pour " + choco.getNom()
+                    + " : stock projeté " + stockProjete + "t >= seuil " + EQ9Config.SEUIL_MIN_T + "t");
                 continue;
             }
 
-            double quantiteAcheter = Math.max(quantiteCC, EQ9Config.CC_QUANTITE_MIN_T);
+            // FIX 2 : un seul contrat actif par produit à la fois.
+            // Sans cette garde, chaque appel à next() empile un nouveau CC sur les précédents.
+            if (aDejaContratEnCours(choco)) {
+                journalCC.ajouter("CC ignoré pour " + choco.getNom()
+                    + " : un contrat est déjà en cours de livraison");
+                continue;
+            }
 
-            // Vérifier les fonds disponibles
+            // FIX 3 : la quantité à commander = UNIQUEMENT ce qui manque pour atteindre STOCK_CIBLE,
+            // en tenant compte du stock projeté. Jamais plus que STOCK_CIBLE.
+            double manque = EQ9Config.STOCK_CIBLE_T - stockProjete;
+            if (manque <= 0) continue;
+            double quantiteAcheter = Math.min(
+                Math.max(manque, EQ9Config.CC_QUANTITE_MIN_T),
+                EQ9Config.STOCK_CIBLE_T   // plafond absolu : jamais plus d'un STOCK_CIBLE par contrat
+            );
+
             double prixEstime = getPrixMaxAcceptable(choco);
             double coutEstime = quantiteAcheter * prixEstime;
-            if (getSolde() < coutEstime * 1.2) { // Marge de sécurité
+
+            // FIX 4 : vérification financière réaliste = solde - engagements déjà contractés.
+            // L'ancien check ignorait les paiements futurs des CC déjà signés.
+            double soldeDisponible = getSolde() - getTotalEngagementsFinanciersFuturs();
+            if (soldeDisponible < coutEstime * 1.2) {
                 this.journalCC.ajouter("Fonds insuffisants pour CC " + choco.getNom()
-                    + " : besoin " + coutEstime + "€, solde " + getSolde() + "€");
+                    + " : besoin " + (coutEstime * 1.2) + "€, solde disponible (engagements déduits) "
+                    + soldeDisponible + "€");
                 continue;
             }
 
@@ -344,11 +412,11 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
 
             boolean propositionReussie = false;
             for (IVendeurContratCadre vendeur : vendeurs) {
-                int stepDebut = Filiere.LA_FILIERE.getEtape() + 1;
-                int nbSteps = Math.min(6, 24 - stepDebut);
-                if (nbSteps <= 0) continue;
 
+                int stepDebut = Filiere.LA_FILIERE.getEtape() + 1;
+                int nbSteps = 6;
                 double quantiteParStep = quantiteAcheter / nbSteps;
+
                 Echeancier echeancierPropose = new Echeancier(stepDebut, nbSteps, quantiteParStep);
 
                 ExemplaireContratCadre contrat = this.superviseurCC.demandeAcheteur(
@@ -370,6 +438,8 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
             }
         }
     }
+
+
 
     /**
      * Méthode utilitaire qui définit le prix maximum qu'on accepte
@@ -394,6 +464,10 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         double stock = this.stock.getOrDefault(choco, 0.0);
         if (stock < EQ9Config.SEUIL_MIN_T) {
             prixMax *= 1.10; // on paye plus cher pour éviter la rupture
+        }
+        double limiteSurvie = prixVentePrevu / 1.05;
+        if (prixMax > limiteSurvie) {
+            prixMax = limiteSurvie;
         }
 
         return prixMax;

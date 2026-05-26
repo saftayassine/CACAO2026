@@ -1,5 +1,6 @@
 package abstraction.eq9Distributeur2.Stratégie;
 
+import abstraction.eq9Distributeur2.Config.EQ9Config;
 import abstraction.eqXRomu.general.Journal;
 
 /**
@@ -17,9 +18,13 @@ public class EQ9_StrategieFixationPrix {
     private static final double MARGE_MARQUE_PROPRE = 35.0; 
     
     // Seuils d'inventaire
-    private static final double OBJECTIF_STOCK_KG = 50000.0;  
-    private static final double SEUIL_ALERTE_BAS = 10000.0;  
-    private static final double SEUIL_SURSTOCK = 75000.0;      
+    double objectifT   = EQ9Config.STOCK_CIBLE_T;
+    double seuilBasT   = EQ9Config.SEUIL_SOUS_STOCK_T;
+    double seuilHautT  = EQ9Config.SEUIL_SURSTOCK_T;
+
+    // Seuil prix
+    double margeSecurite = EQ9Config.MARGE_SECURITE_MIN; // +2% sur le coût d'achat
+     
     
     public EQ9_StrategieFixationPrix(Journal j) {
     }
@@ -38,34 +43,38 @@ public class EQ9_StrategieFixationPrix {
     public double calculerPrixVente(
         double coutAchatEuroPT,
         String nomProduit,
-        double inventaireKg,
+        double inventaireT,      // ⚠ tu travailles en TONNES, pas en kg
         double demandeClients,
         double prixConcurrentEuro
     ) {
-        //DÉTERMINER LA MARGE DE BASE
         double margePercent = obtenirMargeBasePourProduit(nomProduit);
         double prixBase = coutAchatEuroPT * (1.0 + margePercent / 100.0);
-        
-        //FACTEUR DEMANDE/OFFRE
-        double offre = inventaireKg;
+
+        double offre = inventaireT; // cohérent : tout en tonnes
         double ratioDemandeOffre = (offre > 0) ? demandeClients / offre : 2.0;
         double facteurDemande = obtenirFacteurDemande(ratioDemandeOffre);
-        
-        //FACTEUR INVENTAIRE
-        double facteurInventaire = obtenirFacteurInventaire(inventaireKg);
-        
-        //FACTEUR COMPÉTITION DIRECTE
+
+        double facteurInventaire = obtenirFacteurInventaire(inventaireT);
+
         double facteurCompetition = obtenirFacteurCompetition(
-            prixBase * facteurDemande * facteurInventaire, 
+            prixBase * facteurDemande * facteurInventaire,
             prixConcurrentEuro
         );
-        
-        //CALCUL FINAL
+
         double prixFinal = prixBase * facteurDemande * facteurInventaire * facteurCompetition;
-        
+
+        double prixPlancher = coutAchatEuroPT * margeSecurite;
+
+        if (prixFinal < prixPlancher) {
+            return prixPlancher;
+        }
+
         return prixFinal;
     }
+
     
+    
+
     /**
      marge de base selon le type de produit
      */
@@ -116,16 +125,16 @@ public class EQ9_StrategieFixationPrix {
      * Pénalise ou récompense selon stock vs objectif
      */
     private double obtenirFacteurInventaire(double stockKg) {
-        if (stockKg > SEUIL_SURSTOCK) {
+        if (stockKg > seuilHautT) {
             // SURSTOCK massif → urgence déstockage
             return 0.90;  // -10% prix
-        } else if (stockKg > OBJECTIF_STOCK_KG * 1.5) {
+        } else if (stockKg > objectifT * 1.5) {
             // Surstock modéré
             return 0.95;  // -5% prix
-        } else if (stockKg < SEUIL_ALERTE_BAS * 0.5) {
+        } else if (stockKg < seuilBasT * 0.5) {
             // RUPTURE IMMINENTE → urgence réappro
             return 1.10;  // +10% prix
-        } else if (stockKg < SEUIL_ALERTE_BAS) {
+        } else if (stockKg < seuilBasT) {
             // Seuil de sécurité atteint
             return 1.05;  // +5% prix
         } else {
