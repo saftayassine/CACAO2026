@@ -196,20 +196,20 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         List<Double> historique = contrat.getListePrix();
         int tours = historique.size();
 
-          // Refuser si la quantité demandée est nettement supérieure à ce dont on a besoin
-        EQ9_GestionStocks gs = new EQ9_GestionStocks(this.stock, this::restantDu);
-        double quantiteSouhaitee = gs.quantiteAacheter(choco);
-        if (quantiteSouhaitee <= 0.0) quantiteSouhaitee = EQ9Config.CC_QUANTITE_MIN_T;
-        if (quantiteTotale > quantiteSouhaitee * 1.2) {
-            journalCC.ajouter("CC : refus — quantité excessive (" + quantiteTotale + "t) vs souhaitée " + quantiteSouhaitee + "t");
+        //refuser si prix ne couvre pas la marge minimale estimée
+        double coutUnitaireEstime = obtenirCoutAchat(choco);
+        double prixMinGaranti = coutUnitaireEstime * (1.0 + EQ9Config.MARGE_BRUTE_MIN);
+        if (prixPropose < prixMinGaranti) {
+            journalCC.ajouter("CC : refus → prix proposé (" + prixPropose + ") < prix minimum garanti (" + prixMinGaranti + ")");
             return -1.0;
         }
 
-        // Refuser si l'échéancier commence immédiatement alors que ce n'est pas souhaitable
-        Echeancier ech = contrat.getEcheancier();
-        int stepCourant = Filiere.LA_FILIERE.getEtape();
-        if (ech != null && ech.getStepDebut() <= stepCourant) {
-            journalCC.ajouter("CC : refus — livraison immédiate inadaptée (début=" + ech.getStepDebut() + ", étape actuelle=" + stepCourant + ")");
+        // vérifier trésorerie nette après engagements existants
+        double engagementsFuturs = getTotalEngagementsFinanciersFuturs();
+        double soldeNet = solde - engagementsFuturs;
+        double besoinSiAccept = prixPropose * quantiteTotale;
+        if (soldeNet < besoinSiAccept * 1.2) { // garder 20% de marge de sécurité
+            journalCC.ajouter("CC : refus → trésorerie insuffisante après engagements (net=" + soldeNet + "€, besoin=" + besoinSiAccept + "€)");
             return -1.0;
         }
 
