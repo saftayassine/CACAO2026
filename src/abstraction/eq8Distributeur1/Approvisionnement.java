@@ -276,7 +276,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
             IProduit p = (IProduit) nouveauContrat.getProduit();
             if (p instanceof ChocolatDeMarque) {
                 ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-                int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+                int etapeActuelle = Filiere.LA_FILIERE.getEtape() + 1;
                 double livraisonImmediate = nouveauContrat.getEcheancier().getQuantite(etapeActuelle);
             
                 // 1. Stock Predit Global

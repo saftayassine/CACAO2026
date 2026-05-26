@@ -32,9 +32,6 @@ public class Distributeur1 extends MiseEnRayon {
 			this.Stock.put(p.get(i),q+f);
         }
 		
-
-		
-		//Choix de l'acteur
 		this.trierChocolatsParPrix();
 		if (Filiere.LA_FILIERE.getEtape() == 1) {
 			this.initialiser();
