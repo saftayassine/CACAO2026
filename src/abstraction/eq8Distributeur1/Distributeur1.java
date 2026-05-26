@@ -33,6 +33,9 @@ public class Distributeur1 extends MiseEnRayon {
             this.Rayon.put(p.get(i),0.0);
 			this.Stock.put(p.get(i),q+f);
         }
+
+
+		
 		//Choix de l'acteur
 		this.trierChocolatsParPrix();
 		if (Filiere.LA_FILIERE.getEtape() == 1) {
@@ -41,6 +44,25 @@ public class Distributeur1 extends MiseEnRayon {
 		this.lancement_CC = true;
 		this.lancerApprovisionnementGeneral(volumeCibleTotal);
 		this.lancement_CC = false;
+
+		//Journal Stock
+		this.journal2.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		for (int i=0; i<p.size(); i++){
+			double q=this.getQuantiteEnStock(p.get(i),this.cryptogramme);
+			this.journal2.ajouter(p.get(i)+" : "+q+"T");
+		}
+		this.journal2.ajouter("----------------------------------------------");
+		
+		//Journal Frais
+		this.journal4.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
+		//b.payerCout(this, this.cryptogramme, "Frais de Rayonnage", TailleRayon*0.01);
+		//this.journal4.ajouter("Frais de Rayon : "+TailleRayon*0.01 +" €");
+		if(v1!=0){
+			b.payerCout(this, this.cryptogramme, "Frais de Stockage", v1*120);
+			this.journal4.ajouter("Frais de Stockage : "+v1*120+" €");
+		}
+		this.journal4.ajouter("----------------------------------------------");
+		
 		this.executerMiseEnRayon();
 		for (int j=0; j<p.size(); j++){
 			double f=this.getQuantiteEnRayon(p.get(j),this.cryptogramme);
@@ -72,13 +94,7 @@ public class Distributeur1 extends MiseEnRayon {
 		}
 		this.journal1.ajouter("----------------------------------------------");
 
-		//Journal Stock
-		this.journal2.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-		for (int i=0; i<p.size(); i++){
-			double q=this.getQuantiteEnStock(p.get(i),this.cryptogramme);
-			this.journal2.ajouter(p.get(i)+" : "+q+"T");
-		}
-		this.journal2.ajouter("----------------------------------------------");
+		
 
 		/** 
 		//Journal Frais
@@ -86,15 +102,6 @@ public class Distributeur1 extends MiseEnRayon {
 			this.TailleRayon=this.volumerayon;
 		}
 		*/
-		this.journal4.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());
-		b.payerCout(this, this.cryptogramme, "Frais de Rayonnage", TailleRayon*0.01);
-		this.journal4.ajouter("Frais de Rayon : "+TailleRayon*0.01 +" €");
-		if(v1!=0){
-			b.payerCout(this, this.cryptogramme, "Frais de Stockage", v1*0.01);
-			this.journal4.ajouter("Frais de Stockage : "+v1*0.01+" €");
-		}
-	
-		this.journal4.ajouter("----------------------------------------------");
 		
 	}
 
