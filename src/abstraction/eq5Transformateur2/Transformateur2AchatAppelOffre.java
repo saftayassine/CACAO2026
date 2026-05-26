@@ -21,7 +21,6 @@ public class Transformateur2AchatAppelOffre extends Transformateur2AcheteurBours
             return null;
         }
 
-        // 1. Frein d'urgence global
         if (this.getStock_feve_total() > 650000.0) {
             return null;
         }
@@ -33,13 +32,13 @@ public class Transformateur2AchatAppelOffre extends Transformateur2AcheteurBours
             if (!(ov.getProduit() instanceof Feve)) continue;
             Feve f = (Feve) ov.getProduit();
 
-            // 2. Est-ce qu'on a besoin de ces fèves ? (Stock actuel + offre < Cible)
+            // Est-ce qu'on a besoin de ces fèves ? (Stock actuel + offre < Cible)
             double cible = (f == Feve.F_HQ) ? 98000.0 : (f == Feve.F_MQ) ? 154000.0 : (f == Feve.F_BQ) ? 238000.0 : 0.0;
             if (this.getStock_feve(f) + ov.getQuantiteT() > cible) {
-                continue; // On n'achète pas, on a déjà ce qu'il faut !
+                continue; // On n'achète pas, on a déjà ce qu'il faut
             }
 
-            // 3. Est-ce une bonne affaire ? (On compare avec le cours actuel de la Bourse)
+            //On compare avec le cours actuel de la Bourse
             double coursBourse = ((BourseCacao) Filiere.LA_FILIERE.getActeur("BourseCacao")).getCours(f).getValeur();
 
             // Si l'offre propose au moins 5% de réduction par rapport au marché spot

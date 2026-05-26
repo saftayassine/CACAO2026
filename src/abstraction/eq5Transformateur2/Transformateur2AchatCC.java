@@ -110,7 +110,7 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 		Variable coursBourse = bourse.getCours(feve);
 		Double coursActuel = coursBourse.getValeur();
         
-        // SÉCURITÉ CRITIQUE : Évite le crash (IndexOutOfBoundsException) si c'est la première proposition
+        //On évite le crash (IndexOutOfBoundsException) si c'est la première proposition
         if (listePrix.size() < 2) {
             // Au premier tour de négociation, on tente un prix 10% plus bas que celui de la bourse
             return coursActuel * 0.90; 
@@ -162,21 +162,12 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	@Override
     public void next() {
         super.next();
-
-        // --- NOUVEAU : LE FREIN D'URGENCE (Limite globale 600 000 T) ---
-        // On calcule d'abord combien de place on prend déjà avec nos fèves
         double stockFevesTotal = this.getStock_feve(Feve.F_HQ) + this.getStock_feve(Feve.F_MQ) + this.getStock_feve(Feve.F_BQ);
-        
-        // (Il faudrait idéalement ajouter ici votre stock de chocolat total si vous avez la méthode)
-        // double stockChocoTotal = ...
-        
-        // Si nos entrepôts sont déjà dangereusement pleins (ex: plus de 500 000 T), on gèle les achats !
         if (stockFevesTotal > 650000.0) {
-            return; // On arrête la méthode next() ici, on n'achète rien ce tour-ci !
+            return;
         }
-        // ---------------------------------------------------------------
 
-        // 1. Définition des besoins cibles en fèves (pour couvrir vos 100k de choco)
+        // On indique les nombre de fèves qu'on veut pour pouvoir produire à pleine capacité
         HashMap<Feve, Double> ciblesFeves = new HashMap<>();
         ciblesFeves.put(Feve.F_HQ, 98000.0);
         ciblesFeves.put(Feve.F_MQ, 154000.0);
@@ -185,7 +176,7 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
         for (Feve f : ciblesFeves.keySet()) {
             double stockActuel = this.getStock_feve(f);
             
-            // 2. On calcule ce qui arrive déjà par NOS contrats cadres en cours
+            // On calcule ce qu'on va recevoir avec nos contrats existants
             double attendu = 0;
             
             for (ExemplaireContratCadre c : this.mesContratsEnCours) {
@@ -194,37 +185,30 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
                 }
             }
 
-            // 3. Si (Stock actuel + Fèves en livraison) < Cible, on cherche activement un vendeur
+            // Si (Stock actuel + Fèves en livraison) < Cible, on cherche activement un vendeur
             if (stockActuel + attendu < ciblesFeves.get(f)) {
                 double quantiteAManquer = ciblesFeves.get(f) - (stockActuel + attendu);
-                
-                // On cherche la liste des producteurs qui vendent cette fève
                 List<IVendeurContratCadre> vendeurs = ((SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre")).getVendeurs(f);
                 
-                if (!vendeurs.isEmpty()) {
-                    
-                    // --- NOUVEAU : LA RECHERCHE MULTI-VENDEURS ---
-                    // On essaie les vendeurs un par un. Si un contrat est signé, on s'arrête.
+                if (!vendeurs.isEmpty())
                     for (IVendeurContratCadre vendeur : vendeurs) {
                         
                         Echeancier echeancier = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 10, quantiteAManquer/10.0 );
                         if(echeancier.echeancierAcceptable()){
-							// On stocke le résultat de la demande dans une variable
 							ExemplaireContratCadre nouveauContrat = ((SuperviseurVentesContratCadre) Filiere.LA_FILIERE.getActeur("Sup.CCadre")).demandeAcheteur(this, vendeur, f, echeancier, cryptogramme, false);
-							
-							// Si le contrat a été accepté et signé (il n'est pas null)
-
+							// Si le contrat a été refusé, nouveauContrat vaut null
 							if (nouveauContrat != null){
 								this.notificationNouveauContratCadre(nouveauContrat);
-							}; // SUCCÈS ! On quitte la boucle des vendeurs, inutile de demander aux autres.
+							};
 						}
                     }
                 }
             }
-        }
         
-        // 4. Nettoyage : On supprime de notre liste les contrats qui sont totalement terminés
+        
+        //On supprime de notre liste les contrats qui sont totalement terminés
         this.mesContratsEnCours.removeIf(c -> c.getQuantiteRestantALivrer() == 0);
-    }
+	}
 }
+
     
