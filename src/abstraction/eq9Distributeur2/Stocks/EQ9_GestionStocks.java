@@ -33,9 +33,9 @@ public class EQ9_GestionStocks {
     }
 
     public double DOS(ChocolatDeMarque choco) {
-        double stockKg = stockProjete(choco) * 1000.0;
-        double ventesJour = ventesMoyennes(choco);
-        return ventesJour > 0 ? stockKg / ventesJour : 999.0;
+        double stockT = stockProjete(choco) ;
+        double ventesParEtape = ventesMoyennes(choco);
+        return ventesParEtape > 0 ? stockT / ventesParEtape : 999.0;
     }
 
     public boolean risqueRupture(ChocolatDeMarque choco) {
