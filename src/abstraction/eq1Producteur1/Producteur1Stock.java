@@ -98,42 +98,36 @@ public class Producteur1Stock extends Producteur1Acteur{
         this.lots.remove(i);
     }
 
-    public List<Lot> takeFeve(Feve f,double quantite){  // Permet d'extraire des stocks les plus vieilles fêves de la qualité voulue
+    public List<Lot> takeFeve(Feve f,double quantite){
         if(quantite > this.stock.get(f)){
             return null;
-
-            }
-
+        }
 
         List<Lot> take_out = new ArrayList<Lot>();
         double rest = quantite;
         for(int i=0; i<this.lots.size() && rest != 0 ;i++){
             Lot lot = this.lots.get(i);
             if(lot.getGamme().equals(f)){
-                if(lot.getQuantite() <= rest){ // Si on peut prendre tout le lot, on le prend
+                if(lot.getQuantite() <= rest){ 
                     take_out.add(lot);
                     rest -= lot.getQuantite();
                     this.changeStock(f, -lot.getQuantite());
                     this.removeLot(i);
+                    i--;
                 }
-
-                else{ //Si on n'a pas besoin de tout le lot, on le sépare en 2
+                else{ 
                     Lot new_lot = new Lot(f, lot.getEtapeCreation(), rest);
                     take_out.add(new_lot);
                     lot.setQuantite(lot.getQuantite() - rest );
                     this.changeStock(f, -rest);
                     rest = 0;
-
                 }
             }
         }
-
         this.stockTot.setValeur(this, this.totalStock, this.cryptogramme);
-
-
         return take_out;
     }
-
+   
     ///////////////////////////////////
 	//         Actions autres        //
 	///////////////////////////////////

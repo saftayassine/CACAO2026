@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import abstraction.eqXRomu.bourseCacao.IVendeurBourse;
+import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.general.Journal;
@@ -12,9 +13,12 @@ import java.awt.Color;
 /** * @author Elise Dossal & Théophile Trillat
  */
 public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre implements IVendeurBourse{
-///*
+
     private int blacklist=0;
 	protected Journal journalBourse;
+
+	// Marge de sécurité : on ne descend JAMAIS en dessous de 5% du stock initial
+	protected static final double MARGE_SECURITE_PCT = 5.0;
 
 
     public Producteur1VendeurBourse(){
@@ -24,8 +28,32 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 
 
 	/**
-	 * Retourne la quantite en tonnes de feves de type f que le vendeur 
-	 * souhaite vendre a cette etape sachant que le cours actuel de 
+	 * Calcule combien de tonnes de f vont encore être livrées via les CC
+	 * entre maintenant et la fin de l'année en cours.
+	 *
+	 * C'est crucial pour éviter de vendre en bourse du stock qu'on doit garder
+	 * pour honorer les contrats cadres jusqu'à la fin de l'année.
+	 */
+	protected double getLivraisonsCCRestantesCetteAnnee(Feve f) {
+		int etape = Filiere.LA_FILIERE.getEtape();
+		int finAnnee = etape + 23 - (etape % 24);
+		double total = 0;
+
+		for (ExemplaireContratCadre contrat : this.contratsEnCours) {
+			if (contrat.getProduit() == f) {
+				// quantité prévue entre maintenant (étape actuelle) et la fin de l'année
+				double qteFinAnnee = contrat.getEcheancier().getQuantiteJusquA(finAnnee);
+				double qteDejaPassee = etape > 0 ? contrat.getEcheancier().getQuantiteJusquA(etape - 1) : 0;
+				total += Math.max(0.0, qteFinAnnee - qteDejaPassee);
+			}
+		}
+		return total;
+	}
+
+
+	/**
+	 * Retourne la quantite en tonnes de feves de type f que le vendeur
+	 * souhaite vendre a cette etape sachant que le cours actuel de
 	 * la feve f est cours
 	 */
 	public double offre(Feve f, double cours){
@@ -38,58 +66,70 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 		int etape = Filiere.LA_FILIERE.getEtape();
 		int stepDansAnnee = etape % 24;
 
-		if (stepDansAnnee >= this.periode) {  // vendre après une certaine période du cycle
-
-			double stockActuel = getStock(f);
-
-			if (stockActuel <= 0){
-				journalBourse.ajouter("Stock nul pour "+f+" → aucune vente");
-				return 0;
-			}
-
-			if (cours < 600 && f == Feve.F_BQ){
-				journalBourse.ajouter(Color.ORANGE, Color.white, "Prix trop bas ("+cours+" €/t) pour "+f+" → vente refusée");
-				return 0;
-			}
-
-			if (cours < 600 && f == Feve.F_MQ){
-				journalBourse.ajouter(Color.ORANGE, Color.white, "Prix trop bas ("+cours+" €/t) pour "+f+" → vente refusée");
-				return 0;
-			}
-
-			// --- CALCUL DE LA QUANTITÉ À ÉCOULER ---
-			
-			// 1. Récupération des données du début d'année
-			double pourcentEngage = this.pourcentageAVendre.getOrDefault(f, 0.0);
-			double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
-			
-			// 2. Ce qu'on ne doit SURTOUT PAS vendre (Contrats Cadres + marge de 5% du stock initial)
-			double quantiteReserveeCC = stockRef * (pourcentEngage / 100.0);
-			double margeSecurite = stockRef * 0.05; 
-			double stockIntouchable = quantiteReserveeCC + margeSecurite;
-			
-			// 3. Ce qu'il nous reste de "libre" à écouler pour vider les stocks
-			double stockAecouler = Math.max(0.0, stockActuel - stockIntouchable);
-
-			if (stockAecouler <= 0.1) {
-				journalBourse.ajouter("Objectif de stock atteint ou dépassé pour "+f+" (reste "+stockActuel+" t) → aucune vente en bourse");
-				return 0;
-			}
-
-			// 4. Lissage sur le reste de l'année
-			// Il reste (24 - stepDansAnnee) étapes pour vendre cette quantité
-			int stepsRestants = 24 - stepDansAnnee;
-			double quantite = stockAecouler / stepsRestants;
-
-			// Maintien d'un plafond max par sécurité (ex: 20000)
-			quantite = Math.min(quantite, 20000);
-
-			journalBourse.ajouter(Color.BLUE, Color.white, "Offre : "+quantite+" t. de "+f+" (à écouler : "+stockAecouler+" t. sur "+stepsRestants+" steps restants)");
-
-			return quantite;
+		// On ne commence la vente en bourse qu'après la période de négociation des CC
+		if (stepDansAnnee < this.periode) {
+			return 0.;
 		}
 
-		return 0.;
+		double stockActuel = getStock(f);
+		if (stockActuel <= 0){
+			journalBourse.ajouter("Stock nul pour "+f+" → aucune vente");
+			return 0;
+		}
+
+		if (cours < 600 && (f == Feve.F_BQ || f == Feve.F_MQ)){
+			journalBourse.ajouter(Color.ORANGE, Color.white, "Prix trop bas ("+cours+" €/t) pour "+f+" → vente refusée");
+			return 0;
+		}
+
+		// =========================================================
+		// NOUVELLE LOGIQUE : on calcule à partir du STOCK ACTUEL
+		// (et non du stockRef) pour éviter le double comptage
+		// avec les livraisons CC déjà en cours.
+		// =========================================================
+
+		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
+
+		// 1. Marge de sécurité : 5% du stock initial qu'on ne touche jamais
+		double margeSecurite = stockRef * (MARGE_SECURITE_PCT / 100.0);
+
+		// 2. Stock réservé aux livraisons CC FUTURES de cette année
+		//    (ce qui reste à livrer aux CC entre maintenant et fin d'année)
+		double livraisonsCCFutures = this.getLivraisonsCCRestantesCetteAnnee(f);
+
+		// 3. Stock "protégé" qu'on ne doit pas vendre en bourse
+		double stockProtege = margeSecurite + livraisonsCCFutures;
+
+		// 4. Ce qui est réellement disponible pour la bourse
+		double stockDisponible = Math.max(0.0, stockActuel - stockProtege);
+
+		if (stockDisponible <= 0.1) {
+			journalBourse.ajouter("Stock disponible nul pour "+f
+				+" | stock actuel : "+String.format("%.1f", stockActuel)+" t"
+				+" | marge sécurité : "+String.format("%.1f", margeSecurite)+" t"
+				+" | livraisons CC à venir : "+String.format("%.1f", livraisonsCCFutures)+" t"
+				+" → aucune vente");
+			return 0;
+		}
+
+		// 5. Lissage sur les étapes restantes de l'année
+		int stepsRestants = 24 - stepDansAnnee;
+		double quantite = stockDisponible / stepsRestants;
+
+		// 6. ANCIEN PLAFOND SUPPRIMÉ (on laisse l'algorithme faire son calcul)
+		// On s'assure juste de ne pas proposer des poussières par erreur
+		if (quantite < 1.0) {
+			return 0;
+		}
+
+		journalBourse.ajouter(Color.BLUE, Color.white,
+			"Offre : "+String.format("%.1f", quantite)+" t. de "+f
+			+" | stock actuel : "+String.format("%.1f", stockActuel)+" t"
+			+" | protégé (marge+CC futurs) : "+String.format("%.1f", stockProtege)+" t"
+			+" | disponible bourse : "+String.format("%.1f", stockDisponible)+" t"
+			+" | sur "+stepsRestants+" steps restants");
+
+		return quantite;
     }
 
 
@@ -120,4 +160,3 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 		return res;
 	}
 }
-//*/
