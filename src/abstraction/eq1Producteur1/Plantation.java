@@ -67,39 +67,30 @@ public class Plantation {
         int feves_par_cabosse = 0;
 
         if(this.etat==1){
-            cabosse = 500000*this.taille;
+            cabosse = 10 * 1000 * this.taille;   // jeune : 10 cabosses/arbre
+        } else if(this.etat==2){
+            cabosse = 50 * 1000 * this.taille;   // plein rendement : 30 cabosses/arbre
+        } else if(this.etat==3){
+            cabosse = 25 * 1000 * this.taille;   // vieillissant : 15 cabosses/arbre
         }
 
-        if(this.etat==2){
-            cabosse = 2500000*this.taille;
-        }
-
-        if(this.etat==3){
-            cabosse = 1250000*this.taille;
-        }
-
-        else{
-            return 0;
-        }
-
-        
-
+    
         if(this.gamme == Feve.F_HQ || this.gamme == Feve.F_HQ_E){
             feves_par_cabosse = 30;
         }
 
 
-        if(this.gamme == Feve.F_MQ||this.gamme == Feve.F_MQ_E){
+        else if(this.gamme == Feve.F_MQ||this.gamme == Feve.F_MQ_E){
             feves_par_cabosse = 40;
         }
 
 
 
-        if(this.gamme == Feve.F_BQ || this.gamme == Feve.F_BQ_E){
+        else if(this.gamme == Feve.F_BQ || this.gamme == Feve.F_BQ_E){
             feves_par_cabosse = 50;
         }
 
-        double cacao = ( feves_par_cabosse * cabosse * 2 )/1000000;
+        double cacao = (feves_par_cabosse * cabosse) / 1000000.0;
 
         return cacao;
 
