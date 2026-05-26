@@ -10,27 +10,18 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.general.Journal;
 import java.awt.Color;
 
-/** * @author Elise Dossal & Théophile Trillat & Tristan Proust
- */
 public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre implements IVendeurBourse{
 
     private int blacklist=0;
 	protected Journal journalBourse;
-
 
     public Producteur1VendeurBourse(){
         super();
 		this.journalBourse = new Journal("Journal " + this.getNom()+" journal Bourse", this);
     }
 
-
-	/**
-	 * Calcule combien de tonnes de f vont encore être livrées via les CC
-	 * entre maintenant et la fin de l'année en cours.
-	 *
-	 * C'est crucial pour éviter de vendre en bourse du stock qu'on doit garder
-	 * pour honorer les contrats cadres jusqu'à la fin de l'année.
-	 */
+	// On calcule ce qu'il nous reste à livrer cette année via nos contrats cadres, 
+	// pour s'assurer de ne pas vendre par accident ces fèves promises en bourse.
 	protected double getLivraisonsCCRestantesCetteAnnee(Feve f) {
 		int etape = Filiere.LA_FILIERE.getEtape();
 		int finAnnee = etape + 23 - (etape % 24);
@@ -38,7 +29,6 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 
 		for (ExemplaireContratCadre contrat : this.contratsEnCours) {
 			if (contrat.getProduit() == f) {
-				// quantité prévue entre maintenant (étape actuelle) et la fin de l'année
 				double qteFinAnnee = contrat.getEcheancier().getQuantiteJusquA(finAnnee);
 				double qteDejaPassee = etape > 0 ? contrat.getEcheancier().getQuantiteJusquA(etape - 1) : 0;
 				total += Math.max(0.0, qteFinAnnee - qteDejaPassee);
@@ -47,12 +37,6 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 		return total;
 	}
 
-
-	/**
-	 * Retourne la quantite en tonnes de feves de type f que le vendeur
-	 * souhaite vendre a cette etape sachant que le cours actuel de
-	 * la feve f est cours
-	 */
 	public double offre(Feve f, double cours){
 		if (blacklist > 0){
 			journalBourse.ajouter(Color.RED, Color.white, "Blacklist active ("+blacklist+" steps restants) → aucune vente");
@@ -63,7 +47,7 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 		int etape = Filiere.LA_FILIERE.getEtape();
 		int stepDansAnnee = etape % 24;
 
-		// On ne commence la vente en bourse qu'après la période de négociation des CC
+		// On laisse d'abord se dérouler les négociations de début d'année avant d'aller sur la bourse.
 		if (stepDansAnnee < this.periode) {
 			return 0.;
 		}
@@ -79,27 +63,22 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 			return 0;
 		}
 
-		// =========================================================
-		// LOGIQUE DE PROTECTION : on calcule à partir du STOCK ACTUEL
-		// pour éviter le double comptage avec les livraisons CC 
-		// déjà en cours.
-		// =========================================================
-
+		// --- Calcul de l'offre en bourse ---
+		// On part de notre stock réel immédiat pour éviter de proposer des fèves qu'on ne possède plus.
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
 
-		// 1. Marge de sécurité : calculée via le pourcentage équivalent à 500t
+		// Étape 1 : On sécurise notre réserve intouchable (équivalente à 500 tonnes).
 		double plafondEngagement = this.getPlafondEngagement(f);
 		double margeSecuritePct = 100.0 - plafondEngagement;
 		double margeSecurite = stockRef * (margeSecuritePct / 100.0); 
 
-		// 2. Stock réservé aux livraisons CC FUTURES de cette année
-		//    (ce qui reste à livrer aux CC entre maintenant et fin d'année)
+		// Étape 2 : On sanctuarise les fèves promises à nos acheteurs réguliers pour l'année en cours.
 		double livraisonsCCFutures = this.getLivraisonsCCRestantesCetteAnnee(f);
 
-		// 3. Stock "protégé" qu'on ne doit pas vendre en bourse
+		// On fait la somme de tout ce qui ne doit surtout pas être vendu.
 		double stockProtege = margeSecurite + livraisonsCCFutures;
 
-		// 4. Ce qui est réellement disponible pour la bourse
+		// Étape 3 : Ce qui reste est notre véritable excédent disponible.
 		double stockDisponible = Math.max(0.0, stockActuel - stockProtege);
 
 		if (stockDisponible <= 0.1) {
@@ -111,10 +90,10 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 			return 0;
 		}
 
-		// 5. NOUVEAU LOGIQUE : On offre 100% de notre excédent pour capter la demande
+		// Étape 4 : On propose tout notre excédent d'un coup pour répondre à la demande de la bourse.
 		double quantite = stockDisponible;
 
-		// On s'assure juste de ne pas proposer des poussières par erreur
+		// On évite d'inonder le marché avec des micro-quantités ridicules.
 		if (quantite < 1.0) {
 			return 0;
 		}
@@ -128,11 +107,6 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 		return quantite;
     }
 
-
-	/**
-	 * Methode appelee par la bourse pour avertir le vendeur qu'il est parvenu
-	 * a vendre quantiteEnT tonnes
-	 */
 	public double notificationVente(Feve f, double quantiteEnT, double coursEnEuroParT){
         double vrai_quantite= Math.min(quantiteEnT,getStock(f));
         this.takeFeve(f, vrai_quantite);
@@ -142,9 +116,6 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
         return vrai_quantite;
     }
 
-	/**
-	 * Methode appelee par la bourse pour avertir le vendeur qu'il vient d'etre ajoute a la black list
-	 */
 	public void notificationBlackList(int dureeEnStep){
         this.blacklist = dureeEnStep;
 		journalBourse.ajouter(Color.RED, Color.white, "BLACKLIST : exclusion de la bourse pendant "+dureeEnStep+" steps");

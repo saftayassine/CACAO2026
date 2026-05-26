@@ -7,8 +7,6 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
  
- 
- 
 public class Producteur1Planteur extends Producteur1Stock {
  
     private List<Plantation> plantations = new ArrayList<Plantation>();
@@ -17,9 +15,7 @@ public class Producteur1Planteur extends Producteur1Stock {
     private double tailleNonEq  = 150000;
     private double capaciteProchaine;
     protected Journal journalPlantation;
-    /**
-     * @author Théophile Trillat
-     */
+
     public Producteur1Planteur() {
         super();
         Plantation BQ = new Plantation(Feve.F_BQ, 850000, -360);
@@ -29,9 +25,6 @@ public class Producteur1Planteur extends Producteur1Stock {
         this.journalPlantation = new Journal("Journal "+this.getNom()+ " plantation", this);
     }
  
-    /**
-     * @author Elise Dossal
-     */
     public double getTaillePlantation() {
         return this.taille_totale;
     }
@@ -44,9 +37,6 @@ public class Producteur1Planteur extends Producteur1Stock {
         }
     }
  
-    /**
-     * @author Théophile Trillat
-     */
     public void planter(Feve f, double taille) {
         Plantation newP = new Plantation(f, taille, Filiere.LA_FILIERE.getEtape());
         this.plantations.add(newP);
@@ -56,12 +46,8 @@ public class Producteur1Planteur extends Producteur1Stock {
             this.tailleNonEq += taille;
         }
         this.taille_totale += taille;
-        // BQ 1800/ha    MQ 3500/ha    HQ 7000/ha
     }
  
-    /**
-     * @author Elise Dossal
-     */
     public void couper(int i) {
         double taille = this.plantations.get(i).getTaille();
         Feve f = this.plantations.get(i).getGamme();
@@ -74,10 +60,8 @@ public class Producteur1Planteur extends Producteur1Stock {
         this.taille_totale -= taille;
     }
  
-    /**
-     * @author Elise Dossal & Tristan Proust
-     */
-    public void collecter() { // On crée un lot de chaque qualité qui regroupe plusieurs plantations
+    // Lors de la récolte, on rassemble toute la production par qualité pour créer nos lots de stockage.
+    public void collecter() { 
         double lot_HQ   = 0;
         double lot_HQ_E = 0;
         double lot_MQ   = 0;
@@ -87,9 +71,11 @@ public class Producteur1Planteur extends Producteur1Stock {
  
         for (int i = 0; i < this.plantations.size(); i++) {
             Plantation plantation = this.plantations.get(i);
-            if (plantation.getEtat() == 10) { // vérifie si les arbres ne sont pas morts, sinon les coupe
+            
+            // Nettoyage de la parcelle : on abat les arbres arrivés en fin de vie (état 10).
+            if (plantation.getEtat() == 10) { 
                 this.couper(i);
-                i--; // compense le décalage d'indice après la suppression
+                i--; // Petite astuce : reculer l'index après suppression pour ne pas rater l'arbre suivant.
                 continue;
             }
             double cacao = plantation.collecte();
@@ -112,13 +98,12 @@ public class Producteur1Planteur extends Producteur1Stock {
         this.add_lot(Feve.F_BQ_E, lot_BQ_E);
     }
  
-    /**
-     * @author Tristan Proust
-     */
-    public void gererRotation() { // Gère la rotation des plantations
+    // Mécanique de renouvellement de notre parcelle (effectuée une fois par an).
+    public void gererRotation() { 
         int etape = Filiere.LA_FILIERE.getEtape();
 
-        if (etape % 24 != 0 || etape == 0) return; // ← bloquer l'étape 0
+        // On empêche la rotation au tout premier tour du jeu.
+        if (etape % 24 != 0 || etape == 0) return; 
         
         if (etape % 24 != 0) return;
         int annee = etape / 24;
@@ -135,8 +120,10 @@ public class Producteur1Planteur extends Producteur1Stock {
         } else {
             tailleAPlanter = 25000;
         }
-        double tailleBQAPlanter = tailleAPlanter * 0.85; // 85% BQ
-        double tailleMQAPlanter = tailleAPlanter * 0.15; // 15% MQ
+        
+        // On respecte notre stratégie historique : une majorité de plantations de basse qualité.
+        double tailleBQAPlanter = tailleAPlanter * 0.85; 
+        double tailleMQAPlanter = tailleAPlanter * 0.15; 
  
         this.planter(Feve.F_BQ, tailleBQAPlanter);
         this.planter(Feve.F_MQ, tailleMQAPlanter);
@@ -145,11 +132,12 @@ public class Producteur1Planteur extends Producteur1Stock {
         for (Plantation p : this.plantations) {
             Feve gamme = p.getGamme();
             double rendement;
+            // Rendements théoriques qui nous permettent d'estimer notre production future.
             if (gamme == Feve.F_MQ || gamme == Feve.F_MQ_E) { 
                 rendement = 3500; 
             }
             else { 
-                rendement = 1800;     // BQ / BQ_E
+                rendement = 1800; 
             } 
             capaciteTotale += p.getTaille() * rendement;
         }
@@ -164,8 +152,8 @@ public class Producteur1Planteur extends Producteur1Stock {
         double tailleMQProchaine = tailleAPlanter_prochaine * 0.15;
  
         this.capaciteProchaine = capaciteTotale
-                + (tailleBQProchaine * 1800)  // BQ planté l'an prochain
-                + (tailleMQProchaine * 3500); // MQ planté l'an prochain
+                + (tailleBQProchaine * 1800)  
+                + (tailleMQProchaine * 3500); 
  
         this.journalPlantation.ajouter("Année " + annee + " : Rotation des plantations");
         this.journalPlantation.ajouter("Nouveaux arbres plantés : " + tailleAPlanter + " ha"
@@ -193,17 +181,13 @@ public class Producteur1Planteur extends Producteur1Stock {
         this.journalBanque.ajouter("Charges payées : " + 217.65);
     }
  
-    /**
-     * @author Elise Dossal
-     */
     @Override
     public void next() {
         super.next();
         int etape = Filiere.LA_FILIERE.getEtape();
         
-
         if (etape % 24 == 0 && etape > 0) {
-            this.impots(); // <-- DÉPLACÉ ICI
+            this.impots(); 
             this.collecter();
             this.charge();
         }
