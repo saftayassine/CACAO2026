@@ -155,7 +155,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
 
         for (int i = 0; i < liste.size(); i++) {
             ChocolatDeMarque actuel = liste.get(i);
-            double prixCible = this.prixDAchat.getOrDefault(actuel, 15.0);
+            double prixCible = this.prixDAchat.getOrDefault(actuel, 1000.0);
             double prixMax = prixCible * 1.3;
 
             if (i < liste.size() - 1) {
