@@ -71,7 +71,30 @@ public class Producteur3Acteur implements IActeur {
 		// défi 1 
 		this.journal_periode.ajouter("période : "+ Filiere.LA_FILIERE.getEtape()); /** @author Vassili Spiridonov */
 		/** @author Guillaume Leroy */
-		HashMap <Gamme, Double> pourcentage_eq = this.plantationeq3.getPourcentageEquitable();
+		HashMap<Gamme, Double> pourcentage_eq = this.plantationeq3.getPourcentageEquitable();
+		double seuilMax = this.gestionCouts.getSeuilDefenseParFeve();
+
+		double stockMQE = this.stock.getStock(Feve.F_MQ_E);
+		if (stockMQE > seuilMax * 0.75) { 
+			pourcentage_eq.put(Gamme.MQ, 0.10); 
+		} else if (stockMQE > seuilMax * 0.40) { 
+			pourcentage_eq.put(Gamme.MQ, 0.30);
+		} else { 
+			pourcentage_eq.put(Gamme.MQ, 0.60);
+		}
+
+		double stockHQE = this.stock.getStock(Feve.F_HQ_E);
+		if (stockHQE > seuilMax * 0.75) {
+			pourcentage_eq.put(Gamme.HQ, 0.10);
+		} else if (stockHQE > seuilMax * 0.40) {
+			pourcentage_eq.put(Gamme.HQ, 0.30);
+		} else {
+			pourcentage_eq.put(Gamme.HQ, 0.60);
+		}
+
+		this.journal_plantation.ajouter("Ajustement dynamique des quotas - MQ_E: " 
+			+ (pourcentage_eq.get(Gamme.MQ)*100) + "% | HQ_E: " + (pourcentage_eq.get(Gamme.HQ)*100) + "%");
+
 		this.plantationeq3.nextStep(pourcentage_eq); // permet de gérer nos hectares de plantation
 		for (Feve f : List.of(Feve.F_BQ, Feve.F_MQ, Feve.F_HQ, Feve.F_BQ_E, Feve.F_MQ_E, Feve.F_HQ_E)){
 			this.stock.addStock(f, this.plantationeq3.getProductionFeve(f)); // ajoute le nouveau stock de fève et fait vieillir le restant

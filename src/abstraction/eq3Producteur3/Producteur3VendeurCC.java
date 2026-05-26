@@ -60,11 +60,16 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
                 if (c.getProduit().equals(f)) {
                     resteALivrerTotal += c.getQuantiteRestantALivrer();
                 }
-            }
+            }   
 
             double surplusReel = stockReel - resteALivrerTotal;
 
-            if (surplusReel > 200.0) {
+            double productionParEtape = this.plantationeq3.getProductionFeve(f);
+            
+            double seuilSecurite = productionParEtape * 3.0;
+
+            // On ne s'engage que si le surplus libre dépasse notre seuil de sécurité
+            if (surplusReel > seuilSecurite) {
                 double quantiteTotaleVoulue = surplusReel * 0.3;
                 double quantiteParStep = quantiteTotaleVoulue / 12;
 
@@ -143,14 +148,26 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
         double disponible = stockTotalReel - totalDejaPromis;
         double demandeAcheteur = contrat.getEcheancier().getQuantiteTotale();
 
+        //Si on a tout le stock nécessaire, on valide l'échéancier de l'acheteur
         if (disponible >= demandeAcheteur) {
-            return contrat.getEcheancier();
+            return contrat.getEcheancier(); //
         } else {
-            if (disponible > 0) {
+            // Pas assez de stock. On calcule notre capacité de réponse 
+            // Si on ne peut même pas fournir 20% de la demande de l'acheteur, 
+            // on coupe les négociations pour éviter de signer des mini-contrats inutiles.
+            double seuilAcceptationProportionnel = demandeAcheteur * 0.20;
+
+            if (disponible >= seuilAcceptationProportionnel) {
                 Echeancier e = contrat.getEcheancier();
-                e.set(e.getStepDebut(), disponible);
+
+                double qteParStep = disponible / e.getNbEcheances();
+                
+                for (int i = e.getStepDebut(); i <= e.getStepFin(); i++) {
+                    e.set(i, qteParStep);
+                }
                 return e;
             } else {
+                // On refuse poliment si on n'a pas les reins solides pour ce contrat
                 return null;
             }
         }

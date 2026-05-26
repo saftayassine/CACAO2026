@@ -12,6 +12,7 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
 
+/** @author Guillaume Leroy */
 public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implements IVendeurAuxEncheres{
 	private HashMap<Feve, List<Double>> prixRetenus;
 	private double prixMin;
