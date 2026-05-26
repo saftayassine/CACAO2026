@@ -66,17 +66,17 @@ public class Producteur2Stock {
         // F_MQ se dégrade en F_BQ après 24 steps
         // F_BQ se périme après 48 steps
 
-        // 1. Péremption de BQ -> Perdu (après 48 steps)
+        // 1. Péremption de BQ et BQ_E -> Perdu (après 48 steps)
         degraderStock(Feve.F_BQ, null, 48, etapeActuelle);
+        degraderStock(Feve.F_BQ_E, null, 48, etapeActuelle);
 
-        // 2. Dégradation de MQ -> BQ (après 24 steps)
+        // 2. Dégradation de MQ et MQ_E -> BQ et BQ_E (après 24 steps)
         degraderStock(Feve.F_MQ, Feve.F_BQ, 24, etapeActuelle);
+        degraderStock(Feve.F_MQ_E, Feve.F_BQ_E, 24, etapeActuelle);
 
-        // 3. Dégradation de HQ -> MQ (après 12 steps)
+        // 3. Dégradation de HQ et HQ_E -> MQ et MQ_E (après 12 steps)
         degraderStock(Feve.F_HQ, Feve.F_MQ, 12, etapeActuelle);
-
-        // 4. Dégradation de HQ_E -> MQ (après 12 steps, on perd le label équitable)
-        degraderStock(Feve.F_HQ_E, Feve.F_MQ, 12, etapeActuelle);
+        degraderStock(Feve.F_HQ_E, Feve.F_MQ_E, 12, etapeActuelle);
     }
 
     private void degraderStock(Feve source, Feve destination, int ageLimite, int etapeActuelle) {

@@ -81,6 +81,28 @@ public class Plantation {
                 this.stock_max = 100000;
                 break;
 
+            case F_MQ_E:
+                this.dureeDeVie = 960;
+                this.tempsAvantProduction = 72; // 3 ans
+                this.productionParParcelle = 85000;
+                this.prix_achat = 2500;
+                this.prix_vente = 1500;
+                this.prix_replantation = 1750;
+                this.salaire_employe = 60;
+                this.stock_max = 75000;
+                break;
+
+            case F_BQ_E:
+                this.dureeDeVie = 960;
+                this.tempsAvantProduction = 72; // 3 ans
+                this.productionParParcelle = 105000;
+                this.prix_achat = 2000;
+                this.prix_vente = 1200;
+                this.prix_replantation = 1250;
+                this.salaire_employe = 60;
+                this.stock_max = 100000;
+                break;
+
             default:
                 throw new IllegalArgumentException("Type de fève non reconnu !");
         }
@@ -245,8 +267,10 @@ public class Plantation {
      */
     public void activerCertificationEquitable(int nombreOuvriers, double salaireMiniJournalier, double coutLabelMensuel,
             double pourcentageCertifie) {
-        if (this.typeFeve != Feve.F_HQ && this.typeFeve != Feve.F_HQ_E) {
-            return; // Seules les plantations F_HQ/F_HQ_E peuvent devenir équitables
+        if (this.typeFeve != Feve.F_HQ && this.typeFeve != Feve.F_HQ_E && 
+            this.typeFeve != Feve.F_MQ && this.typeFeve != Feve.F_MQ_E && 
+            this.typeFeve != Feve.F_BQ && this.typeFeve != Feve.F_BQ_E) {
+            return; // Seules les plantations basiques peuvent devenir équitables
         }
 
         if (pourcentageCertifie < 0 || pourcentageCertifie > 100) {
@@ -261,7 +285,9 @@ public class Plantation {
         this.coutLabelMensuel = coutLabelMensuel;
         this.travailEnfant = false; // Certification équitable = pas de travail enfant
         this.estEquitable = true;
-        this.typeFeve = Feve.F_HQ_E; // Conversion en F_HQ_E
+        if (this.typeFeve == Feve.F_HQ) this.typeFeve = Feve.F_HQ_E;
+        else if (this.typeFeve == Feve.F_MQ) this.typeFeve = Feve.F_MQ_E;
+        else if (this.typeFeve == Feve.F_BQ) this.typeFeve = Feve.F_BQ_E;
     }
 
     /**
@@ -269,8 +295,8 @@ public class Plantation {
      * Utile pour diviser une plantation en partie certifiée + non-certifiée
      */
     public Plantation diviserPlantation(double pourcentageACertifier) {
-        if (this.typeFeve != Feve.F_HQ) {
-            return null; // Seules les plantations F_HQ peuvent être divisées
+        if (this.typeFeve != Feve.F_HQ && this.typeFeve != Feve.F_MQ && this.typeFeve != Feve.F_BQ) {
+            return null; // Seules les plantations non-équitables peuvent être divisées
         }
 
         if (pourcentageACertifier <= 0 || pourcentageACertifier >= 100) {
@@ -282,7 +308,7 @@ public class Plantation {
         int parcellesNonCertifiees = this.parcelles - parcellesCertifiees;
 
         // Créer une nouvelle plantation avec les parcelles non-certifiées
-        Plantation plantationNonCertifiee = new Plantation(Feve.F_HQ, parcellesNonCertifiees, this.age);
+        Plantation plantationNonCertifiee = new Plantation(this.typeFeve, parcellesNonCertifiees, this.age);
 
         // Réduire cette plantation à la portion certifiée
         this.parcelles = parcellesCertifiees;
@@ -331,9 +357,8 @@ public class Plantation {
         if (!estEquitable || !verifierConditionsEquitables()) {
             return parcelles * salaire_employe;
         }
-        // Coût = nombre d'ouvriers × salaire journalier × nombre de jours par step (2
-        // jours)
-        double coutEquitable = nombreOuvriers * salaireMiniJournalier * 2; // 2 jours par step environ
+
+        double coutEquitable = nombreOuvriers * salaireMiniJournalier * 15;
         return coutEquitable;
     }
 

@@ -197,7 +197,7 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
             return prixMinimum; // On force l'acheteur à monter au prix minimum au lieu d'annuler
         }
 
-        if (feve == Feve.F_HQ_E) {
+        if (feve == Feve.F_HQ_E || feve == Feve.F_MQ_E || feve == Feve.F_BQ_E) {
             double prixPropose = Math.max(prixActuel, prixMinimum);
             this.journalContratCadre.ajouter("Prix équitable proposé: " + prixPropose + " € pour " + feve);
             return prixPropose;
@@ -224,14 +224,14 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
 
         if ((feve == Feve.F_HQ || feve == Feve.F_HQ_E) && ageMax >= 8) {
             multiplicateurAge = 0.90;
-        } else if (feve == Feve.F_MQ && ageMax >= 18) {
+        } else if ((feve == Feve.F_MQ || feve == Feve.F_MQ_E) && ageMax >= 18) {
             multiplicateurAge = 0.85;
-        } else if (feve == Feve.F_BQ && ageMax >= 36) {
+        } else if ((feve == Feve.F_BQ || feve == Feve.F_BQ_E) && ageMax >= 36) {
             multiplicateurAge = 0.80;
         }
 
-        // Pour les fèves équitables (F_HQ_E), appliquer une meilleure marge
-        if (feve == Feve.F_HQ_E) {
+        // Pour les fèves équitables, appliquer une meilleure marge
+        if (feve == Feve.F_HQ_E || feve == Feve.F_MQ_E || feve == Feve.F_BQ_E) {
             double prixEquitable = coutProd * MARGE_EQUITABLE * multiplicateurAge;
             return Math.max(prixEquitable, coutProd * 1.5 * multiplicateurAge);
         }

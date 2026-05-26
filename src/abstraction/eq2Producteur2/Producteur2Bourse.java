@@ -73,11 +73,11 @@ public class Producteur2Bourse extends Sechage implements IVendeurBourse {
 				marge = 0.90; // Péremption imminente (dégrade à 12)
 				this.journalBourse
 						.ajouter("⚠️ PANIC SELL (ÂGE) pour " + f + " (Âge = " + ageMax + " > 9). Marge baissée à 0.90");
-			} else if (f == Feve.F_MQ && ageMax >= 20) {
+			} else if ((f == Feve.F_MQ || f == Feve.F_MQ_E) && ageMax >= 20) {
 				marge = 0.85; // Péremption imminente (dégrade à 24)
 				this.journalBourse.ajouter(
 						"⚠️ PANIC SELL (ÂGE) pour " + f + " (Âge = " + ageMax + " > 20). Marge baissée à 0.85");
-			} else if (f == Feve.F_BQ && ageMax >= 40) {
+			} else if ((f == Feve.F_BQ || f == Feve.F_BQ_E) && ageMax >= 40) {
 				marge = 0.80; // Péremption imminente (pourrit à 48)
 				this.journalBourse.ajouter(
 						"⚠️ PANIC SELL (ÂGE) pour " + f + " (Âge = " + ageMax + " > 40). Marge baissée à 0.80");

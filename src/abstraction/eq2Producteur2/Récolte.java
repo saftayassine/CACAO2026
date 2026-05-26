@@ -49,10 +49,14 @@ public class Récolte extends Producteur2Acteur {
         double Prod_MQ = 0;
         double Prod_HQ = 0;
         double Prod_HQ_E = 0;
+        double Prod_MQ_E = 0;
+        double Prod_BQ_E = 0;
         double cout_BQ = 0;
         double cout_MQ = 0;
         double cout_HQ = 0;
         double cout_HQ_E = 0;
+        double cout_MQ_E = 0;
+        double cout_BQ_E = 0;
 
         double limiteStock = 500000.0;
         boolean stopRecolte = this.stockTotal.getValeur() > limiteStock;
@@ -80,6 +84,14 @@ public class Récolte extends Producteur2Acteur {
                     Prod_HQ_E += stopRecolte ? 0 : p.prodPlantation();
                     cout_HQ_E += p.getcout();
                     break;
+                case F_MQ_E:
+                    Prod_MQ_E += stopRecolte ? 0 : p.prodPlantation();
+                    cout_MQ_E += p.getcout();
+                    break;
+                case F_BQ_E:
+                    Prod_BQ_E += stopRecolte ? 0 : p.prodPlantation();
+                    cout_BQ_E += p.getcout();
+                    break;
                 default:
                     throw new IllegalArgumentException("Type de fève non reconnu !");
             }
@@ -89,12 +101,16 @@ public class Récolte extends Producteur2Acteur {
         this.feve_recolte.put(Feve.F_MQ, Prod_MQ);
         this.feve_recolte.put(Feve.F_HQ, Prod_HQ);
         this.feve_recolte.put(Feve.F_HQ_E, Prod_HQ_E);
+        this.feve_recolte.put(Feve.F_MQ_E, Prod_MQ_E);
+        this.feve_recolte.put(Feve.F_BQ_E, Prod_BQ_E);
         this.cout_recolte.put(Feve.F_BQ, cout_BQ);
         this.cout_recolte.put(Feve.F_MQ, cout_MQ);
         this.cout_recolte.put(Feve.F_HQ, cout_HQ);
         this.cout_recolte.put(Feve.F_HQ_E, cout_HQ_E);
+        this.cout_recolte.put(Feve.F_MQ_E, cout_MQ_E);
+        this.cout_recolte.put(Feve.F_BQ_E, cout_BQ_E);
         JournalRecolte.ajouter(Filiere.LA_FILIERE.getEtape() + " : Recolte de " + Prod_BQ + " t de BQ, " + Prod_MQ
-                + " t de MQ, " + Prod_HQ + " t de HQ et " + Prod_HQ_E + " t de HQ_E");
+                + " t de MQ, " + Prod_HQ + " t de HQ, " + Prod_HQ_E + " t de HQ_E, " + Prod_MQ_E + " t de MQ_E et " + Prod_BQ_E + " t de BQ_E");
     }
 
     public void cout_plantations() {
@@ -117,6 +133,8 @@ public class Récolte extends Producteur2Acteur {
                         + " | MQ=" + coutParFeve.getOrDefault(Feve.F_MQ, 0.0)
                         + " | HQ=" + coutParFeve.getOrDefault(Feve.F_HQ, 0.0)
                         + " | HQ_E=" + coutParFeve.getOrDefault(Feve.F_HQ_E, 0.0)
+                        + " | MQ_E=" + coutParFeve.getOrDefault(Feve.F_MQ_E, 0.0)
+                        + " | BQ_E=" + coutParFeve.getOrDefault(Feve.F_BQ_E, 0.0)
                         + " | Total=" + cout);
     }
 
@@ -132,8 +150,9 @@ public class Récolte extends Producteur2Acteur {
                 double coutLabel = p.getCoutLabelEquitable(etape);
                 if (coutLabel > 0) {
                     coutLabelTotal += coutLabel;
-                    this.cout_equitable_accumule.put(Feve.F_HQ_E,
-                            this.cout_equitable_accumule.get(Feve.F_HQ_E) + coutLabel);
+                    Feve typeEquitable = p.getTypeFeve();
+                    this.cout_equitable_accumule.put(typeEquitable,
+                            this.cout_equitable_accumule.getOrDefault(typeEquitable, 0.0) + coutLabel);
                 }
             }
         }
@@ -202,6 +221,8 @@ public class Récolte extends Producteur2Acteur {
         double nb_MQ = 0;
         double nb_HQ = 0;
         double nb_HQ_E = 0;
+        double nb_MQ_E = 0;
+        double nb_BQ_E = 0;
         for (Plantation p : plantations) {
             if (p.estMorte() == false) {
                 switch (p.getTypeFeve()) {
@@ -217,13 +238,19 @@ public class Récolte extends Producteur2Acteur {
                     case F_HQ_E:
                         nb_HQ_E += p.getParcelles();
                         break;
+                    case F_MQ_E:
+                        nb_MQ_E += p.getParcelles();
+                        break;
+                    case F_BQ_E:
+                        nb_BQ_E += p.getParcelles();
+                        break;
                     default:
                         throw new IllegalArgumentException("Type de fève non reconnu !");
                 }
             }
         }
         Journalterrains.ajouter(Filiere.LA_FILIERE.getEtape() + " Nombre de parcelles avec arbres : " + nb_BQ + " BQ, "
-                + nb_MQ + " MQ, " + nb_HQ + " HQ et " + nb_HQ_E + " HQ_E");
+                + nb_MQ + " MQ, " + nb_HQ + " HQ, " + nb_HQ_E + " HQ_E, " + nb_MQ_E + " MQ_E et " + nb_BQ_E + " BQ_E");
     }
 
     public void certifierPlantationsEquitable(double pourcentageACertifier, int nombreOuvriers, double salaireMini,
@@ -280,6 +307,8 @@ public class Récolte extends Producteur2Acteur {
         ajouterPlantation(new Plantation(Feve.F_MQ, 100000, age_init));
         ajouterPlantation(new Plantation(Feve.F_HQ, 400000, age_init));
         ajouterPlantation(new Plantation(Feve.F_HQ_E, 0, age_init));
+        ajouterPlantation(new Plantation(Feve.F_MQ_E, 0, age_init));
+        ajouterPlantation(new Plantation(Feve.F_BQ_E, 0, age_init));
 
         // Certifier automatiquement 10% des parcelles HQ en équitable
         // Paramètres : 10% certifiés, 30 ouvriers, 4€/jour, 1000€ tous les 2 steps
@@ -359,6 +388,10 @@ public class Récolte extends Producteur2Acteur {
                         this.cout_unit_t.put(f, 500.0);
                     else if (f == Feve.F_HQ_E)
                         this.cout_unit_t.put(f, 1000.0);
+                    else if (f == Feve.F_MQ_E)
+                        this.cout_unit_t.put(f, 740.0);
+                    else if (f == Feve.F_BQ_E)
+                        this.cout_unit_t.put(f, 600.0);
                 }
             }
         }
