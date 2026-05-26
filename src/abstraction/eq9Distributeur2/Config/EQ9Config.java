@@ -10,7 +10,7 @@ public class EQ9Config {
 
     // Stocks et seuils (en tonnes)
     public static final double SEUIL_MIN_T = 10.0;
-    public static final double STOCK_CIBLE_T = 50.0;
+    public static final double STOCK_CIBLE_T = 500.0;
     public static final double CC_QUANTITE_MIN_T = 100.0;
 
     // Coûts et frais (€/tonne)
