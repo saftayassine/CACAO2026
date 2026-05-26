@@ -196,67 +196,81 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         List<Double> historique = contrat.getListePrix();
         int tours = historique.size();
 
-        // ABANDON si prix trop élevé et on a déjà négocié 3 tours sans accord
-        if (prixPropose > prixMax && tours >= 3) {
-            journalCC.ajouter("CC : abandon après 3 tours (prix=" + prixPropose 
-                + " > max=" + prixMax + ")");
+          // Refuser si la quantité demandée est nettement supérieure à ce dont on a besoin
+        EQ9_GestionStocks gs = new EQ9_GestionStocks(this.stock, this::restantDu);
+        double quantiteSouhaitee = gs.quantiteAacheter(choco);
+        if (quantiteSouhaitee <= 0.0) quantiteSouhaitee = EQ9Config.CC_QUANTITE_MIN_T;
+        if (quantiteTotale > quantiteSouhaitee * 1.2) {
+            journalCC.ajouter("CC : refus — quantité excessive (" + quantiteTotale + "t) vs souhaitée " + quantiteSouhaitee + "t");
             return -1.0;
         }
 
-        // PRIX ACCEPTABLE
-        if (prixPropose <= prixMax) {
-            switch (tours) {
-                case 0:
-                    // Tour 1 : on tente -10%
-                    double offre1 = prixPropose * 0.90;
-                    // Sécurité : jamais plus cher que le vendeur
-                    if (offre1 >= prixPropose) return prixPropose;
-                    journalCC.ajouter("CC tour 1 : offre -10% → " + offre1);
-                    return offre1;
-
-                case 1:
-                    // Tour 2 : on remonte un peu, -5%
-                    double offre2 = prixPropose * 0.95;
-                    if (offre2 >= prixPropose) return prixPropose;
-                    journalCC.ajouter("CC tour 2 : offre -5% → " + offre2);
-                    return offre2;
-
-                case 2:
-                    // Tour 3 : on remonte encore, -2%
-                    double offre3 = prixPropose * 0.98;
-                    if (offre3 >= prixPropose) return prixPropose;
-                    journalCC.ajouter("CC tour 3 : offre -2% → " + offre3);
-                    return offre3;
-
-                default:
-                    // Tour 4+ : on accepte
-                    journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
-                    return prixPropose;
-            }
+        // Refuser si l'échéancier commence immédiatement alors que ce n'est pas souhaitable
+        Echeancier ech = contrat.getEcheancier();
+        int stepCourant = Filiere.LA_FILIERE.getEtape();
+        if (ech != null && ech.getStepDebut() <= stepCourant) {
+            journalCC.ajouter("CC : refus — livraison immédiate inadaptée (début=" + ech.getStepDebut() + ", étape actuelle=" + stepCourant + ")");
+            return -1.0;
         }
 
-        // PRIX TROP HAUT : on négocie agressivement
-        double ratio = 0.70 + 0.05 * tours;
+        // 1) Si le prix est acceptable, on tente une petite baisse 
+        if (prixPropose <= prixMax) {
+            // Vérifier que l'on a les fonds pour couvrir la commande si on finit par accepter
+            double coutTotalSiAccept = prixPropose * quantiteTotale;
+            if (solde < coutTotalSiAccept) {
+                journalCC.ajouter("CC : refus → fonds insuffisants pour accepter à ce prix (" + prixPropose + ")");
+                return -1.0;
+            }
+
+            double tentative = prixPropose * 0.97; // -3%
+            double seuilMini = prixMax * 0.90;
+            if (tentative < seuilMini) tentative = seuilMini;
+
+            // Si on a déjà négocié plusieurs fois, on accepte (mais seulement si fonds ok)
+            if (tours >= 2) {
+                journalCC.ajouter("CC : prix acceptable → acceptation (" + prixPropose + ")");
+                return prixPropose;
+            }
+
+            journalCC.ajouter("CC : prix acceptable mais tentative de négo → " + tentative);
+            return tentative;
+        }
+
+        //  2) Si le prix est trop haut, on descend
+        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
         if (ratio > 0.90) ratio = 0.90;
 
+        // On descend, pas on monte
         double contreProp = prixPropose * ratio;
+
+        // On ne dépasse jamais notre prix max
         if (contreProp > prixMax) contreProp = prixMax;
 
-        // FIX : vérification fonds en tenant compte des engagements déjà contractés
         double coutTotal = contreProp * quantiteTotale;
-        double soldeDisponible = solde - getTotalEngagementsFinanciersFuturs();
-        if (soldeDisponible < coutTotal) {
-            journalCC.ajouter("CC : abandon → fonds insuffisants (disponible=" 
-                + soldeDisponible + "€, besoin=" + coutTotal + "€)");
+        if (solde < coutTotal) {
+            journalCC.ajouter("CC : abandon → fonds insuffisants pour " + contreProp);
             return -1.0;
         }
 
-        journalCC.ajouter("CC : contre-proposition tour " + tours 
-            + " → " + contreProp
+        // Si on est très proche du prix vendeur et que c'est acceptable → on accepte
+        if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
+            // double-check fonds avant acceptation finale
+            if (solde < prixPropose * quantiteTotale) {
+                journalCC.ajouter("CC : refus final → fonds insuffisants pour acceptation finale (" + prixPropose + ")");
+                return -1.0;
+            }
+            journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
+            return prixPropose;
+        }
+
+        journalCC.ajouter("CC : contre-proposition " + contreProp
             + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
 
         return contreProp;
     }
+
+       
+    
 
 
 
