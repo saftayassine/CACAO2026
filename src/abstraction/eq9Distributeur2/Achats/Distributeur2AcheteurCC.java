@@ -200,76 +200,76 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      * @author Paul Juhel V2
      */
    @Override
-public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
+    public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
 
-    ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
-    double prixPropose = contrat.getPrix();
-    double prixMax = getPrixMaxAcceptable(choco);
-    double solde = getSolde();
-    double quantiteTotale = contrat.getQuantiteTotale();
+        ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
+        double prixPropose = contrat.getPrix();
+        double prixMax = getPrixMaxAcceptable(choco);
+        double solde = getSolde();
+        double quantiteTotale = contrat.getQuantiteTotale();
 
-    List<Double> historique = contrat.getListePrix();
-    int tours = historique.size();
+        List<Double> historique = contrat.getListePrix();
+        int tours = historique.size();
 
-    // ABANDON si prix trop élevé et on a déjà négocié 3 tours sans accord
-    if (prixPropose > prixMax && tours >= 3) {
-        journalCC.ajouter("CC : abandon après 3 tours (prix=" + prixPropose 
-            + " > max=" + prixMax + ")");
-        return -1.0;
-    }
-
-    // PRIX ACCEPTABLE
-    if (prixPropose <= prixMax) {
-        switch (tours) {
-            case 0:
-                // Tour 1 : on tente -10%
-                double offre1 = prixPropose * 0.90;
-                // Sécurité : jamais plus cher que le vendeur
-                if (offre1 >= prixPropose) return prixPropose;
-                journalCC.ajouter("CC tour 1 : offre -10% → " + offre1);
-                return offre1;
-
-            case 1:
-                // Tour 2 : on remonte un peu, -5%
-                double offre2 = prixPropose * 0.95;
-                if (offre2 >= prixPropose) return prixPropose;
-                journalCC.ajouter("CC tour 2 : offre -5% → " + offre2);
-                return offre2;
-
-            case 2:
-                // Tour 3 : on remonte encore, -2%
-                double offre3 = prixPropose * 0.98;
-                if (offre3 >= prixPropose) return prixPropose;
-                journalCC.ajouter("CC tour 3 : offre -2% → " + offre3);
-                return offre3;
-
-            default:
-                // Tour 4+ : on accepte
-                journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
-                return prixPropose;
+        // ABANDON si prix trop élevé et on a déjà négocié 3 tours sans accord
+        if (prixPropose > prixMax && tours >= 3) {
+            journalCC.ajouter("CC : abandon après 3 tours (prix=" + prixPropose 
+                + " > max=" + prixMax + ")");
+            return -1.0;
         }
+
+        // PRIX ACCEPTABLE
+        if (prixPropose <= prixMax) {
+            switch (tours) {
+                case 0:
+                    // Tour 1 : on tente -10%
+                    double offre1 = prixPropose * 0.90;
+                    // Sécurité : jamais plus cher que le vendeur
+                    if (offre1 >= prixPropose) return prixPropose;
+                    journalCC.ajouter("CC tour 1 : offre -10% → " + offre1);
+                    return offre1;
+
+                case 1:
+                    // Tour 2 : on remonte un peu, -5%
+                    double offre2 = prixPropose * 0.95;
+                    if (offre2 >= prixPropose) return prixPropose;
+                    journalCC.ajouter("CC tour 2 : offre -5% → " + offre2);
+                    return offre2;
+
+                case 2:
+                    // Tour 3 : on remonte encore, -2%
+                    double offre3 = prixPropose * 0.98;
+                    if (offre3 >= prixPropose) return prixPropose;
+                    journalCC.ajouter("CC tour 3 : offre -2% → " + offre3);
+                    return offre3;
+
+                default:
+                    // Tour 4+ : on accepte
+                    journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
+                    return prixPropose;
+            }
+        }
+
+        // PRIX TROP HAUT : on négocie agressivement
+        double ratio = 0.70 + 0.05 * tours;
+        if (ratio > 0.90) ratio = 0.90;
+
+        double contreProp = prixPropose * ratio;
+        if (contreProp > prixMax) contreProp = prixMax;
+
+        // Vérification fonds
+        double coutTotal = contreProp * quantiteTotale;
+        if (solde < coutTotal) {
+            journalCC.ajouter("CC : abandon → fonds insuffisants");
+            return -1.0;
+        }
+
+        journalCC.ajouter("CC : contre-proposition tour " + tours 
+            + " → " + contreProp
+            + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
+
+        return contreProp;
     }
-
-    // PRIX TROP HAUT : on négocie agressivement
-    double ratio = 0.70 + 0.05 * tours;
-    if (ratio > 0.90) ratio = 0.90;
-
-    double contreProp = prixPropose * ratio;
-    if (contreProp > prixMax) contreProp = prixMax;
-
-    // Vérification fonds
-    double coutTotal = contreProp * quantiteTotale;
-    if (solde < coutTotal) {
-        journalCC.ajouter("CC : abandon → fonds insuffisants");
-        return -1.0;
-    }
-
-    journalCC.ajouter("CC : contre-proposition tour " + tours 
-        + " → " + contreProp
-        + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
-
-    return contreProp;
-}
 
 
 

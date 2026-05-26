@@ -48,7 +48,7 @@ public class EQ9_GestionStocks {
 
     public boolean doitAcheter(ChocolatDeMarque choco) {
         double sp = stockProjete(choco);
-        return sp < EQ9Config.STOCK_CIBLE_T * 1000;
+        return sp < EQ9Config.STOCK_CIBLE_T;
     }
 
     public double quantiteAacheter(ChocolatDeMarque choco) {
