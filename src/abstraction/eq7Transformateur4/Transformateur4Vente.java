@@ -33,31 +33,52 @@ public class Transformateur4Vente extends Transformateur4Production implements I
 
     @Override
     public Echeancier contrePropositionDuVendeur(ExemplaireContratCadre contrat) {
+        if (contrat.getProduit() instanceof ChocolatDeMarque){
         this.journal_negociation_CC.ajouter("[Échancier] Proposition de Contrat avec "+ contrat.getAcheteur() + " , négociation de l'échéancier " + contrat.getEcheancier());
-        return contrat.getEcheancier();//echeance;
+        return contrat.getEcheancier(); }
+        else {
+            return null;
+        }
+
     }
 
     @Override
     public double propositionPrix(ExemplaireContratCadre contrat) {
-        this.journal_negociation_CC.ajouter("[Prix]Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix());
-        return 6500.;}
+        if (contrat.getProduit() instanceof ChocolatDeMarque){
+        this.journal_negociation_CC.ajouter("[Prix acheteur] Proposition de Contrat avec négociation du prix " + contrat.getPrix());
+        if (Double.isNaN(contrat.getPrix())){
+            this.journal_negociation_CC.ajouter("[Prix vendeur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + this.cout_prod.getValeur()*3);
+            return this.cout_prod.getValeur()*3;
+        }
+        else if (contrat.getPrix()<this.cout_prod.getValeur()){
+            this.journal_negociation_CC.ajouter("[Prix vendeur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix()*3);
+            return contrat.getPrix()*2;}
+        else {
+            return 0.;}}
+        else{
+            return 0.;
+        }
+        
+        }
 
     @Override
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat) {
         if (contrat.getProduit() instanceof ChocolatDeMarque){
-        this.journal_negociation_CC.ajouter("[Prix]Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix());
-        return 6000.;}
-        else{
+        this.journal_negociation_CC.ajouter("[Prix acheteur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix());
+        if (contrat.getPrix()<this.cout_prod.getValeur()){
+            this.journal_negociation_CC.ajouter("[Prix vendeur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix()*2);
+            return contrat.getPrix()*2;}
+        else {
+            return 0.;}
+        }
+        else {
             return 0.;
         }
+        
+        
     }
 
-    @Override
-    public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
-        this.journal_vente_CC.ajouter("Contrat accepté avec " + contrat.getAcheteur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
-        this.journal_negociation_CC.ajouter("Contrat accepté avec " + contrat.getAcheteur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
-    
-    }
+
 
     @Override
     public double livrer(IProduit produit, double quantite, ExemplaireContratCadre contrat) {
