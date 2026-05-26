@@ -33,15 +33,15 @@ public class Transformateur3AcheteurBourse extends Transformateur3Transformation
 
         journalBourse.ajouter("Demande appelée pour " + f + " au cours " + cours);
         if (f == Feve.F_HQ) {
-            return 80;
+            return 0;
         }
 
         if (f == Feve.F_MQ) {
-            return 120;
+            return 0;
         }
 
         if (f == Feve.F_BQ) {
-            return 60;
+            return 0;
         }
 
 

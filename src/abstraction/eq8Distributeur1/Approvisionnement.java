@@ -190,8 +190,12 @@ public class Approvisionnement extends ChocolatDistributeur1 {
         }
     }
 
-    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
+    protected void methodeIntermediaireAchatCC(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
         // Sera surchargée
+    }
+
+    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
+        methodeIntermediaireAchatCC(cdm, besoin, prixCible, prixMax, TG);
     }
 
     /**

@@ -1,5 +1,8 @@
-package abstraction.eq9Distributeur2;
+package abstraction.eq9Distributeur2.Achats;
 
+import abstraction.eq9Distributeur2.Config.EQ9Config;
+import abstraction.eq9Distributeur2.Stocks.EQ9_GestionStocks;
+import abstraction.eq9Distributeur2.Stratégie.EQ9_StrategieFixationPrix;
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
@@ -44,12 +47,20 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         int etape = Filiere.LA_FILIERE.getEtape();
         this.journalCC.ajouter("=== ETAPE " + etape + " ===");
 
+        List<ExemplaireContratCadre> aRetirer = new java.util.ArrayList<>();
+        for (ExemplaireContratCadre contrat : this.contratsEnCours) {
+            if (contrat.getQuantiteRestantALivrer() == 0.0) {
+                aRetirer.add(contrat);
+                this.contratsTermines.add(contrat);
+            }
+        }
+        this.contratsEnCours.removeAll(aRetirer);
+
         List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
 
         if (produits != null && !produits.isEmpty()) {
             // Frais de stockage : 120 €/T par étape (16x le coût producteur de 7.5€/T)
             payerFraisStockage();
-            // --- V2 : Ajustement dynamique des prix de vente ---
             ajusterPrixDynamiques();
             fairePropositionCC();
         }
@@ -64,7 +75,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      */
     protected void payerFraisStockage() {
         double stockTotalT = getStockTotal();
-        double fraisStockage = stockTotalT * 120.0; // 120€/t
+        double fraisStockage = stockTotalT * EQ9Config.FRAIS_STOCKAGE_EUR_PAR_T;
         if (fraisStockage > 0) {
             Filiere.LA_FILIERE.getBanque().payerCout(this, this.cryptogramme, "Frais de stockage", fraisStockage);
         }
@@ -74,9 +85,32 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
     /**
      * Ajuste les prix de vente de manière dynamique
      */
+    @Override
     protected void ajusterPrixDynamiques() {
-        // mettre en place en V2
+        int etape = Filiere.LA_FILIERE.getEtape();
+        if (etape < 1) return;
+
+        for (ChocolatDeMarque choco : Filiere.LA_FILIERE.getChocolatsProduits()) {
+
+            double coutAchat = obtenirCoutAchat(choco);
+            double stockT = this.stock.getOrDefault(choco, 0.0);
+            double dos = this.indicateurDOS.getValeur();
+            double demande = estimerDemandeClients(choco);
+            double prixConcurrent = estimerPrixConcurrent(choco);
+            double partMarche = this.indicateurPartMarche.getValeur();
+            double cash = getSolde();
+
+            double prixFinal = this.pricingService.calculerPrix(
+                choco, coutAchat, stockT, dos, demande, prixConcurrent, partMarche, cash
+            );
+
+            this.prix.put(choco, prixFinal);
+
+            this.journal.ajouter("Prix EQ9 " + choco.getNom() + " = " + prixFinal
+                + "€/T (coût=" + coutAchat + ", DOS=" + dos + ", marché=" + prixConcurrent + ")");
+        }
     }
+    
 
     //         IMPLEMENTATION DE L'INTERFACE IAcheteurContratCadre
 
@@ -101,56 +135,65 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
         return false;
     }
 
-
+   /**
+     * @author Paul Juhel
+     */
     @Override
     public Echeancier contrePropositionDeLAcheteur(ExemplaireContratCadre contrat) {
-        Echeancier propositionVendeur = contrat.getEcheancier();
+        Echeancier prop = contrat.getEcheancier();
+        ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
 
-        // Analyser l'échéancier proposé
-        int stepDebut = propositionVendeur.getStepDebut();
-        int nbSteps = propositionVendeur.getNbEcheances();
-        double quantiteTotale = propositionVendeur.getQuantiteTotale();
-
-        // livraison échelonnée sur plusieurs étapes
         int stepCourant = Filiere.LA_FILIERE.getEtape();
+        int stepDebut = prop.getStepDebut();
+        int nbSteps = prop.getNbEcheances();
+        double quantiteTotale = prop.getQuantiteTotale();
 
-        // Ajustement
-        int debutOptimal = stepCourant + 2; // Décalage de 2 étapes
-        if (stepDebut < debutOptimal) {
-            int decalage = debutOptimal - stepDebut;
-            Echeancier contreProposition = new Echeancier(debutOptimal, nbSteps, quantiteTotale / nbSteps);
-            this.journalCC.ajouter("Contre-proposition échéancier : décalage à l'étape " + debutOptimal
-                + " (était " + stepDebut + ")");
-            return contreProposition;
-        } else if (stepDebut > debutOptimal + 3) {
-            int nouveauDebut = Math.max(stepCourant + 1, stepDebut - 2);
-            Echeancier contreProposition = new Echeancier(nouveauDebut, nbSteps, quantiteTotale / nbSteps);
-            this.journalCC.ajouter("Contre-proposition échéancier : anticipation à l'étape " + nouveauDebut
-                + " (était " + stepDebut + ")");
-            return contreProposition;
+        double stock = this.stock.getOrDefault(choco, 0.0);
+        double enCours = restantDu(choco);
+        double stockProjete = stock + enCours;
+
+        // Stock faible = livraisons rapides
+        if (stockProjete < EQ9Config.SEUIL_MIN_T) {
+            int debutSouhaite = stepCourant + 1;
+            if (stepDebut > debutSouhaite) {
+                Echeancier cp = new Echeancier(debutSouhaite, nbSteps, quantiteTotale / nbSteps);
+                journalCC.ajouter("CC échéancier : stock faible → anticipation livraison à l'étape " + debutSouhaite);
+                return cp;
+            }
         }
 
-        // Ajustement
+        // Stock élevé = début plus tardif 
+        if (stockProjete > EQ9Config.STOCK_CIBLE_T * 1.2) {
+            int debutSouhaite = stepCourant + 3;
+            if (stepDebut < debutSouhaite) {
+                Echeancier cp = new Echeancier(debutSouhaite, nbSteps, quantiteTotale / nbSteps);
+                journalCC.ajouter("CC échéancier : stock élevé → décalage livraison à l'étape " + debutSouhaite);
+                return cp;
+            }
+        }
+
+        // Ajustement de la durée
+        // Trop court = étaler
         if (nbSteps < 3) {
-            // Étaler sur plus d'étapes
             int nouvelleDuree = Math.min(6, 24 - stepDebut);
-            Echeancier contreProposition = new Echeancier(stepDebut, nouvelleDuree, quantiteTotale / nouvelleDuree);
-            this.journalCC.ajouter("Contre-proposition échéancier : étalement sur " + nouvelleDuree
-                + " étapes (était " + nbSteps + ")");
-            return contreProposition;
-        } else if (nbSteps > 8) {
-            // Raccourcir
-            int nouvelleDuree = Math.max(3, nbSteps - 2);
-            Echeancier contreProposition = new Echeancier(stepDebut, nouvelleDuree, quantiteTotale / nouvelleDuree);
-            this.journalCC.ajouter("Contre-proposition échéancier : réduction à " + nouvelleDuree
-                + " étapes (était " + nbSteps + ")");
-            return contreProposition;
+            Echeancier cp = new Echeancier(stepDebut, nouvelleDuree, quantiteTotale / nouvelleDuree);
+            journalCC.ajouter("CC échéancier : durée trop courte → étalement sur " + nouvelleDuree + " étapes");
+            return cp;
         }
 
-        // Accepter l'échéancier
-        this.journalCC.ajouter("Acceptation de l'échéancier pour " + ((ChocolatDeMarque)contrat.getProduit()).getNom());
-        return propositionVendeur;
+        // Trop long = raccourcir
+        if (nbSteps > 8) {
+            int nouvelleDuree = Math.max(4, nbSteps - 2);
+            Echeancier cp = new Echeancier(stepDebut, nouvelleDuree, quantiteTotale / nouvelleDuree);
+            journalCC.ajouter("CC échéancier : durée trop longue → réduction à " + nouvelleDuree + " étapes");
+            return cp;
+        }
+
+        // Tout est ok = acceptation 
+        journalCC.ajouter("CC échéancier : accepté pour " + choco.getNom());
+        return prop;
     }
+
 
 
     /**
@@ -309,17 +352,14 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
 
     @Override
     public void receptionner(IProduit produit, double quantiteEnTonnes, ExemplaireContratCadre contrat) {
-
-        double quantiteEnKg = quantiteEnTonnes;
-
         // Ajouter au stock
         double stockActuel = this.stock.getOrDefault(produit, 0.0);
-        this.stock.put(produit, stockActuel + quantiteEnKg);
+        this.stock.put(produit, stockActuel + quantiteEnTonnes);
 
         // Mettre à jour l'indicateur de stock total
         this.indicateurStockTotal.setValeur(this, getStockTotal());
 
-        this.journalStocks.ajouter("Livraison reçue : " + (quantiteEnKg) + "t de " +
+        this.journalStocks.ajouter("Livraison reçue : " + quantiteEnTonnes + "t de " +
                            produit + " (contrat cadre)");
     }
 
@@ -327,7 +367,7 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
     //         MÉTHODES UTILITAIRES
 
     
-    protected double restantDu(IProduit produit) {
+    public double restantDu(IProduit produit) {
         double res = 0.0;
         for (ExemplaireContratCadre contrat : this.contratsEnCours) {
             if (contrat.getProduit().equals(produit)) {
@@ -352,75 +392,104 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      * @author Paul JUHEL
      */
     public void fairePropositionCC() {
-        List<ChocolatDeMarque> produits = Filiere.LA_FILIERE.getChocolatsProduits();
-        for (ChocolatDeMarque choco : produits) {
+        EQ9_GestionStocks gs = new EQ9_GestionStocks(this.stock, this::restantDu);
+
+        List<ChocolatDeMarque> produitsFiliere = Filiere.LA_FILIERE.getChocolatsProduits();
+        if (produitsFiliere == null || produitsFiliere.isEmpty()) {
+            return;
+        }
+
+        for (ChocolatDeMarque choco : produitsFiliere) {
+            if (!gs.doitAcheter(choco)) continue;
+            if (!gs.prefererCC(choco)) continue; // AO gère le reste
+
+            double quantiteCC = gs.quantiteAacheter(choco);
+            if (quantiteCC < EQ9Config.CC_QUANTITE_MIN_T) continue;
+
             double stockActuel = this.stock.getOrDefault(choco, 0.0);
             double enCours = restantDu(choco);
-            double seuilDeSecurite = 10 ;
+            double seuilDeSecurite = EQ9Config.SEUIL_MIN_T;
             double stockProjete = stockActuel + enCours;
 
-            if (stockProjete < seuilDeSecurite) {
-                double quantiteCible = 50.0; // 50 tonnes
-                double quantiteAcheter = quantiteCible - stockProjete;
-                if (quantiteAcheter < 100.0) { // Minimum 100 tonnes
-                    continue;
+            if (stockProjete >= seuilDeSecurite) {
+                continue;
+            }
+
+            double quantiteAcheter = Math.max(quantiteCC, EQ9Config.CC_QUANTITE_MIN_T);
+
+            // Vérifier les fonds disponibles
+            double prixEstime = getPrixMaxAcceptable(choco);
+            double coutEstime = quantiteAcheter * prixEstime;
+            if (getSolde() < coutEstime * 1.2) { // Marge de sécurité
+                this.journalCC.ajouter("Fonds insuffisants pour CC " + choco.getNom()
+                    + " : besoin " + coutEstime + "€, solde " + getSolde() + "€");
+                continue;
+            }
+
+            List<IVendeurContratCadre> vendeurs = this.superviseurCC.getVendeurs(choco);
+            if (vendeurs.isEmpty()) {
+                this.journalCC.ajouter("Aucun vendeur disponible pour " + choco.getNom());
+                continue;
+            }
+
+            boolean propositionReussie = false;
+            for (IVendeurContratCadre vendeur : vendeurs) {
+                int stepDebut = Filiere.LA_FILIERE.getEtape() + 1;
+                int nbSteps = Math.min(6, 24 - stepDebut);
+                if (nbSteps <= 0) continue;
+
+                double quantiteParStep = quantiteAcheter / nbSteps;
+                Echeancier echeancierPropose = new Echeancier(stepDebut, nbSteps, quantiteParStep);
+
+                ExemplaireContratCadre contrat = this.superviseurCC.demandeAcheteur(
+                    this, vendeur, choco, echeancierPropose, this.cryptogramme, false);
+
+                if (contrat != null) {
+                    this.journalCC.ajouter("Proposition CC initiée pour " + quantiteAcheter
+                        + "t de " + choco.getNom() + " chez " + vendeur.getNom());
+                    propositionReussie = true;
+                    break;
+                } else {
+                    this.journalCC.ajouter("Proposition CC rejetée par " + vendeur.getNom()
+                        + " pour " + choco.getNom());
                 }
+            }
 
-                // Vérifier les fonds disponibles
-                double prixEstime = getPrixMaxAcceptable(choco);
-                double coutEstime = (quantiteAcheter / 1.0) * prixEstime;
-                if (getSolde() < coutEstime * 1.2) { // Marge de sécurité
-                    this.journalCC.ajouter("Fonds insuffisants pour CC " + choco.getNom()
-                        + " : besoin " + coutEstime + "€, solde " + getSolde() + "€");
-                    continue;
-                }
-
-                List<IVendeurContratCadre> vendeurs = this.superviseurCC.getVendeurs(choco);
-                if (vendeurs.isEmpty()) {
-                    this.journalCC.ajouter("Aucun vendeur disponible pour " + choco.getNom());
-                    continue;
-                }
-
-                // Essayer de négocier avec les vendeurs
-                boolean propositionReussie = false;
-                for (IVendeurContratCadre vendeur : vendeurs) {
-                    int stepDebut = Filiere.LA_FILIERE.getEtape() + 1;
-                    int nbSteps = Math.min(6, 24 - stepDebut);
-                    if (nbSteps <= 0) continue;
-
-                    double quantiteParStep = quantiteAcheter / nbSteps;
-                    Echeancier echeancierPropose = new Echeancier(stepDebut, nbSteps, quantiteParStep);
-
-                    // Initier la négociation
-                    ExemplaireContratCadre contrat = this.superviseurCC.demandeAcheteur(
-                        this, vendeur, choco, echeancierPropose, this.cryptogramme, false);
-
-                    if (contrat != null) {
-                        this.journalCC.ajouter("Proposition CC initiée pour " + (quantiteAcheter)
-                            + "t de " + choco.getNom() + " chez " + vendeur.getNom());
-                        propositionReussie = true;
-                        break; // On s'arrête au premier vendeur qui accepte de négocier
-                    } else {
-                        this.journalCC.ajouter("Proposition CC rejetée par " + vendeur.getNom()
-                            + " pour " + choco.getNom());
-                    }
-                }
-
-                if (!propositionReussie) {
-                    this.journalCC.ajouter("Échec de toutes les propositions CC pour " + choco.getNom());
-                }
+            if (!propositionReussie) {
+                this.journalCC.ajouter("Échec de toutes les propositions CC pour " + choco.getNom());
             }
         }
     }
 
     /**
      * Méthode utilitaire qui définit le prix maximum qu'on accepte
-     * selon la qualité du chocolat (en €/T)
      * Ces valeurs sont nos prix d'achat maximum pour garder une marge rentable
+     * @author Paul JUHEL
      */
     private double getPrixMaxAcceptable(ChocolatDeMarque choco) {
-        return this.prix.getOrDefault(choco, 100.0) * 0.75; // 25% de marge systématique
+        double prixVentePrevu = prix(choco);
+        double margeMin = EQ9Config.MARGE_BRUTE_MIN;
+
+        double prixMax = prixVentePrevu / (1.0 + margeMin);
+
+        // Ajustements agressifs
+        if (this.indicateurPartMarche.getValeur() < EQ9Config.PART_MARCHE_CIBLE * 100) {
+            prixMax *= 1.05; // on accepte 5% plus cher pour gagner du volume
+        }
+
+        if (getSolde() > EQ9Config.CASH_BUFFER_MIN * 2) {
+            prixMax *= 1.03; // on utilise notre puissance financière
+        }
+
+        double stock = this.stock.getOrDefault(choco, 0.0);
+        if (stock < EQ9Config.SEUIL_MIN_T) {
+            prixMax *= 1.10; // on paye plus cher pour éviter la rupture
+        }
+
+        return prixMax;
     }
+
+
 
     @Override
     public Filiere getFiliere(String nom) {

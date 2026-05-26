@@ -37,7 +37,7 @@ public class Transformateur2AchatEncheres extends Transformateur2VendeurAppelOff
 					return 0.9*cours;
 				}
 			}
-			if(f==Feve.F_MQ){
+			else if(f==Feve.F_MQ){
 				Double cours = ((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_MQ).getValeur();
 				if (quantite>this.DemandeChocolat().get(Chocolat.C_MQ)*0.1){
 					return 0.85*cours;
@@ -46,7 +46,7 @@ public class Transformateur2AchatEncheres extends Transformateur2VendeurAppelOff
 					return 0.9*cours;
 				}
 			}
-			else{
+			else if(f==Feve.F_HQ){
 				Double cours = ((BourseCacao) (Filiere.LA_FILIERE.getActeur("BourseCacao"))).getCours(Feve.F_HQ).getValeur();
 				if (quantite>this.DemandeChocolat().get(Chocolat.C_HQ)*0.1){
 					return 0.85*cours;
@@ -54,6 +54,9 @@ public class Transformateur2AchatEncheres extends Transformateur2VendeurAppelOff
 				else{
 					return 0.9*cours;
 				}
+			}
+			else{
+			return 0.0;
 			}
 		}
 		else{

@@ -60,7 +60,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.Stock = new HashMap<IProduit, Double>();
 		this.Prix = new HashMap<IProduit, Double>();
 		this.ChocolatsAchetes = new HashMap<ChocolatDeMarque, Double>();
-		this.TailleRayonTotal = 1000000.0;
+		this.TailleRayonTotal = 300000.0;
 		this.TailleRayonTG = this.TailleRayonTotal * 0.1;
 		this.TailleRayon = this.TailleRayonTotal * 0.9;
 		this.volumerayon = 0.0;
@@ -89,7 +89,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 				this.Prix.put((IProduit)(p.get(i)), 30000.0);
 			}
 
-			this.Stock.put((IProduit)(p.get(i)),1000000.0);
+			this.Stock.put((IProduit)(p.get(i)),1000.0);
 			this.Rayon.put((IProduit)(p.get(i)),0.0);
 			this.volumeStock.ajouter(this,getQuantiteEnStock((IProduit)(p.get(i)),this.cryptogramme));
 		}
@@ -249,6 +249,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	}
 
 	// Renvoie les parametres
+	/** @author Alexandre Cornet */
 	public List<Variable> getParametres() {
 		List<Variable> res=new ArrayList<Variable>();
 		return res;

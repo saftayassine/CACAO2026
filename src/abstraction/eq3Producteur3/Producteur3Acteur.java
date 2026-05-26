@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import abstraction.eqXRomu.encheres.SuperviseurVentesAuxEncheres;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
@@ -26,6 +27,8 @@ public class Producteur3Acteur implements IActeur {
 	public GestionCouts3 gestionCouts;
 	public Journal journal_cout_periode;
 	public Agriculteurs3 agriculteurs;
+	protected Journal journalEncheres;
+	protected SuperviseurVentesAuxEncheres superviseur;
 
 	public Producteur3Acteur() {
 		/** @author Vassili Spiridonov */
@@ -34,6 +37,7 @@ public class Producteur3Acteur implements IActeur {
 		this.journal_stock = new Journal("Journal des Stocks détaillé EQ3", this);
 		this.journal_cout_periode = new Journal("Journal des coûts par période EQ3", this);
 		this.journal_plantation = new Journal("Journal plantation EQ3", this);
+		this.journalEncheres = new Journal(" journal Encheres EQ3", this);
 
 		/** @author Guillaume Leroy */
 		this.stock = new Producteur3Stock(this.journal_stock);
@@ -42,10 +46,13 @@ public class Producteur3Acteur implements IActeur {
 
 		this.plantationeq3= new Plantation3(journal_plantation);
 		this.agriculteurs = new Agriculteurs3(this.plantationeq3);
+		this.superviseur = null;
 
 	}
 	
 	public void initialiser() {
+		this.superviseur = (SuperviseurVentesAuxEncheres)(Filiere.LA_FILIERE.getActeur("Sup.Encheres"));
+		this.gestionCouts.coutStockageTonne = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur();
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -110,6 +117,7 @@ public class Producteur3Acteur implements IActeur {
 		res.add(journal_stock);
 		res.add(journal_cout_periode);
 		res.add(journal_plantation);
+		res.add(journalEncheres);
 		return res;
 	}
 
