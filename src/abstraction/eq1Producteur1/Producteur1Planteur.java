@@ -75,7 +75,7 @@ public class Producteur1Planteur extends Producteur1Stock {
     }
  
     /**
-     * @author Elise Dossal
+     * @author Elise Dossal & Tristan Proust
      */
     public void collecter() { // On crée un lot de chaque qualité qui regroupe plusieurs plantations
         double lot_HQ   = 0;

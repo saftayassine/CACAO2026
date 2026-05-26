@@ -10,7 +10,7 @@ import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.general.Journal;
 import java.awt.Color;
 
-/** * @author Elise Dossal & Théophile Trillat
+/** * @author Elise Dossal & Théophile Trillat & Tristan Proust
  */
 public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre implements IVendeurBourse{
 
@@ -79,10 +79,10 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 			return 0;
 		}
 
-		// ===============================s==========================
-		// NOUVELLE LOGIQUE : on calcule à partir du STOCK ACTUEL
-		// (et non du stockRef) pour éviter le double comptage
-		// avec les livraisons CC déjà en cours.
+		// =========================================================
+		// LOGIQUE DE PROTECTION : on calcule à partir du STOCK ACTUEL
+		// pour éviter le double comptage avec les livraisons CC 
+		// déjà en cours.
 		// =========================================================
 
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
@@ -111,11 +111,9 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 			return 0;
 		}
 
-		// 5. Lissage sur les étapes restantes de l'année
-		int stepsRestants = 24 - stepDansAnnee;
-		double quantite = stockDisponible / stepsRestants;
+		// 5. NOUVEAU LOGIQUE : On offre 100% de notre excédent pour capter la demande
+		double quantite = stockDisponible;
 
-		// 6. ANCIEN PLAFOND SUPPRIMÉ (on laisse l'algorithme faire son calcul)
 		// On s'assure juste de ne pas proposer des poussières par erreur
 		if (quantite < 1.0) {
 			return 0;
@@ -125,8 +123,7 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 			"Offre : "+String.format("%.1f", quantite)+" t. de "+f
 			+" | stock actuel : "+String.format("%.1f", stockActuel)+" t"
 			+" | protégé (marge+CC futurs) : "+String.format("%.1f", stockProtege)+" t"
-			+" | disponible bourse : "+String.format("%.1f", stockDisponible)+" t"
-			+" | sur "+stepsRestants+" steps restants");
+			+" | disponible bourse : "+String.format("%.1f", stockDisponible)+" t");
 
 		return quantite;
     }
