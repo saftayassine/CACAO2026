@@ -574,31 +574,31 @@ if (lotB != null
     && this.PeremptionProntellaB.get(lotB) != null
     && this.PeremptionProntellaB.get(lotB).size() > 0) {
 
-    this.journalStock.ajouter("Prochaine péremption Prontella BQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaB)+"à la date :"+this.PeremptionProntellaB.get(this.getFirstPeremptionDouble(ProntellaB)).get(0));
+    this.journalStock.ajouter("Prochaine péremption Prontella BQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaB)+" à la periode :"+this.PeremptionProntellaB.get(this.getFirstPeremptionDouble(ProntellaB)).get(0));
 }
 if (lotM != null
     && this.PeremptionProntellaM.containsKey(lotM)&& this.PeremptionProntellaM.get(lotM) != null
     && this.PeremptionProntellaM.get(lotM).size() > 0){
-    this.journalStock.ajouter("Prochaine péremption Prontella MQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaM)+"à la date :"+this.PeremptionProntellaM.get(this.getFirstPeremptionDouble(ProntellaM)).get(0));
+    this.journalStock.ajouter("Prochaine péremption Prontella MQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaM)+" à la periode :"+this.PeremptionProntellaM.get(this.getFirstPeremptionDouble(ProntellaM)).get(0));
 }
 
 if (lotH != null
     && this.PeremptionProntellaH.containsKey(lotH)
     && this.PeremptionProntellaH.get(lotH) != null
     && this.PeremptionProntellaH.get(lotH).size() > 0) {
-    this.journalStock.ajouter("Prochaine péremption Prontella HQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaH)+"à la date :"+this.PeremptionProntellaH.get(this.getFirstPeremptionDouble(ProntellaH)).get(0));
+    this.journalStock.ajouter("Prochaine péremption Prontella HQ pour le lot: " + this.getFirstPeremptionDouble(ProntellaH)+" à la periode :"+this.PeremptionProntellaH.get(this.getFirstPeremptionDouble(ProntellaH)).get(0));
 }
 if (lotBE != null
     && this.PeremptionProntellaBE.containsKey(lotBE)
     && this.PeremptionProntellaBE.get(lotBE) != null
     && this.PeremptionProntellaBE.get(lotBE).size() > 0) {
-    this.journalStock.ajouter("Prochaine péremption Prontella BQ E pour le lot: " + this.getFirstPeremptionDouble(ProntellaBE)+"à la date :"+this.PeremptionProntellaBE.get(this.getFirstPeremptionDouble(ProntellaBE)).get(0));
+    this.journalStock.ajouter("Prochaine péremption Prontella BQ E pour le lot: " + this.getFirstPeremptionDouble(ProntellaBE)+" à la periode :"+this.PeremptionProntellaBE.get(this.getFirstPeremptionDouble(ProntellaBE)).get(0));
 }
 if (lotHE != null
     && this.PeremptionProntellaHE.containsKey(lotHE)
     && this.PeremptionProntellaHE.get(lotHE) != null
     && this.PeremptionProntellaHE.get(lotHE).size() > 0) {
-    this.journalStock.ajouter("Prochaine péremption Prontella HQ E pour le lot: " + this.getFirstPeremptionDouble(ProntellaHE)+"à la date :"+this.PeremptionProntellaHE.get(this.getFirstPeremptionDouble(ProntellaHE)).get(0));
+    this.journalStock.ajouter("Prochaine péremption Prontella HQ E pour le lot: " + this.getFirstPeremptionDouble(ProntellaHE)+" à la periode :"+this.PeremptionProntellaHE.get(this.getFirstPeremptionDouble(ProntellaHE)).get(0));
 }
     }
     public List<Journal> getJournaux() {
