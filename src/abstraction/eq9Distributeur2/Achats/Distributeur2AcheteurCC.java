@@ -2,7 +2,6 @@ package abstraction.eq9Distributeur2.Achats;
 
 import abstraction.eq9Distributeur2.Config.EQ9Config;
 import abstraction.eq9Distributeur2.Stocks.EQ9_GestionStocks;
-import abstraction.eq9Distributeur2.Stratégie.EQ9_StrategieFixationPrix;
 import abstraction.eqXRomu.contratsCadres.Echeancier;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.contratsCadres.IAcheteurContratCadre;
@@ -201,60 +200,61 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      * @author Paul Juhel V2
      */
     @Override
-    public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
+public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
 
-        ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
-        double prixPropose = contrat.getPrix();
-        double prixMax = getPrixMaxAcceptable(choco);
-        double solde = getSolde();
-        double quantiteTotale = contrat.getQuantiteTotale();
+    ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
+    double prixPropose = contrat.getPrix();
+    double prixMax = getPrixMaxAcceptable(choco);
+    double solde = getSolde();
+    double quantiteTotale = contrat.getQuantiteTotale();
 
-        List<Double> historique = contrat.getListePrix();
-        int tours = historique.size();
+    List<Double> historique = contrat.getListePrix();
+    int tours = historique.size();
 
-        // --- 1) Si le prix est acceptable, on tente une petite baisse ---
-        if (prixPropose <= prixMax) {
-            double tentative = prixPropose * 0.97; // -3%
-            double seuilMini = prixMax * 0.90;
-            if (tentative < seuilMini) tentative = seuilMini;
-
-            // Si on a déjà négocié plusieurs fois, on accepte
-            if (tours >= 2) {
-                journalCC.ajouter("CC : prix acceptable → acceptation (" + prixPropose + ")");
+    
+    if (prixPropose <= prixMax) {
+        if (tours == 0) {
+            double tentative = prixPropose * 0.97;
+            // SÉCURITÉ : ne jamais proposer plus cher que le vendeur
+            if (tentative >= prixPropose) {
+                journalCC.ajouter("CC : prix acceptable → acceptation directe (" + prixPropose + ")");
                 return prixPropose;
             }
-
-            journalCC.ajouter("CC : prix acceptable mais tentative de négo → " + tentative);
+            journalCC.ajouter("CC : tentative de négo → " + tentative);
             return tentative;
         }
-
-        // --- 2) Si le prix est trop haut, on descend ---
-        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
-        if (ratio > 0.90) ratio = 0.90;
-
-        // ⚠️ On descend, pas on monte
-        double contreProp = prixPropose * ratio;
-
-        // On ne dépasse jamais notre prix max
-        if (contreProp > prixMax) contreProp = prixMax;
-
-        double coutTotal = contreProp * quantiteTotale;
-        if (solde < coutTotal) {
-            journalCC.ajouter("CC : abandon → fonds insuffisants pour " + contreProp);
-            return -1.0;
-        }
-
-        // Si on est très proche du prix vendeur et que c'est acceptable → on accepte
-        if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
-            journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
-            return prixPropose;
-        }
-
-        journalCC.ajouter("CC : contre-proposition " + contreProp
-            + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
-
-        return contreProp;
+        // Dès le 2ème tour : on accepte
+        journalCC.ajouter("CC : acceptation (" + prixPropose + ")");
+        return prixPropose;
     }
+
+    // PRIX TROP HAUT : NÉGO "CLASSIQUE"
+    double ratio = 0.70 + 0.05 * tours;
+    if (ratio > 0.90) ratio = 0.90;
+
+    double contreProp = prixPropose * ratio;
+
+    if (contreProp > prixMax) {
+        contreProp = prixMax;
+    }
+
+    double coutTotal = contreProp * quantiteTotale;
+    if (solde < coutTotal) {
+        journalCC.ajouter("CC : abandon → fonds insuffisants pour " + contreProp);
+        return -1.0;
+    }
+
+    // Si on est très proche du prix vendeur et que c'est acceptable : on accepte
+    if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
+        journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
+        return prixPropose;
+    }
+
+    journalCC.ajouter("CC : contre-proposition " + contreProp
+        + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
+
+    return contreProp;
+}
 
 
 
