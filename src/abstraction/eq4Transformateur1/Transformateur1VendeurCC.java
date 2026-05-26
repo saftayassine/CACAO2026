@@ -111,11 +111,13 @@ public class Transformateur1VendeurCC extends Transformateur1AcheteurBourse impl
     public double livrer(IProduit produit, double quantite, ExemplaireContratCadre contrat){
        if (this.getStocksProduit(produit)>=quantite){
         this.setStocksProduit(produit, this.getStocksProduit(produit)-quantite);
+        this.Vente(produit, quantite);
         return quantite;
        }
        else if (this.getStocksProduit(produit)<quantite && this.getStocksProduit(produit)>0){
         double quantiteLivree= this.getStocksProduit(produit);
         this.setStocksProduit(produit, 0);
+        this.Vente(produit, quantiteLivree);
         return quantiteLivree;
        }
        else{

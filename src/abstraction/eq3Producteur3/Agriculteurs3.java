@@ -42,11 +42,11 @@ public class Agriculteurs3 {
 
             int ratio;
             if (g == Gamme.HQ) {
-                ratio = 7;
+                ratio = 3;
             } else if (g == Gamme.MQ) {
-                ratio = 5;
+                ratio = 2;
             } else {
-                ratio = 3; 
+                ratio = 1; 
             }
             
             int besoinTotalGamme = (int) (surfaceGamme * ratio);

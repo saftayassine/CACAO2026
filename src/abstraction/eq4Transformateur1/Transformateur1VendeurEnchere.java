@@ -49,6 +49,7 @@ public class Transformateur1VendeurEnchere extends Transformateur1VendeurCC impl
 				if (enchere!=null) { // on a retenu l'une des encheres faites
 					journalVendeurEncheres.ajouter("   Enchere finalisee : on retire "+quantite+" T de "+cm+" du stock");
 					this.getStock().put(cm, this.getStock().get(cm)-quantite);
+					this.Vente(cm, quantite);
 					this.setStocksPrevuProduit(cm, this.getStocksPrevuProduit(cm)-quantite);
 					prixRetenus.get(cm).add(enchere.getPrixTonne());
 					if (prixRetenus.get(cm).size()>10) {

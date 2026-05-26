@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import abstraction.eqXRomu.appelDOffre.AppelDOffre;
+import abstraction.eqXRomu.appelDOffre.IAcheteurAO;
+import abstraction.eqXRomu.appelDOffre.OffreVente;
+import abstraction.eqXRomu.appelDOffre.SuperviseurVentesAO;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
@@ -14,10 +18,12 @@ import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.produits.IProduit;
 
 /** @author Ewen Landron */
-public class Approvisionnement extends Distributeur1Acteur {
+/** @author Lucas Levillain */
 
-    protected Map<ChocolatDeMarque, Double> prixDAchat;
-    private Map<ChocolatDeMarque, Double> stockPredit;
+public class Approvisionnement extends ChocolatDistributeur1 {
+
+  //  protected Map<ChocolatDeMarque, Double> prixDAchat;
+    protected Map<ChocolatDeMarque, Double> stockPredit;
     private Map<String, List<ChocolatDeMarque>> classements;
     protected List<ExemplaireContratCadre> mesContrats;
     protected double pourcentBQ, pourcentBQ_E, pourcentMQ, pourcentMQ_E, pourcentHQ, pourcentHQ_E;
@@ -25,7 +31,7 @@ public class Approvisionnement extends Distributeur1Acteur {
 
     public Approvisionnement() {
         super();
-        this.prixDAchat = new HashMap<>();
+        //this.prixDAchat = new HashMap<>();
         this.classements = new HashMap<>();
         this.classements.put("BQ", new ArrayList<>());
         this.classements.put("BQ_EQUITABLE", new ArrayList<>());
@@ -36,14 +42,15 @@ public class Approvisionnement extends Distributeur1Acteur {
     
         this.mesContrats = new ArrayList<>();
         this.stockPredit = new HashMap<>();
+        this.stockPreditTG = new HashMap<>();
 
         // Initialisation des pourcentages de répartition (Total = 1.0)
-        this.pourcentBQ = 0.15;   // 15% Bas de gamme standard
-        this.pourcentBQ_E = 0.05; // 5%  Bas de gamme équitable
-        this.pourcentMQ = 0.35;   // 35% Milieu de gamme standard
-        this.pourcentMQ_E = 0.15; // 15% Milieu de gamme équitable
+        this.pourcentBQ = 0.30;   // 30% Bas de gamme standard
+        this.pourcentBQ_E = 0.1166; // 11.66%  Bas de gamme équitable
+        this.pourcentMQ = 0.2166;   // 21.66% Milieu de gamme standard
+        this.pourcentMQ_E = 0.0633; // 6.33% Milieu de gamme équitable
         this.pourcentHQ = 0.20;   // 20% Haut de gamme standard
-        this.pourcentHQ_E = 0.10; // 10% Haut de gamme équitable
+        this.pourcentHQ_E = 0.1033; // 10.33% Haut de gamme équitable
     }
 
     /**
@@ -67,6 +74,7 @@ public class Approvisionnement extends Distributeur1Acteur {
             if (quantiteTotale > 0) {
                 double prixMoyenPondere = coutTotal / quantiteTotale;
                 this.prixDAchat.put(cdm, prixMoyenPondere);
+                //System.out.println("init "+cdm+" a "+prixMoyenPondere+" €/T basé sur les contrats cadres");
             }
         }
         // Si aucun contrat n'existe, on garde la valeur précédente (initialisée par le ClientFinal)
@@ -112,7 +120,6 @@ public class Approvisionnement extends Distributeur1Acteur {
     }
 
     public void lancerApprovisionnementGeneral(double volumeCibleTotal) {
-        this.stockPredit = initialiserStockPredit();
 
         // Calcul des cibles pour les 6 catégories
         acheterParCategorie(Gamme.BQ, false, volumeCibleTotal * this.pourcentBQ);
@@ -153,57 +160,147 @@ public class Approvisionnement extends Distributeur1Acteur {
     private void parcourirEtAcheter(List<ChocolatDeMarque> liste, double besoinCategorie) {
         if (liste.isEmpty()) return;
 
+        // --- ÉTAPE 1 : TOURNÉE DES CONTRATS CADRES (CC) ---
+        double besoinRestantPourCC = besoinCategorie;
+
         for (int i = 0; i < liste.size(); i++) {
             ChocolatDeMarque actuel = liste.get(i);
-            double prixCible = this.prixDAchat.getOrDefault(actuel, 15.0);
+            
+            // PROTECTION CONCURRENT : On n'achète pas la marque du distributeur concurrent eq9
+            if (actuel.getMarque() != null && actuel.getMarque().contains("eq9Distributeur2")) {
+                this.journal5.ajouter("CC Refusé - Produit du concurrent boycotté : " + actuel.getMarque());
+                continue; 
+            }
+
+            double prixCible = this.prixDAchat.getOrDefault(actuel, 1000.0);
             double prixMax = prixCible * 1.3;
 
             if (i < liste.size() - 1) {
                 prixMax = this.prixDAchat.getOrDefault(liste.get(i + 1), prixMax);
             }
 
-            // --- NOUVELLE LOGIQUE TÊTE DE GONDOLE (TG) ---
+            // Logique Tête de Gondole (TG)
             boolean demandeTG = false;
-            double quantiteAcheter = besoinCategorie;
+            double quantiteAcheterCC = besoinRestantPourCC;
             
-            // 1. On ne demande la TG que pour les produits équitables
             if (actuel.isEquitable()) {
                 double capaciteMaxTG = this.TailleRayon * 0.1;
                 double occupationActuelleTG = getQuantiteTotaleTG();
                 double placeRestanteTG = getPlaceRestanteTG();
 
-                // 2. Condition de seuil : on n'initie de TG que si moins de 80% de l'espace TG est pris
                 if (occupationActuelleTG < (capaciteMaxTG * 0.8)) {
                     demandeTG = true;
-                    
-                    // 3. Sécurité de volume : si le besoin dépasse la place restante, on plafonne
-                    if (besoinCategorie > placeRestanteTG) {
-                        quantiteAcheter = Math.max(0, placeRestanteTG);
+                    if (besoinRestantPourCC > placeRestanteTG) {
+                        quantiteAcheterCC = Math.max(0, placeRestanteTG);
                     }
                 }
             }
 
-            // Si après plafonnement il reste quelque chose à acheter, on lance le contrat
-            if (quantiteAcheter > 0.1) {
-                methodeIntermediaireAchat(actuel, quantiteAcheter, prixCible, prixMax, demandeTG);
+            // On ne tente le Contrat Cadre que s'il y a un volume pertinent
+            if (quantiteAcheterCC > 0.1) {
+                // Déclenchement exclusif du Contrat Cadre
+                this.methodeIntermediaireAchatCC(actuel, quantiteAcheterCC, prixCible, prixMax, demandeTG);
+                
+                // On met à jour le besoin de la catégorie en soustrayant ce qu'on vient de tenter d'acheter en CC
+                besoinRestantPourCC = Math.max(0, besoinRestantPourCC - quantiteAcheterCC);
+            }
+        }
+
+        // --- ÉTAPE 2 : TOURNÉE DES APPELS D'OFFRE (AO) ---
+        // On repart du besoin mis à jour après la phase des Contrats Cadres
+        double besoinRestantPourAO = besoinRestantPourCC; 
+
+        for (int i = 0; i < liste.size(); i++) {
+            // Si le besoin a été totalement comblé par les contrats cadres, on arrête
+            if (besoinRestantPourAO <= 0.1) break;
+
+            ChocolatDeMarque actuel = liste.get(i);
+            
+            // PROTECTION CONCURRENT : Même blocage pour la phase d'Appels d'Offres
+            if (actuel.getMarque() != null && actuel.getMarque().contains("eq9Distributeur2")) {
+                continue; 
+            }
+
+            double prixCible = this.prixDAchat.getOrDefault(actuel, 1000.0);
+            double prixMax = prixCible * 1.3;
+
+            if (i < liste.size() - 1) {
+                prixMax = this.prixDAchat.getOrDefault(liste.get(i + 1), prixMax);
+            }
+
+            // Recalcul de la logique TG pour la phase AO (les stocks TG ayant pu évoluer)
+            boolean demandeTG = false;
+            double quantiteAcheterAO = besoinRestantPourAO;
+            
+            if (actuel.isEquitable()) {
+                double capaciteMaxTG = this.TailleRayon * 0.1;
+                double occupationActuelleTG = getQuantiteTotaleTG();
+                double placeRestanteTG = getPlaceRestanteTG();
+
+                if (occupationActuelleTG < (capaciteMaxTG * 0.8)) {
+                    demandeTG = true;
+                    if (besoinRestantPourAO > placeRestanteTG) {
+                        quantiteAcheterAO = Math.max(0, placeRestanteTG);
+                    }
+                }
+            }
+
+            // Déclenchement exclusif de l'Appel d'Offre
+            if (quantiteAcheterAO > 0.1) {
+                this.methodeIntermediaireAchatAO(actuel, quantiteAcheterAO, prixCible, prixMax, demandeTG);
+                
+                // On déduit également le volume pour les prochains chocolats de la liste s'il y en a
+                besoinRestantPourAO = Math.max(0, besoinRestantPourAO - quantiteAcheterAO);
             }
         }
     }
 
-    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
-        // Sera surchargée
+    protected void methodeIntermediaireAchatCC(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
+        // Sera surchargée dans ContratCadre2 pour lancer sup.demandeAcheteur(...)
     }
+
+    /** @author Lucas Levillain (Adapté pour exécution isolée de l'AO) */
+    protected void methodeIntermediaireAchatAO(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
+        if (besoin < AppelDOffre.AO_QUANTITE_MIN) return;
+
+        // Récupération du superviseur AO via son nom dans la filière
+        SuperviseurVentesAO superviseur = (SuperviseurVentesAO) Filiere.LA_FILIERE.getActeur("Sup.AO");
+
+        if (superviseur == null) {
+            this.journal5.ajouter("ERREUR : SuperviseurVentesAO introuvable");
+            return;
+        }
+
+        OffreVente retenue = superviseur.acheterParAO(
+            (IAcheteurAO) this,
+            this.cryptogramme,
+            cdm,
+            besoin,
+            false
+        );
+
+        if (retenue != null) {
+            this.journal3.ajouter(
+                "AO retenu : " + retenue.getQuantiteT() + " T de " + cdm
+                + " à " + retenue.getPrixT() + " €/T"
+                + (TG ? " [TG]" : "")
+            );
+        } else {
+            this.journal3.ajouter("AO sans résultat pour " + cdm);
+        }
+    }
+
 
     /**
      * Correction : Création d'une nouvelle Map pour le stock prédit afin d'éviter
      * de modifier le stock réel pendant les simulations de calcul.
      */
-    private Map<ChocolatDeMarque, Double> initialiserStockPredit() {
+    protected Map<ChocolatDeMarque, Double> initialiserStockPredit() {
         Map<ChocolatDeMarque, Double> predit = new HashMap<>();
         this.ChocolatsAchetes = new HashMap<>(); 
         this.stockPreditTG = new HashMap<>(); // Initialisation du dictionnaire TG
         
-        int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+        int etapeActuelle = Filiere.LA_FILIERE.getEtape() + 1;
 
         // 1. Initialisation à 0 pour tous les chocolats de la filière
         for (ChocolatDeMarque cdm : Filiere.LA_FILIERE.getChocolatsProduits()) {
@@ -239,7 +336,7 @@ public class Approvisionnement extends Distributeur1Acteur {
             IProduit p = (IProduit) nouveauContrat.getProduit();
             if (p instanceof ChocolatDeMarque) {
                 ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-                int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+                int etapeActuelle = Filiere.LA_FILIERE.getEtape() + 1;
                 double livraisonImmediate = nouveauContrat.getEcheancier().getQuantite(etapeActuelle);
             
                 // 1. Stock Predit Global
@@ -257,9 +354,17 @@ public class Approvisionnement extends Distributeur1Acteur {
     }
 
     public double getQuantiteTotaleTG() {
+        // Sécurité : si le dictionnaire n'est même pas encore instancié
+        if (this.stockPreditTG == null) {
+            return 0.0;
+        }
+        
         double total = 0;
         for (Double qte : this.stockPreditTG.values()) {
-            total += qte;
+            // Sécurité : on vérifie que la valeur stockée n'est pas nulle
+            if (qte != null) {
+                total += qte;
+            }
         }
         return total;
     }

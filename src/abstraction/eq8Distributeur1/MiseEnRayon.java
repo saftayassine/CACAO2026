@@ -37,47 +37,80 @@ public class MiseEnRayon extends AppelOffre {
     }
 
     private void remplirEspaceCategorie(Gamme gamme, boolean equitable, double espaceAlloueCategorie) {
-        // 1. Récupérer uniquement les produits de cette catégorie précise présents en stock
-        List<ChocolatDeMarque> produitsEnStock = new ArrayList<>();
+        double espaceOccupeCategorie = 0;
+
+        // --- ÉTAPE 1 : MISE EN RAYON CLASSIQUE (Priorité aux volumes de base) ---
+        // 1. Récupérer les produits en stock pour cette catégorie exacte
+        List<ChocolatDeMarque> produitsDansCategorie = new ArrayList<>();
         for (IProduit p : this.Stock.keySet()) {
             if (p instanceof ChocolatDeMarque) {
                 ChocolatDeMarque cdm = (ChocolatDeMarque) p;
-                if (cdm.getGamme() == gamme && cdm.isEquitable() == equitable && this.Stock.get(cdm) > 0) {
-                    produitsEnStock.add(cdm);
+                if (cdm.getGamme() == gamme && cdm.isEquitable() == equitable && this.Stock.getOrDefault(cdm, 0.0) > 0) {
+                    produitsDansCategorie.add(cdm);
                 }
             }
         }
 
-        // 2. Tri au sein de la catégorie (par exemple par quantité croissante pour diversifier les marques en rayon)
-        Collections.sort(produitsEnStock, new Comparator<ChocolatDeMarque>() {
+        // 2. Tri pour diversifier les marques
+        Collections.sort(produitsDansCategorie, new Comparator<ChocolatDeMarque>() {
             public int compare(ChocolatDeMarque c1, ChocolatDeMarque c2) {
-                double qte1 = MiseEnRayon.this.Stock.get(c1);
-                double qte2 = MiseEnRayon.this.Stock.get(c2);
-                return Double.compare(qte1, qte2);
+                return Double.compare(MiseEnRayon.this.Stock.getOrDefault(c1, 0.0), MiseEnRayon.this.Stock.getOrDefault(c2, 0.0));
             }
         });
 
-        // 3. Remplissage de l'espace alloué pour cette catégorie
-        double espaceOccupeCategorie = 0;
-
-        for (ChocolatDeMarque cdm : produitsEnStock) {
-            // Si le quota de la catégorie est atteint, on arrête pour cette catégorie
+        // 3. Remplissage initial en rayon classique
+        for (ChocolatDeMarque cdm : produitsDansCategorie) {
             if (espaceOccupeCategorie >= espaceAlloueCategorie) break;
 
             double resteAFermerCategorie = espaceAlloueCategorie - espaceOccupeCategorie;
-            double quantiteEnStock = this.Stock.get(cdm);
-
-            // Sécurité : ne pas dépasser le quota de la catégorie ET la capacité physique globale restante
+            double quantiteEnStock = this.Stock.getOrDefault(cdm, 0.0);
             double placeRestanteMagasin = Math.max(0, this.TailleRayon - this.volumerayon);
-            double aDeplacer = Math.min(quantiteEnStock, Math.min(resteAFermerCategorie, placeRestanteMagasin));
 
-            if (aDeplacer > 0.001) {
-                // Utilisation exclusive de AjoutenRayon pour éviter la double soustraction du stock
-                // et garantir la mise à jour de volumerayon et volumeStock.
-                this.AjoutenRayon(cdm, aDeplacer);
-                
-                espaceOccupeCategorie += aDeplacer;
+            // On ne remplit ici que l'espace classique
+            double aDeplacerClassique = Math.min(quantiteEnStock, Math.min(resteAFermerCategorie, placeRestanteMagasin));
+
+            if (aDeplacerClassique > 0.001) {
+                this.AjoutenRayon(cdm, aDeplacerClassique);
+                espaceOccupeCategorie += aDeplacerClassique;
+            }
+        }
+
+        // --- ÉTAPE 2 : AJOUT DES TÊTES DE GONDOLE (TG) ---
+        // On ne traite la TG que si le quota de la catégorie n'est pas saturé par le stock classique
+        if (espaceOccupeCategorie < espaceAlloueCategorie) {
+            
+            // Dynamic TG Cap : 10% de ce qui est REELLEMENT en rayon en ce moment (this.volumerayon)
+            // moins ce qui occupe déjà l'espace TG global (getQuantiteTotaleTG())
+            double limiteDynamiqueTG = (this.volumerayon * 0.1) - this.getQuantiteTotaleTG();
+            
+            if (limiteDynamiqueTG > 0.001) {
+                for (ChocolatDeMarque cdm : this.stockPreditTG.keySet()) {
+                    if (espaceOccupeCategorie >= espaceAlloueCategorie || limiteDynamiqueTG <= 0.001) break;
+
+                    if (cdm.getGamme() == gamme && cdm.isEquitable() == equitable) {
+                        double quantiteTGPredite = this.stockPreditTG.getOrDefault(cdm, 0.0);
+                        
+                        // Sécurité critique : On vérifie le stock REEL restant dans le dictionnaire 
+                        // après les retraits de l'étape 1
+                        double quantiteEnStockReelRestant = this.getQuantiteEnStock(cdm, this.cryptogramme);
+                        
+                        // On plafonne selon : le contrat, le stock physique restant, la place de la catégorie et la règle des 10%
+                        double resteAFermerCategorie = espaceAlloueCategorie - espaceOccupeCategorie;
+                        double placeRestanteMagasin = Math.max(0, this.TailleRayon - this.volumerayon);
+                        
+                        double aMettreEnTG = Math.min(quantiteTGPredite, quantiteEnStockReelRestant);
+                        aMettreEnTG = Math.min(aMettreEnTG, Math.min(resteAFermerCategorie, Math.min(placeRestanteMagasin, limiteDynamiqueTG)));
+
+                        if (aMettreEnTG > 0.001) {
+                            this.AjoutenRayonTG(cdm, aMettreEnTG);
+                            
+                            espaceOccupeCategorie += aMettreEnTG;
+                            limiteDynamiqueTG -= aMettreEnTG; // On réduit la marge TG disponible pour le prochain produit
+                        }
+                    }
+                }
             }
         }
     }
 }
+

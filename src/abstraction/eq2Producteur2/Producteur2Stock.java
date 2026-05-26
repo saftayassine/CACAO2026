@@ -5,9 +5,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.general.Variable;
 import abstraction.eqXRomu.produits.Feve;
 import abstraction.eqXRomu.produits.IProduit;
+import abstraction.eqXRomu.filiere.Filiere;
 
 /** @author Thomas */
 public class Producteur2Stock {
@@ -19,6 +21,7 @@ public class Producteur2Stock {
     protected HashMap<Feve, Double> seuil_stock;
     protected int cryptogramme;
     protected double cout_stockage = 7.5;
+    protected Journal journalStock;
 
     public Producteur2Stock() {
         this.stock = new HashMap<Feve, HashMap<Integer, Double>>();
@@ -43,17 +46,88 @@ public class Producteur2Stock {
         }
 
         this.stockTotal = new Variable("Stock Total EQ2", null, 0.0);
+        this.journalStock = new Journal("Journal Stock Eq2", null);
 
         // Statut par défaut
         this.cryptogramme = 0;
     }
 
-
-
     public void next() {
+        gererPeremption();
         setStockMin(0.1);
         TaxeStockage();
         setTotalStock();
+    }
+
+    public void gererPeremption() {
+        int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+
+        // F_HQ et F_HQ_E se dégradent en F_MQ après 12 steps
+        // F_MQ se dégrade en F_BQ après 24 steps
+        // F_BQ se périme après 48 steps
+
+        // 1. Péremption de BQ et BQ_E -> Perdu (après 48 steps)
+        degraderStock(Feve.F_BQ, null, 48, etapeActuelle);
+        degraderStock(Feve.F_BQ_E, null, 48, etapeActuelle);
+
+        // 2. Dégradation de MQ et MQ_E -> BQ et BQ_E (après 24 steps)
+        degraderStock(Feve.F_MQ, Feve.F_BQ, 24, etapeActuelle);
+        degraderStock(Feve.F_MQ_E, Feve.F_BQ_E, 24, etapeActuelle);
+
+        // 3. Dégradation de HQ et HQ_E -> MQ et MQ_E (après 12 steps)
+        degraderStock(Feve.F_HQ, Feve.F_MQ, 12, etapeActuelle);
+        degraderStock(Feve.F_HQ_E, Feve.F_MQ_E, 12, etapeActuelle);
+    }
+
+    private void degraderStock(Feve source, Feve destination, int ageLimite, int etapeActuelle) {
+        HashMap<Integer, Double> stockSource = this.stock.get(source);
+        if (stockSource == null)
+            return;
+
+        List<Integer> steps = new ArrayList<Integer>(stockSource.keySet());
+        double quantiteDegradeeTotale = 0.0;
+
+        for (Integer stepProd : steps) {
+            int age = etapeActuelle - stepProd;
+            if (age >= ageLimite) {
+                double quantite = stockSource.get(stepProd);
+                stockSource.remove(stepProd);
+
+                if (destination != null) {
+                    // On transfère vers la destination avec le même step_prod d'origine (l'âge est
+                    // conservé)
+                    HashMap<Integer, Double> stockDest = this.stock.get(destination);
+                    stockDest.put(stepProd, stockDest.getOrDefault(stepProd, 0.0) + quantite);
+
+                    // Mise à jour rapide des variables (sera recalculé via setTotalStock de toute
+                    // façon)
+                    Variable vSource = this.stockvar.get(source);
+                    Variable vDest = this.stockvar.get(destination);
+                    if (vSource != null)
+                        vSource.retirer(null, quantite, this.cryptogramme);
+                    if (vDest != null)
+                        vDest.ajouter(null, quantite, this.cryptogramme);
+                } else {
+                    // Perte sèche, pas de destination
+                    Variable vSource = this.stockvar.get(source);
+                    if (vSource != null)
+                        vSource.retirer(null, quantite, this.cryptogramme);
+                    this.stockTotal.retirer(null, quantite, this.cryptogramme);
+                }
+                quantiteDegradeeTotale += quantite;
+            }
+        }
+
+        // Log s'il y a eu des dégradations
+        if (quantiteDegradeeTotale > 0.0) {
+            if (destination != null) {
+                this.journalStock.ajouter(Filiere.LA_FILIERE.getEtape() + " : DÉGRADATION - " + quantiteDegradeeTotale
+                        + " T de " + source + " sont devenues " + destination + " (Âge >= " + ageLimite + " steps)");
+            } else {
+                this.journalStock.ajouter(Filiere.LA_FILIERE.getEtape() + " : PÉREMPTION - " + quantiteDegradeeTotale
+                        + " T de " + source + " ont été jetées (Âge >= " + ageLimite + " steps)");
+            }
+        }
     }
 
     public void setTotalStock() {
@@ -146,9 +220,23 @@ public class Producteur2Stock {
         return total;
     }
 
+    public int getAgeAnciennete(Feve f) {
+        HashMap<Integer, Double> stockFeve = this.stock.get(f);
+        if (stockFeve == null || stockFeve.isEmpty())
+            return 0;
+        int etapeActuelle = Filiere.LA_FILIERE.getEtape();
+        int stepPlusAncien = etapeActuelle;
+        boolean found = false;
+        for (Integer stepProd : stockFeve.keySet()) {
+            if (stockFeve.get(stepProd) > 1.0 && stepProd < stepPlusAncien) { // Ignore les poussières (< 1 tonne)
+                stepPlusAncien = stepProd;
+                found = true;
+            }
+        }
+        return found ? (etapeActuelle - stepPlusAncien) : 0;
+    }
 
-    public void TaxeStockage(){
+    public void TaxeStockage() {
     }
 
 }
-

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import abstraction.eqXRomu.encheres.SuperviseurVentesAuxEncheres;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.filiere.IActeur;
 import abstraction.eqXRomu.general.Journal;
@@ -26,14 +27,17 @@ public class Producteur3Acteur implements IActeur {
 	public GestionCouts3 gestionCouts;
 	public Journal journal_cout_periode;
 	public Agriculteurs3 agriculteurs;
+	protected Journal journalEncheres;
+	protected SuperviseurVentesAuxEncheres superviseur;
 
 	public Producteur3Acteur() {
 		/** @author Vassili Spiridonov */
 		this.journal_periode = new Journal("Journal des périodes EQ3", this); 
 		this.journal_vente_bouse = new Journal("Journal Ventes en bourse EQ3", this);
 		this.journal_stock = new Journal("Journal des Stocks détaillé EQ3", this);
-		this.journal_cout_periode = new Journal("Journal des coûts par période", this);
+		this.journal_cout_periode = new Journal("Journal des coûts par période EQ3", this);
 		this.journal_plantation = new Journal("Journal plantation EQ3", this);
+		this.journalEncheres = new Journal(" journal Encheres EQ3", this);
 
 		/** @author Guillaume Leroy */
 		this.stock = new Producteur3Stock(this.journal_stock);
@@ -42,10 +46,13 @@ public class Producteur3Acteur implements IActeur {
 
 		this.plantationeq3= new Plantation3(journal_plantation);
 		this.agriculteurs = new Agriculteurs3(this.plantationeq3);
+		this.superviseur = null;
 
 	}
 	
 	public void initialiser() {
+		this.superviseur = (SuperviseurVentesAuxEncheres)(Filiere.LA_FILIERE.getActeur("Sup.Encheres"));
+		this.gestionCouts.coutStockageTonne = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur();
 	}
 
 	public String getNom() {// NE PAS MODIFIER
@@ -64,7 +71,30 @@ public class Producteur3Acteur implements IActeur {
 		// défi 1 
 		this.journal_periode.ajouter("période : "+ Filiere.LA_FILIERE.getEtape()); /** @author Vassili Spiridonov */
 		/** @author Guillaume Leroy */
-		HashMap <Gamme, Double> pourcentage_eq = this.plantationeq3.getPourcentageEquitable();
+		HashMap<Gamme, Double> pourcentage_eq = this.plantationeq3.getPourcentageEquitable();
+		double seuilMax = this.gestionCouts.getSeuilDefenseParFeve();
+
+		double stockMQE = this.stock.getStock(Feve.F_MQ_E);
+		if (stockMQE > seuilMax * 0.75) { 
+			pourcentage_eq.put(Gamme.MQ, 0.10); 
+		} else if (stockMQE > seuilMax * 0.40) { 
+			pourcentage_eq.put(Gamme.MQ, 0.30);
+		} else { 
+			pourcentage_eq.put(Gamme.MQ, 0.60);
+		}
+
+		double stockHQE = this.stock.getStock(Feve.F_HQ_E);
+		if (stockHQE > seuilMax * 0.75) {
+			pourcentage_eq.put(Gamme.HQ, 0.10);
+		} else if (stockHQE > seuilMax * 0.40) {
+			pourcentage_eq.put(Gamme.HQ, 0.30);
+		} else {
+			pourcentage_eq.put(Gamme.HQ, 0.60);
+		}
+
+		this.journal_plantation.ajouter("Ajustement dynamique des quotas : " 
+			+ (pourcentage_eq.get(Gamme.MQ)*100) + "% | HQ_E: " + (pourcentage_eq.get(Gamme.HQ)*100) + "%");
+
 		this.plantationeq3.nextStep(pourcentage_eq); // permet de gérer nos hectares de plantation
 		for (Feve f : List.of(Feve.F_BQ, Feve.F_MQ, Feve.F_HQ, Feve.F_BQ_E, Feve.F_MQ_E, Feve.F_HQ_E)){
 			this.stock.addStock(f, this.plantationeq3.getProductionFeve(f)); // ajoute le nouveau stock de fève et fait vieillir le restant
@@ -110,6 +140,7 @@ public class Producteur3Acteur implements IActeur {
 		res.add(journal_stock);
 		res.add(journal_cout_periode);
 		res.add(journal_plantation);
+		res.add(journalEncheres);
 		return res;
 	}
 

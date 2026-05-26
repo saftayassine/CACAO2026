@@ -1,3 +1,5 @@
+/**@author Ewan Lefort */
+
 package abstraction.eq4Transformateur1;
 import java.util.List;
 
@@ -39,26 +41,26 @@ public Transformateur1AcheteurCC() {
         BourseCacao bourseCacao=(BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
         Feve feve=(Feve) contrat.getProduit();
         if (!feve.isEquitable()){
-        if (prix<0.8*bourseCacao.getCours(feve).getValeur()){
+        if (prix<0.9*bourseCacao.getCours(feve).getValeur()){
         return contrat.getPrix();}
         else{
-            return 0.8*bourseCacao.getCours(feve).getValeur();
+            return 0.9*bourseCacao.getCours(feve).getValeur();
         }}
         else if (feve==Feve.F_BQ_E){
 					double cours= bourseCacao.getCours(Feve.F_BQ).getValeur();
-                    if (prix<0.9*cours){
+                    if (prix<cours){
                         return contrat.getPrix();
                     }
                     else{
-                        return 0.9*cours;
+                        return cours;
                     }}
 		else if (feve==Feve.F_HQ_E){
 					double cours= bourseCacao.getCours(Feve.F_HQ).getValeur();
-                    if (prix<0.9*cours){
+                    if (prix<cours){
                         return contrat.getPrix();
                     }
                     else{
-                        return 0.9*cours;
+                        return cours;
                     }}
         else{
             return 0.0; // on n'achete pas de feves equitables autres que BQ_E et HQ_E
@@ -77,6 +79,7 @@ public Transformateur1AcheteurCC() {
 
 	public void receptionner(IProduit p, double quantiteEnTonnes, ExemplaireContratCadre contrat){
         this.setStocksProduit(p, this.getStocksProduit(p)+quantiteEnTonnes);
+        this.addPeremption(quantiteEnTonnes, this.getChoco(p));
     }
 
     public List<Journal> getJournaux() {
