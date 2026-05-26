@@ -363,29 +363,23 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public Echeancier correctionEcheancier(Echeancier echeancier, Feve f){
-		int etape = Filiere.LA_FILIERE.getEtape();
-		int finAnnee = etape + 23 - (etape % 24);
-
 		double stockDispo = this.stockDebutAnnee.getOrDefault(f, 0.0);
 		double pourcentDispo = Math.max(0, this.getPlafondEngagement(f) - this.pourcentageAVendre.getOrDefault(f, 0.0));
 		double maxCetteAnnee = stockDispo * (pourcentDispo / 100.0);
 
 		double demandeCetteAnnee = this.getQuantiteCetteAnnee(echeancier);
 
-		double ratioCetteAnnee = 1.0;
+		double ratio = 1.0;
 		if (demandeCetteAnnee > maxCetteAnnee && demandeCetteAnnee > 0) {
-			ratioCetteAnnee = maxCetteAnnee / demandeCetteAnnee;
+			ratio = maxCetteAnnee / demandeCetteAnnee;
 		}
 
 		List<Double> quantites = new ArrayList<>();
 
+		// Appliquer uniformément le ratio de réduction sur chaque pas de temps
 		for (int step = echeancier.getStepDebut(); step <= echeancier.getStepFin(); step++) {
 			double qteDemandee = echeancier.getQuantite(step);
-			if (step <= finAnnee) {
-				quantites.add(qteDemandee * ratioCetteAnnee);
-			} else {
-				quantites.add(qteDemandee);
-			}
+			quantites.add(qteDemandee * ratio);
 		}
 
 		return new Echeancier(echeancier.getStepDebut(), quantites);
