@@ -59,7 +59,7 @@ public class EQ9_Pricing {
     private double facteurDemande(double demande, double stockT) {
         if (stockT <= 0) return 1.20; // rupture → prix haut
 
-        double ratio = demande / (stockT * 1000.0);
+        double ratio = demande / (stockT );
 
         if (ratio > 1.5) return 1.15;
         if (ratio > 1.0) return 1.05;
