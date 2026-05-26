@@ -165,6 +165,13 @@ public class Approvisionnement extends ChocolatDistributeur1 {
 
         for (int i = 0; i < liste.size(); i++) {
             ChocolatDeMarque actuel = liste.get(i);
+            
+            // PROTECTION CONCURRENT : On n'achète pas la marque du distributeur concurrent eq9
+            if (actuel.getMarque() != null && actuel.getMarque().contains("eq9Distributeur2")) {
+                this.journal5.ajouter("CC Refusé - Produit du concurrent boycotté : " + actuel.getMarque());
+                continue; 
+            }
+
             double prixCible = this.prixDAchat.getOrDefault(actuel, 1000.0);
             double prixMax = prixCible * 1.3;
 
@@ -208,6 +215,12 @@ public class Approvisionnement extends ChocolatDistributeur1 {
             if (besoinRestantPourAO <= 0.1) break;
 
             ChocolatDeMarque actuel = liste.get(i);
+            
+            // PROTECTION CONCURRENT : Même blocage pour la phase d'Appels d'Offres
+            if (actuel.getMarque() != null && actuel.getMarque().contains("eq9Distributeur2")) {
+                continue; 
+            }
+
             double prixCible = this.prixDAchat.getOrDefault(actuel, 1000.0);
             double prixMax = prixCible * 1.3;
 
@@ -263,7 +276,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
             this.cryptogramme,
             cdm,
             besoin,
-            TG
+            false
         );
 
         if (retenue != null) {
