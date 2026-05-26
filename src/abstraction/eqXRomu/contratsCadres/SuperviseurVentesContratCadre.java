@@ -127,7 +127,9 @@ public class SuperviseurVentesContratCadre implements IActeur, IAssermente {
 			throw new IllegalArgumentException(" appel de demandeAcheteur(...) de SuperViseurVentesContratCadre avec null pour echeancier");
 		}
 		if (!echeancier.echeancierAcceptable()) {
-			throw new  IllegalArgumentException(" appel de demandeAcheteur(...) par "+acheteur.getNom()+" en fournissant un echeancier ne respectant pas les conditions du document des distributeurs : "+echeancier);
+			System.out.println(" appel de demandeAcheteur(...) par "+acheteur.getNom()+" en fournissant un echeancier ne respectant pas les conditions du document des distributeurs : "+echeancier);
+			Filiere.LA_FILIERE.getBanque().faireFaillite(acheteur, this, cryptos.get(this));	
+			//throw new  IllegalArgumentException(" appel de demandeAcheteur(...) par "+acheteur.getNom()+" en fournissant un echeancier ne respectant pas les conditions du document des distributeurs : "+echeancier);
 		}
 		if (acheteur==vendeur) {
 			throw new IllegalArgumentException(" appel de demandeAcheteur(...) de SuperViseurVentesContratCadre avec vendeur==acheteur. On ne peut pas faire un contrat cadre avec soi meme");

@@ -18,62 +18,67 @@ public class Transformateur2ProductionChocolat extends Transformateur2Stock {
     public void next() {
         super.next();
 
-        // 1. PAIEMENT DES EMPLOYÉS (Coût fixe) 
+        // 1. PAIEMENT DES EMPLOYÉS
         double coutSalaires = 9000 * 625.0;
-        
-        // On demande à la banque de payer nos employés
         Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Salaires des employés", coutSalaires);
 
-        // 2. OPTIMISATION DE LA PRODUCTION (Flux tendu)
+        // 2. CONFIGURATION DES STOCKS CIBLES
         double stockCibleHQ = 200000.0;
         double stockCibleMQ = 200000.0;
         double stockCibleBQ = 200000.0;
 
-        // On recrée nos références exactes pour lire les stocks
         ChocolatDeMarque chocoHQ = new ChocolatDeMarque(Chocolat.C_HQ, "Ferrara Rocher", 100);
         ChocolatDeMarque chocoMQ = new ChocolatDeMarque(Chocolat.C_MQ, "Ferrara Rocher", 100);
-        ChocolatDeMarque chocoBQ = new ChocolatDeMarque(Chocolat.C_BQ, "Ferrara Rocher", 45); 
+        ChocolatDeMarque chocoBQ = new ChocolatDeMarque(Chocolat.C_BQ, "Ferrara Rocher", 45);
 
-        // On calcule ce qu'il nous MANQUE pour atteindre l'objectif
-        double aProduireHQ = stockCibleHQ - this.getStock_chocolatDeMarque(chocoHQ);
-        double aProduireMQ = stockCibleMQ - this.getStock_chocolatDeMarque(chocoMQ);
-        double aProduireBQ = stockCibleBQ - this.getStock_chocolatDeMarque(chocoBQ);
+        double capaciteProductionTour = 9000 * 8.4; 
+        
+        double besoinHQ = Math.max(0, stockCibleHQ - this.getStock_chocolatDeMarque(chocoHQ));
+        double besoinMQ = Math.max(0, stockCibleMQ - this.getStock_chocolatDeMarque(chocoMQ));
+        double besoinBQ = Math.max(0, stockCibleBQ - this.getStock_chocolatDeMarque(chocoBQ));
 
-        // Capacité de production de notre usine 
-        double capaciteRestante = 9000 * 8.4; 
+        // --- DIRECTIVE CRITIQUE : CAPTURE DES STOCKS DOS DOS AVANT PRODUCTION ---
+        double stockFeveHQ_Initial = this.getStock_feve(Feve.F_HQ);
+        double stockFeveMQ_Initial = this.getStock_feve(Feve.F_MQ);
+        double stockFeveBQ_Initial = this.getStock_feve(Feve.F_BQ);
 
-        // 3. On lance la production par ordre de priorité (le HQ rapporte le plus !)        
-        if (aProduireHQ > 0 && capaciteRestante > 0) {
-            double stockFeveHQ = this.getStock_feve(Feve.F_HQ);
-            double stockFeveMQ = this.getStock_feve(Feve.F_MQ);
+        // --- PRODUCTION HQ ---
+        if (stockFeveHQ_Initial > 0 && stockFeveMQ_Initial > 0 && besoinHQ > 0 && capaciteProductionTour > 0) {
+            double maxPossibleHQ = Math.min(stockFeveHQ_Initial / 0.49, stockFeveMQ_Initial / 0.51);
+            double capaciteAlloueeHQ = capaciteProductionTour / 5.0; // 1/3 max de l'usine
             
-            double maxPossibleHQ = stockFeveHQ / 0.49;
-            double maxPossibleMQ = stockFeveMQ / 0.51;
-            
-            double prodHQ = Math.min(Math.min(aProduireHQ, capaciteRestante), Math.min(maxPossibleHQ, maxPossibleMQ));
+            double prodHQ = Math.min(besoinHQ, Math.min(maxPossibleHQ, capaciteAlloueeHQ));
             this.ProductionFerraraHQ(prodHQ);
-            capaciteRestante -= prodHQ; // On met à jour la capacité restante
-        }
-        
-        if (aProduireMQ > 0 && capaciteRestante > 0) {
-            double stockFeveMQ = this.getStock_feve(Feve.F_MQ);
-            double stockFeveBQ = this.getStock_feve(Feve.F_BQ);
+            capaciteProductionTour -= prodHQ;
             
-            double maxPossibleMQ = stockFeveMQ / 0.26;
-            double maxPossibleBQ = stockFeveBQ / 0.74;
-        
-            double prodMQ = Math.min(Math.min(aProduireMQ, capaciteRestante), Math.min(maxPossibleMQ, maxPossibleBQ));
-            this.ProductionFerraraMQ(prodMQ);
-            capaciteRestante -= prodMQ;
+            // On met à jour les stocks virtuels restants pour les lignes suivantes
+            stockFeveMQ_Initial -= (prodHQ * 0.51);
         }
 
-        if (aProduireBQ > 0 && capaciteRestante > 0) {
-            double stockFeveBQ = this.getStock_feve(Feve.F_BQ);
-        
-            double maxPossibleBQ = stockFeveBQ / 0.45;
-            double prodBQ = Math.min(Math.min(aProduireBQ, capaciteRestante), maxPossibleBQ);
+        // --- PRODUCTION BQ (On la fait passer AVANT le MQ pour protéger ses fèves !) ---
+        if (stockFeveBQ_Initial > 0 && besoinBQ > 0 && capaciteProductionTour > 0) {
+            // On réserve la moitié du stock de fèves BQ pour le chocolat BQ, l'autre moitié ira au MQ
+            double fèvesBQPourCeBloc = stockFeveBQ_Initial * 0.5; 
+            double maxPossibleBQ = fèvesBQPourCeBloc / 0.45;
+            
+            double capaciteAlloueeBQ = 2*capaciteProductionTour / 5.0; // Partage équitable du reste
+            
+            double prodBQ = Math.min(besoinBQ, Math.min(maxPossibleBQ, capaciteAlloueeBQ));
             this.ProductionFerraraBQ(prodBQ);
-            capaciteRestante -= prodBQ;
+            capaciteProductionTour -= prodBQ;
+            
+            // On déduit ce qui a été consommé du stock réel pour le MQ
+            stockFeveBQ_Initial -= (prodBQ * 0.45);
+        }
+
+        // --- PRODUCTION MQ (En dernier, elle prend les restes de fèves MQ et BQ) ---
+        if (stockFeveMQ_Initial > 0 && stockFeveBQ_Initial > 0 && besoinMQ > 0 && capaciteProductionTour > 0) {
+            double maxPossibleMQ = Math.min(stockFeveMQ_Initial / 0.26, stockFeveBQ_Initial / 0.74);
+            double capaciteAlloueeMQ = capaciteProductionTour; // Prend tout ce qui reste de main d'œuvre
+            
+            double prodMQ = Math.min(besoinMQ, Math.min(maxPossibleMQ, capaciteAlloueeMQ));
+            this.ProductionFerraraMQ(prodMQ);
+            capaciteProductionTour -= prodMQ;
         }
     }
 
@@ -133,7 +138,7 @@ public class Transformateur2ProductionChocolat extends Transformateur2Stock {
         
         if (quantiteDemandee > 0) {
             double fevesBQUtilisees = quantiteDemandee * 0.45;
-            double quantiteMP = quantiteDemandee * 0.65;
+            double quantiteMP = quantiteDemandee * 0.55;
             
             this.remove_feve(fevesBQUtilisees, Feve.F_BQ);
             

@@ -19,6 +19,7 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
     private HashMap<IProduit, Double> stock;
     private HashMap<IProduit, Double> stockPrévu;
     public double ChocoProduit;
+    private double MatieresPremieresTotales;
     public ChocolatDeMarque ProntellaM= new ChocolatDeMarque(Chocolat.C_MQ, "Prontella", 65);
     public ChocolatDeMarque ProntellaB= new ChocolatDeMarque(Chocolat.C_BQ, "Prontella", 50);
     public ChocolatDeMarque ProntellaH= new ChocolatDeMarque(Chocolat.C_HQ, "Prontella", 65);
@@ -45,6 +46,7 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         this.stock=new HashMap<IProduit, Double>();
         this.stockPrévu=new HashMap<IProduit, Double>();
         this.ChocoProduit=0;
+        this.MatieresPremieresTotales=0;
         this.PeremptionProntellaB.put(0, new ArrayList<Double>());
         this.PeremptionProntellaM.put(0, new ArrayList<Double>());  
         this.PeremptionProntellaH.put(0, new ArrayList<Double>());
@@ -457,6 +459,9 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         return null;
     }
 
+    public double getMatieresPremieresTotales(){
+        return this.MatieresPremieresTotales;
+    }
 
     public void next(){
         super.next();
@@ -467,10 +472,16 @@ public class Transformateur1Stock extends Transformateur1Acteur implements IFabr
         double F_HQ_ATransfo= this.getStocksProduit(Feve.F_HQ);
         double F_HQ_E_ATransfo= this.getStocksProduit(Feve.F_HQ_E);
         double ChocoBObtenu= F_BQ_ATransfo/0.50;
+        double MatieresPremieresB= ChocoBObtenu-F_BQ_ATransfo;
         double ChocoBEObtenu= F_BQ_E_ATransfo/0.50;
+        double MatieresPremieresBE= ChocoBEObtenu-F_BQ_E_ATransfo;
         double ChocoMObtenu= F_MQ_ATransfo/0.65;
+        double MatieresPremieresM= ChocoMObtenu-F_MQ_ATransfo;
         double ChocoHObtenu= F_HQ_ATransfo/0.65;
+        double MatieresPremieresH= ChocoHObtenu-F_HQ_ATransfo;
         double ChocoHEObtenu= F_HQ_E_ATransfo/0.65;
+        double MatieresPremieresHE= ChocoHEObtenu-F_HQ_E_ATransfo;
+        double MatieresPremieresTotales= MatieresPremieresB+MatieresPremieresBE+MatieresPremieresM+MatieresPremieresH+MatieresPremieresHE;
         this.ChocoProduit=ChocoBObtenu+ChocoBEObtenu+ChocoMObtenu+ChocoHObtenu+ChocoHEObtenu;  
         this.setStocksProduit(Feve.F_BQ, this.getStocksProduit(Feve.F_BQ)-F_BQ_ATransfo);
         this.setStocksProduit(ProntellaB, this.getStocksProduit(ProntellaB)+ChocoBObtenu);

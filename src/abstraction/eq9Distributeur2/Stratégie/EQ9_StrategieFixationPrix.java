@@ -1,4 +1,4 @@
-package abstraction.eq9Distributeur2;
+package abstraction.eq9Distributeur2.Stratégie;
 
 import abstraction.eqXRomu.general.Journal;
 
@@ -9,8 +9,6 @@ import abstraction.eqXRomu.general.Journal;
  * @author Paul ROSSIGNOL
  */
 public class EQ9_StrategieFixationPrix {
-    
-    private Journal journal;
     
     // Marges de base par gamme de produit
     private static final double MARGE_GAMME_BASSE = 12.0;    
@@ -24,7 +22,6 @@ public class EQ9_StrategieFixationPrix {
     private static final double SEUIL_SURSTOCK = 75000.0;      
     
     public EQ9_StrategieFixationPrix(Journal j) {
-        this.journal = j;
     }
     
     /**

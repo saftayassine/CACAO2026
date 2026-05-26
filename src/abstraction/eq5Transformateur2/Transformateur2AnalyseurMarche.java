@@ -13,7 +13,10 @@ public class Transformateur2AnalyseurMarche extends Transformateur2Acteur{
 
     public Transformateur2AnalyseurMarche(){
         super();
-        this.prixDernieresEncheres = new ArrayList<>(3);
+        this.prixDernieresEncheres = new ArrayList<>();
+        this.prixDernieresEncheres.add(0.0);
+        this.prixDernieresEncheres.add(0.0);
+        this.prixDernieresEncheres.add(0.0);
     }
 
     public HashMap<ChocolatDeMarque,Double> DemandeMarque(){
@@ -46,7 +49,7 @@ public class Transformateur2AnalyseurMarche extends Transformateur2Acteur{
 
     public void updatePrixEnchere(Integer indice, Double prixTonne){
         /*indice 0:FerraraHQ, 1:FerraraMQ, 2:FerraraBQ  */
-        this.prixDernieresEncheres.add(indice,prixTonne);
+        this.prixDernieresEncheres.set(indice,prixTonne);
     }
 
     public Double getPrixEnchere(Integer indice){
