@@ -469,10 +469,4 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         
         return false;
     }
-    @Override
-    public List<String> getMarquesChocolat() {
-        List<String> marques = new ArrayList<String>();
-        marques.add("EQ9");
-        return marques;
-    }
 }
