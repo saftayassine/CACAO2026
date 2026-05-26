@@ -105,23 +105,33 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
     }
 
     public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
-        // Pas besoin d'initialiser ici, contrePropositionDeLAcheteur est toujours appelée avant par le superviseur
         double pVendeur = contrat.getPrix();
 
-        if (pVendeur <= this.prixCibleCourant * 0.9) {
+        // Si le vendeur est déjà en dessous de notre cible idéale, on signe immédiatement !
+        if (pVendeur <= this.prixCibleCourant) {
             return pVendeur;
         }
 
-        double debutNego = this.prixCibleCourant * 0.9;
+        // On commence notre négociation à 85% de notre prix cible
+        double debutNego = this.prixCibleCourant * 0.85;
+        
+        // Si le prix max est inférieur au prix du vendeur, on l'ajuste pour laisser une chance à la négociation
+        if (this.prixMaxCourant < debutNego) {
+            this.prixMaxCourant = debutNego * 1.4;
+        }
+        
         double margeTotale = this.prixMaxCourant - debutNego;
         int tourDeNego = contrat.getListePrix().size() / 2;
 
-        double nouvelleOffre = debutNego + (tourDeNego * (margeTotale / 10.0));
+        // Augmentation progressive de notre offre à chaque tour
+        double nouvelleOffre = debutNego + (tourDeNego * (margeTotale / 12.0));
 
+        // Au-delà de 10-12 tours de table, on applique le verdict final
         if (tourDeNego >= 10) {
             return (pVendeur <= this.prixMaxCourant) ? pVendeur : -1.0;
         }
 
+        // Si notre calcul mathématique dépasse l'offre du vendeur, on accepte son prix
         if (nouvelleOffre >= pVendeur) {
             return pVendeur;
         }
