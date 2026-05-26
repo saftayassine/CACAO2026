@@ -162,9 +162,6 @@ public class Producteur3VendeurCC extends Producteur3VendeurBourse implements IV
 
         boolean contratConnu = contratsEnCours.contains(contrat);
         if (!contratConnu) {
-            // si on reçoit une livraison pour un contrat qu'on ne connaît pas
-            // (initié par l'acheteur, notificationNouveauContratCadre non appelée),
-            // on l'enregistre maintenant
             this.contratsEnCours.add(contrat);
             this.journalCC.ajouter("Contrat #" + contrat.getNumero()
                     + " découvert à la livraison (initié par " + nomAcheteur + ") — enregistré");
