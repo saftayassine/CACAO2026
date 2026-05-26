@@ -62,23 +62,35 @@ public class Transformateur4Production extends Transformateur4Marques implements
     }
 
     public void next(){
-        if (Filiere.LA_FILIERE.getEtape()>0){
-            this.production(get_LQ().getValeur()*2.2222, Gamme.BQ, 45);
+        double quantity = 0.;
+        if (Filiere.LA_FILIERE.getEtape()>0 && this.StockChoco_BQ.getValeur()<1000000){
+            quantity = get_LQ().getValeur()*2.2222;
         }
+        else if (this.StockChoco_BQ.getValeur()>1000000){
+            quantity = 0.;
+        }
+        else{
+            quantity = 50000.;
+        }
+        this.production(quantity, Gamme.BQ,45);
+        
         super.next();
-        this.production(50000, Gamme.BQ, 45);
         BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
         this.cours_feves_bq.setValeur(this, bourse.getCours(Feve.F_BQ).getValeur());
         this.cout_prod.setValeur(this, 0.45*this.cours_feves_bq.getValeur()+0.55*1000);
 
         
         // Auteur : Aymeric
-        // Coûts de stockage du chocolat : 20 euros par tonne
+        // Coûts de stockage du chocolat : 25 euros par tonne
         double totalChoco = this.get_StockChoco_BQ().getValeur() + this.get_StockChoco_MQ().getValeur() + this.get_StockChoco_HQ().getValeur();
-        double coutStockage = totalChoco * 20;
+        double coutStockageU = Filiere.LA_FILIERE.getParametre("cout moyen stockage producteur").getValeur()*4;
+        double coutStockage = totalChoco * coutStockageU ;
         if(coutStockage > 0){
             Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coûts de stockage du chocolat", coutStockage);
         }
+
+        //Coûts de main d'oeuvre
+        double totalHR = 0;
     }
         
     // Coûts de production 

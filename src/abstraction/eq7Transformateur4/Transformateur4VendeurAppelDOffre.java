@@ -58,10 +58,10 @@ public class Transformateur4VendeurAppelDOffre extends Transformateur4VendeurAux
 
 	public void notifierVenteAO(OffreVente propositionRetenue){
         this.get_StockChoco_BQ().retirer(this, propositionRetenue.getQuantiteT());
-        this.getJournaux().get(8).ajouter("Retenue de l'offre: "+propositionRetenue.toString()+ "\n");
+        this.journal_vente_AO.ajouter("Retenue de l'offre: "+propositionRetenue.toString()+ "\n");
     }
 
 	public void notifierPropositionNonRetenueAO(OffreVente propositionRefusee){
-        this.getJournaux().get(8).ajouter("Refus de l'offre: "+propositionRefusee.toString()+ "\n");
+        this.journal_vente_AO.ajouter("Refus de l'offre: "+propositionRefusee.toString()+ "\n");
     }
 }

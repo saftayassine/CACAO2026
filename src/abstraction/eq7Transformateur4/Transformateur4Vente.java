@@ -39,6 +39,7 @@ public class Transformateur4Vente extends Transformateur4Production implements I
 
     @Override
     public double propositionPrix(ExemplaireContratCadre contrat) {
+        if (contrat.getProduit() instanceof ChocolatDeMarque){
         this.journal_negociation_CC.ajouter("[Prix acheteur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix());
         if (Double.isNaN(contrat.getPrix())){
             this.journal_negociation_CC.ajouter("[Prix vendeur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + this.cout_prod.getValeur()*3);
@@ -48,26 +49,34 @@ public class Transformateur4Vente extends Transformateur4Production implements I
             this.journal_negociation_CC.ajouter("[Prix vendeur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix()*3);
             return contrat.getPrix()*2;}
         else {
-            return 0.;}
+            return 0.;}}
+        else{
+            return 0.;
+        }
         
         }
 
     @Override
     public double contrePropositionPrixVendeur(ExemplaireContratCadre contrat) {
+        if (contrat.getProduit() instanceof ChocolatDeMarque){
         this.journal_negociation_CC.ajouter("[Prix acheteur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix());
         if (contrat.getPrix()<this.cout_prod.getValeur()){
             this.journal_negociation_CC.ajouter("[Prix vendeur] Proposition de Contrat avec "+ contrat.getAcheteur() + ", négociation du prix " + contrat.getPrix()*2);
             return contrat.getPrix()*2;}
         else {
             return 0.;}
+        }
+        else {
+            return 0.;
+        }
         
         
     }
 
     @Override
     public void notificationNouveauContratCadre(ExemplaireContratCadre contrat) {
-        this.journal_vente_CC.ajouter("Contrat accepté avec " + contrat.getAcheteur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
-        this.journal_negociation_CC.ajouter("Contrat accepté avec " + contrat.getAcheteur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
+        this.journal_vente_CC.ajouter("[CONTRAT ACCEPTE] Contrat accepté avec " + contrat.getVendeur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
+        this.journal_negociation_CC.ajouter("[CONTRAT ACCEPTE] Contrat accepté avec " + contrat.getAcheteur() + " pour " + contrat.getQuantiteTotale() + " tonnes de " + contrat.getProduit() + " à " + contrat.getPrix() + " € la tonne");
     
     }
 
