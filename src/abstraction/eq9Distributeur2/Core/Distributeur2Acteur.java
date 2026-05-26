@@ -83,7 +83,7 @@ public class Distributeur2Acteur implements IActeur, IDistributeurChocolatDeMarq
         if (produits != null && !produits.isEmpty()) {
             for (ChocolatDeMarque choco : produits) {
 
-                this.stock.put(choco, 0.0);
+                this.stock.put(choco, 40000.0);
             }
         }
 
