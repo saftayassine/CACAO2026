@@ -200,11 +200,13 @@ public class Producteur1Planteur extends Producteur1Stock {
     public void next() {
         super.next();
         int etape = Filiere.LA_FILIERE.getEtape();
-        this.impots();
+        
+
         if (etape % 24 == 0 && etape > 0) {
-            this.collecter();  // collecter d'abord
+            this.impots(); // <-- DÉPLACÉ ICI
+            this.collecter();
             this.charge();
         }
-        this.gererRotation(); // couper et replanter ensuite
+        this.gererRotation();
     }
 }
