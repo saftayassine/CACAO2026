@@ -40,6 +40,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	protected HashMap<ChocolatDeMarque, Double> ChocolatsAchetes;/** @author Lucas Levillain */
 	protected double CoutParArticle; /** @author Lucas Levillain */
 	protected HashMap<ChocolatDeMarque, Double> prixDAchat; /** @author Lucas Levillain */
+	protected double qtevendutotal; /** @author Ewen Landron */
 	
 	/**
          * @author Alexandre Cornet
@@ -68,6 +69,7 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 		this.volumerayonTG = 0.0;
 		this.CoutParArticle = 0.0;
 		this.prixDAchat = new HashMap<ChocolatDeMarque, Double>();
+		this.qtevendutotal = 75000*4;
 	}
 	/** @author Alexandre Cornet */
 	public void initialiser() {
@@ -411,6 +413,8 @@ public class Distributeur1Acteur implements IDistributeurChocolatDeMarque {
 	public void vendre(ClientFinal client, ChocolatDeMarque choco, double quantite, double montant, int crypto) {
 		double v=getQuantiteEnRayon(choco,this.cryptogramme);
 		this.Rayon.put((IProduit)(choco),v-quantite);
+		this.qtevendutotal+=quantite;
+
 
 	}
 	/** @author Alexandre Cornet */
