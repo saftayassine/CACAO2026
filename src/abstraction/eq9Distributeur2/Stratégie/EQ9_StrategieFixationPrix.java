@@ -94,10 +94,10 @@ public class EQ9_StrategieFixationPrix {
      * Calcule le facteur demande/offre
      * 
      * Ratio = Demande / Offre
-     *   > 1.5 : forte demande → prix haut
+     *   > 1.5 : forte demande : prix haut
      *   1.0-1.5 : équilibre normal
-     *   0.7-1.0 : légère suroffre → prix réduit
-     *   < 0.7 : suroffre massive → prix très réduit
+     *   0.7-1.0 : légère suroffre : prix réduit
+     *   < 0.7 : suroffre massive : prix très réduit
      */
     private double obtenirFacteurDemande(double ratio) {
         if (ratio > 1.5) {

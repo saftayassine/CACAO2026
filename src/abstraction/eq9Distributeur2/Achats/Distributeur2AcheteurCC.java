@@ -202,144 +202,54 @@ public class Distributeur2AcheteurCC extends Distributeur2AcheteurAO implements 
      */
     @Override
     public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
-        double prixPropose = contrat.getPrix();
 
         ChocolatDeMarque choco = (ChocolatDeMarque) contrat.getProduit();
-
-        int etape = Filiere.LA_FILIERE.getEtape();
-
-        EQ9_StrategieFixationPrix strat = new EQ9_StrategieFixationPrix(this.journal);
-
-        // Simulation d’un prix de vente réaliste
-        double prixVenteEstime = strat.calculerPrixVente(
-            prixPropose, // on suppose que c’est le coût d’achat
-            choco.getNom(),
-            this.stock.getOrDefault(choco, 0.0),
-            20.0, // demande estimée simple
-            prixPropose 
-        );
-
-        // marge minimale 
-        double margeMin = 1.2; // 20%
-
-        double prixMax = prixVenteEstime / margeMin;
-
-        // Si le vendeur demande plus que notre maximum : on abandonne la négociation
-        // -1.0 = stop dans le protocole
-        if (prixPropose > prixMax) {
-            this.journalCC.ajouter("Abandon négociation CC : prix " + prixPropose
-                + "€/T trop élevé (max=" + prixMax + "€/T)");
-            return -1.0;
-        }
-
-        // Situation financière
+        double prixPropose = contrat.getPrix();
+        double prixMax = getPrixMaxAcceptable(choco);
         double solde = getSolde();
-        double quantiteTotale = contrat.getQuantiteTotale(); // en tonnes
-        double coutTotalEstime = quantiteTotale * prixPropose;
+        double quantiteTotale = contrat.getQuantiteTotale();
 
-        // Si on n'a pas les fonds, être plus ferme dans la négociation
-        double margeSecurite = (solde < coutTotalEstime * 2) ? 1.1 : 1.05;
-
-        // On consulte le prix moyen du marché à l'étape précédente
-        // Si etape=0 on n'a pas de référence donc on met NaN (Not a Number = pas de valeur)
-        double prixMoyen = (etape >= 1) ? Filiere.LA_FILIERE.prixMoyen(choco, etape - 1) : Double.NaN;
-
-        // Si on a une référence marché valide
-        if (!Double.isNaN(prixMoyen) && prixMoyen > 0) {
-
-            double prixSeuilBas = Math.max(prixMax * 0.70, prixMoyen * 0.70);
-            prixSeuilBas = Math.min(prixSeuilBas, prixMax);
-
-            double prixCompromis = Math.max(prixPropose * 0.80, prixSeuilBas);
-            prixCompromis = Math.min(prixCompromis, prixMax);
-
-            if (prixPropose <= prixCompromis) {
-                this.journalCC.ajouter("Acceptation CC : prix attractif " + prixPropose + "€/T (marché=" + prixMoyen + ")");
-                return prixPropose;
-            }
-
-            List<Double> listePrix = contrat.getListePrix();
-            if (listePrix.isEmpty()) {
-                this.journalCC.ajouter("Abandon CC : liste des prix vide");
-                return -1.0;
-            }
-            double prixInitial = listePrix.get(0);
-            int tourNegociation = listePrix.size() / 2;
-            double ratio = 0.70;
-            for (int i = 0; i < tourNegociation && ratio < 0.80; i++) {
-                ratio += 0.05;
-            }
-            if (ratio > 0.80) {
-                ratio = 0.80;
-            }
-
-            double contreProposition = prixInitial * ratio;
-            if (contreProposition < prixSeuilBas) {
-                contreProposition = prixSeuilBas;
-            }
-            if (contreProposition > prixMax) {
-                contreProposition = prixMax;
-            }
-
-            if (contreProposition >= prixPropose * 0.98) {
-                this.journalCC.ajouter("Acceptation CC : " + prixPropose + "€/T pour " + choco.getNom());
-                return prixPropose;
-            }
-
-            double coutContreProposition = quantiteTotale * contreProposition;
-            if (solde < coutContreProposition * margeSecurite) {
-                this.journalCC.ajouter("Abandon CC : fonds insuffisants pour " + coutContreProposition
-                    + "€ (solde=" + solde + "€)");
-                return -1.0;
-            }
-
-            this.journalCC.ajouter("Contre-proposition CC : " + contreProposition
-                + "€/T (proposé=" + prixPropose + ", marché=" + prixMoyen + ", seuil bas=" + prixSeuilBas + ", compromis=" + prixCompromis + ")");
-            return contreProposition;
-        }
-
-        // Pas de référence marché disponible
-        double prixSeuilBas = Math.max(prixMax * 0.70, prixPropose * 0.70);
-        double prixCompromis = Math.max(prixPropose * 0.80, prixSeuilBas);
-        prixCompromis = Math.min(prixCompromis, prixMax);
-
-        if (prixPropose <= prixCompromis) {
-            this.journalCC.ajouter("Acceptation CC (pas de ref marché) : " + prixPropose + "€/T");
+        // prix déjà acceptable : on accepte
+        if (prixPropose <= prixMax) {
+            journalCC.ajouter("CC : prix acceptable → acceptation directe (" + prixPropose + ")");
             return prixPropose;
         }
 
-        List<Double> listePrix = contrat.getListePrix();
-        if (listePrix.isEmpty()) {
-            this.journalCC.ajouter("Abandon CC : liste des prix vide (pas de ref marché)");
-            return -1.0;
-        }
-        double prixInitial = listePrix.get(0);
-        int tourNegociation = listePrix.size() / 2;
-        double ratio = 0.70;
-        for (int i = 0; i < tourNegociation && ratio < 0.80; i++) {
-            ratio += 0.05;
-        }
-        if (ratio > 0.80) {
-            ratio = 0.80;
+        //négociations
+        List<Double> historique = contrat.getListePrix();
+        int tours = historique.size();
+
+        // contre-proposition
+        double ratio = 0.70 + 0.05 * tours; // augmente à chaque tour
+        if (ratio > 0.90) ratio = 0.90;     // on ne dépasse jamais 90%
+
+        double contreProp = prixPropose * ratio;
+
+        // Vérification du prix max
+        if (contreProp > prixMax) {
+            contreProp = prixMax;
         }
 
-        double contreProposition = prixInitial * ratio;
-        if (contreProposition < prixSeuilBas) {
-            contreProposition = prixSeuilBas;
-        }
-        if (contreProposition > prixMax) {
-            contreProposition = prixMax;
-        }
-
-        double coutContreProposition = quantiteTotale * contreProposition;
-        if (solde >= coutContreProposition * margeSecurite) {
-            this.journalCC.ajouter("Contre-proposition CC (pas de ref) : " + contreProposition + "€/T");
-            return contreProposition;
-        } else {
-            this.journalCC.ajouter("Abandon CC : fonds insuffisants (pas de ref marché)");
+        //Vérification financière
+        double coutTotal = contreProp * quantiteTotale;
+        if (solde < coutTotal) {
+            journalCC.ajouter("CC : abandon → fonds insuffisants pour " + contreProp);
             return -1.0;
         }
+
+        // contre-proposition est proche du prix vendeur : on accepte
+        if (contreProp >= prixPropose * 0.98 && prixPropose <= prixMax) {
+            journalCC.ajouter("CC : acceptation finale (" + prixPropose + ")");
+            return prixPropose;
+        }
+
+        //on continue la négociation
+        journalCC.ajouter("CC : contre-proposition " + contreProp
+            + " (proposé=" + prixPropose + ", max=" + prixMax + ")");
+
+        return contreProp;
     }
+
 
 
     @Override

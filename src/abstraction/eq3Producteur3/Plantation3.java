@@ -14,6 +14,8 @@ public class Plantation3 {
     public Map<Gamme, ArbresParGamme> plantation;
     private Journal journal;
     private HashMap<Gamme,Double> pourcentagesEquitables;
+    private Double pourcentagesEquitablesHQ;
+    private Double pourcentagesEquitablesMQ;
     
     public Plantation3(Journal journal) {
         /** @author Vassili Spiridonov*/
@@ -26,6 +28,8 @@ public class Plantation3 {
             ArbresParGamme arbres = new ArbresParGamme(g);
             this.plantation.put(g, arbres);
         }
+        this.pourcentagesEquitablesHQ=0.6;
+        this.pourcentagesEquitablesMQ=0.6;
 
         this.pourcentagesEquitables = new HashMap<Gamme, Double>();
         this.pourcentagesEquitables.put(Gamme.BQ, 0.0);

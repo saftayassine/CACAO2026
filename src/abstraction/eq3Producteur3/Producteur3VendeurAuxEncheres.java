@@ -12,6 +12,7 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.general.Journal;
 import abstraction.eqXRomu.produits.Feve;
 
+/** @author Guillaume Leroy */
 public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implements IVendeurAuxEncheres{
 	private HashMap<Feve, List<Double>> prixRetenus;
 	private double prixMin;
@@ -31,7 +32,7 @@ public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implemen
 
 	public void next() {
 		super.next();
-		/*int stepActuel = Filiere.LA_FILIERE.getEtape();
+		int stepActuel = Filiere.LA_FILIERE.getEtape();
 		this.journalEncheres.ajouter("=== STEP "+stepActuel+" ====================");
 		for (Feve f : this.stock.getStockMap().keySet()) {
 			if (f.isEquitable()) continue; // à modifier si les autres équipes peuvent acheter de l'équitable
@@ -88,7 +89,7 @@ public class Producteur3VendeurAuxEncheres extends Producteur3VendeurCC implemen
 			}else {
 				journalEncheres.ajouter("   Pas assez de marge sur la fève " + f + " pour risquer une enchère (Max vendable calculé : " + quantiteMaxVendable + "t)");
 			}
-		}*/
+		}
 		// On archive les contrats termines
 		this.journalEncheres.ajouter("=================================");
 	}
