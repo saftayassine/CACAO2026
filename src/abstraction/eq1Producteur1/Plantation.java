@@ -69,9 +69,9 @@ public class Plantation {
         if(this.etat==1){
             cabosse = 10 * 1000 * this.taille;   // jeune : 10 cabosses/arbre
         } else if(this.etat==2){
-            cabosse = 30 * 1000 * this.taille;   // plein rendement : 30 cabosses/arbre
+            cabosse = 50 * 1000 * this.taille;   // plein rendement : 30 cabosses/arbre
         } else if(this.etat==3){
-            cabosse = 15 * 1000 * this.taille;   // vieillissant : 15 cabosses/arbre
+            cabosse = 25 * 1000 * this.taille;   // vieillissant : 15 cabosses/arbre
         }
 
     
@@ -90,7 +90,7 @@ public class Plantation {
             feves_par_cabosse = 50;
         }
 
-        double cacao = ( feves_par_cabosse * cabosse * 2 )/1000000;
+        double cacao = (feves_par_cabosse * cabosse) / 1000000.0;
 
         return cacao;
 

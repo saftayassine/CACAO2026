@@ -22,8 +22,8 @@ public class Producteur1Planteur extends Producteur1Stock {
      */
     public Producteur1Planteur() {
         super();
-        Plantation BQ = new Plantation(Feve.F_BQ, 850000, -600);
-        Plantation MQ = new Plantation(Feve.F_MQ, 150000, -600);
+        Plantation BQ = new Plantation(Feve.F_BQ, 850000, -360);
+        Plantation MQ = new Plantation(Feve.F_MQ, 150000, -360);
         this.plantations.add(BQ);
         this.plantations.add(MQ);
         this.journalPlantation = new Journal("Journal "+this.getNom()+ " plantation", this);
@@ -201,10 +201,10 @@ public class Producteur1Planteur extends Producteur1Stock {
         super.next();
         int etape = Filiere.LA_FILIERE.getEtape();
         this.impots();
-        this.gererRotation();
-        if (etape % 24 == 0 && etape > 0) { // ← ajouter && etape > 0
-            this.collecter();
+        if (etape % 24 == 0 && etape > 0) {
+            this.collecter();  // collecter d'abord
             this.charge();
         }
+        this.gererRotation(); // couper et replanter ensuite
     }
 }
