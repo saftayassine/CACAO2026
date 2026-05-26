@@ -1,5 +1,8 @@
 
 package abstraction.eq6Transformateur3;
+import abstraction.eq4Transformateur1.Transformateur1Stock;
+import abstraction.eqXRomu.filiere.Filiere;
+
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ import abstraction.eqXRomu.appelDOffre.SuperviseurVentesAO;
 
 
 import abstraction.eq6Transformateur3.StockFeve;
+import abstraction.eq5Transformateur2.Transformateur2Stock;
 import abstraction.eq6Transformateur3.StockChocolat;
 
 /**
@@ -46,28 +50,43 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
     // Paramètres simples de production
     private int nbOuvriers;
     private int nbMachines;
+    private int nbOuvriersPrecedent;
 
     // Paramètres de capacité
     private static final double PRODUCTION_PAR_OUVRIER = 8.4;   // T / période / ouvrier
-    private static final double PRODUCTION_PAR_MACHINE = 840.0; // T / période / machine
+    private static final double PRODUCTION_PAR_MACHINE = 840.0;
+    private static final double MAX_HEURES_SUP = 1.20;
 
     // Coûts variables simples
+    private static final double SALAIRE_OUVRIER = 1250.0;        // €/ouvrier/période
     private static final double COUT_ENERGIE_PAR_T = 90.0;      // €/T
     private static final double COUT_ENTRETIEN_PAR_T = 40.0;    // €/T
+    private static final double CHARGES_FIXES_PERIODE = 2000000.0;
+
+    private static final double FRAIS_EMBAUCHE = 5000.0;
+    private static final double FRAIS_LICENCIEMENT = 3500.0;
 
     // Règles qualité perçue
     private static final double GAIN_QUALITE_EQUITABLE = 0.5;
     private static final double IMPACT_MARQUE_QUALITE_PERCUE = 0.3;
     private static final double IMPACT_CACAO_QUALITE_PERCUE = 0.3;
 
+    private static final double prixStockageTonne=20;
+
+    protected Journal journaltransfo;
+
     public Transformateur3Transformation() {
-        this.nbOuvriers = 100;
-        this.nbMachines = 2;
+        super();
+        this.nbOuvriers = 9000;
+        this.nbOuvriersPrecedent = 9000;
+        this.nbMachines = 90;
+        this.journaltransfo = new Journal("Journal de transformation eq6", this);
     }
 
     public Transformateur3Transformation( int nbOuvriers, int nbMachines) {
         this.nbOuvriers = nbOuvriers;
         this.nbMachines = nbMachines;
+        this.journaltransfo = new Journal("Journal de transformation eq6", this);
     }
 
     public int getNbOuvriers() {
@@ -90,9 +109,9 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
      * Capacité maximale de production sur une période.
      */
     public double capaciteProduction() {
-        double capaciteOuvriers = nbOuvriers * PRODUCTION_PAR_OUVRIER;
-        double capaciteMachines = nbMachines * PRODUCTION_PAR_MACHINE;
-        return Math.min(capaciteOuvriers, capaciteMachines);
+        double capaciteOuvriersMax = nbOuvriers * PRODUCTION_PAR_OUVRIER * MAX_HEURES_SUP;
+        double capaciteMachineMax = nbMachines * PRODUCTION_PAR_MACHINE;
+        return Math.min(capaciteOuvriersMax, capaciteMachineMax);
     }
 
     /**
@@ -238,20 +257,36 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
     }
     /*cout de production d'une quantité définie de chocolat sur une période */
     public double coutTransformation(double quantiteChocolatProduite) {
-       if (quantiteChocolatProduite <= 0) {
-           return 0.0;
-    }
+       if (quantiteChocolatProduite <= 0 && nbOuvriers == nbOuvriersPrecedent) {
+           return CHARGES_FIXES_PERIODE + (nbOuvriers * SALAIRE_OUVRIER);
+        }
+        double coutMainOeuvre = nbOuvriers * SALAIRE_OUVRIER;
 
-    
-       double coutMainOeuvre = nbOuvriers * 1250;
+        double coutRH = 0;
+        int difference = nbOuvriers - nbOuvriersPrecedent;
+        if (difference > 0) {
+            coutRH = difference * FRAIS_EMBAUCHE;
+        } else if (difference < 0) {
+            coutRH = Math.abs(difference) * FRAIS_LICENCIEMENT;
+        }
 
-       double coutEnergie = quantiteChocolatProduite * 500.0 * 0.18;
+        double capaciteStandard = nbOuvriers * PRODUCTION_PAR_OUVRIER;
+        double surcoutHeuresSup = 0;
 
-       double coutLocauxEtChargesFixes = 2000000.0;
+        if (quantiteChocolatProduite > capaciteStandard) {
+            double quantiteHeuresSup = quantiteChocolatProduite - capaciteStandard;
+            // Prix d'une tonne en standard = SALAIRE_BASE / PRODUCTION_PAR_OUVRIER
+            // Heures sup payées x2
+            surcoutHeuresSup = quantiteHeuresSup * (SALAIRE_OUVRIER / PRODUCTION_PAR_OUVRIER) * 2;
+        }
 
-       double coutTotal = coutMainOeuvre + coutEnergie + coutLocauxEtChargesFixes;
+        double coutEnergie = quantiteChocolatProduite * COUT_ENERGIE_PAR_T;
 
-       return coutTotal;
+        double coutEntretien = quantiteChocolatProduite * COUT_ENTRETIEN_PAR_T;
+
+        double coutTotal = coutMainOeuvre + coutRH + coutEnergie + coutEntretien + CHARGES_FIXES_PERIODE + surcoutHeuresSup;
+
+        return coutTotal;
 }
 
     /**
@@ -262,14 +297,15 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
      */
     public Chocolat transformer(Feve feve, double quantiteFevesUtilisee, double pourcentageCacao, double noteMarque) {
        if (!peutTransformer(feve, quantiteFevesUtilisee, pourcentageCacao)) {
-           this.journal.ajouter("Transformation impossible : " + quantiteFevesUtilisee + " T de " + feve
+           this.journaltransfo.ajouter("Transformation impossible : " + quantiteFevesUtilisee + " T de " + feve
                    + " avec pourcentage cacao = " + pourcentageCacao);
            return null;
+           
        }
 
        Chocolat chocolatProduit = chocolatCorrespondant(feve, pourcentageCacao);
        if (chocolatProduit == null) {
-           this.journal.ajouter("Aucun chocolat correspondant pour " + feve
+           this.journaltransfo.ajouter("Aucun chocolat correspondant pour " + feve
                    + " avec pourcentage cacao = " + pourcentageCacao);
            return null;
        }
@@ -278,25 +314,37 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
 
     // Règle : pour 100 T de chocolat à p% cacao, il faut 100*p T de fèves
     // Donc : quantité de chocolat produite = quantité de fèves utilisée / p
-       double quantiteChocolatProduite = quantiteFevesUtilisee / pourcentageCacao;
+        double quantiteChocolatProduite = quantiteFevesUtilisee / pourcentageCacao;
 
     // Retrait des fèves du stock
-       this.stockFeve.retirerQuantite(feve, quantiteFevesUtilisee);
+        this.stockFeve.retirerQuantite(feve, quantiteFevesUtilisee);
 
-    // Ajout du chocolat au stock
-       this.stockChocolat.ajouterQuantite(chocolatProduit, quantiteChocolatProduite);
+        if (chocolatProduit == Chocolat.C_HQ_E) {
+        double stockActuel = this.getStockProduit(this.LamborghiniduCacao);
+        this.setStockProduit(this.LamborghiniduCacao, stockActuel + quantiteChocolatProduite);
+        journaltransfo.ajouter("Ajout de " + quantiteChocolatProduite + " T de " + this.LamborghiniduCacao + " au stock de chocolat de marque");
+        } else if (chocolatProduit == Chocolat.C_MQ_E) {
+            double stockActuel = this.getStockProduit(this.Chocoenbien);
+            this.setStockProduit(this.Chocoenbien, stockActuel + quantiteChocolatProduite);
+            journaltransfo.ajouter("Ajout de " + quantiteChocolatProduite + " T de " + this.Chocoenbien + " au stock de chocolat de marque");
+        } 
+        else {
+            this.stockChocolat.ajouterQuantite(chocolatProduit, quantiteChocolatProduite);
+        }
 
     // Coût calculé à partir des fèves utilisées et du chocolat produit
        double cout = coutTransformation(quantiteChocolatProduite);
 
-       this.journal.ajouter("Transformation de " + quantiteFevesUtilisee + " T de " + feve
+       this.journaltransfo.ajouter("Transformation de " + quantiteFevesUtilisee + " T de " + feve
                + " en " + quantiteChocolatProduite + " T de " + chocolatProduit
                + " | % cacao = " + pourcentageCacao
                + " | qualité perçue = " + qualitePercue
                + " | péremption = " + dureePeremption(pourcentageCacao) + " mois"
                + " | coût estimé = " + cout + " €");
+        Filiere.LA_FILIERE.getBanque().payerCout(this, this.cryptogramme,"couts totaux", cout);
 
        return chocolatProduit;
+
 }
     /**
      * Version simple appelée à chaque étape.
@@ -309,8 +357,10 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
      * noteMarque par défaut = 1.0
      */
     public void next() {
+        super.next();
         double capaciteRestante = capaciteProduction();
         double noteMarque = 1.0;
+        double totalProduit = 0.0;
 
         for (Feve feve : this.stockFeve.getFeves()) {
             if (capaciteRestante <= 0.0) {
@@ -336,7 +386,43 @@ public class Transformateur3Transformation extends Transformateur3Acteur{
             Chocolat choco = transformer(feve, quantiteATransformer, pourcentageCacao, noteMarque);
             if (choco != null) {
                 capaciteRestante -= quantiteATransformer;
+                totalProduit += quantiteATransformer / pourcentageCacao;
             }
         }
+        double coutTotal = coutTransformation(totalProduit);
+        if (coutTotal > 0) {
+            Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Salaires + RH + Charges", coutTotal);
+        }
+        double coutStockage = calculerCoutStockage();
+        if (coutStockage > 0) {
+            Filiere.LA_FILIERE.getBanque().payerCout(this, cryptogramme, "Coût de stockage", coutStockage);
+        }
+        this.nbOuvriersPrecedent = this.nbOuvriers;
+    }
+
+    private double calculerCoutStockage() {
+        double totalStock = 0;
+
+        for (Feve f : stockFeve.getFeves()) {
+            totalStock += stockFeve.getQuantite(f);
+        }
+        
+        // Somme du chocolat en vrac
+        for (Chocolat c : stockChocolat.getChocolat()) {
+            totalStock += stockChocolat.getQuantite(c);
+        }
+        
+        // Somme du chocolat de marque
+        for (IProduit p : stockchocomarque.keySet()) {
+            totalStock += stockchocomarque.get(p);
+        }
+        
+        return totalStock * prixStockageTonne;
+        }
+
+        public List<Journal> getJournaux() {
+            List<Journal> res = super.getJournaux();
+            res.add(this.journaltransfo);
+            return res;
     }
 }

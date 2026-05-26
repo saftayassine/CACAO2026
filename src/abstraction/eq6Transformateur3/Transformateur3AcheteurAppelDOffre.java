@@ -46,7 +46,7 @@ public class Transformateur3AcheteurAppelDOffre extends Transformateur3VendeurAp
 		super.next();
 		this.journalAOVente.ajouter("=== STEP "+Filiere.LA_FILIERE.getEtape()+" ====================");
 		for (Feve f : this.stockFeve.getFeves()) {
-			if (!f.isEquitable() && this.stockFeve.getQuantite(f)<95000) { // pas top...
+			if ((f == Feve.F_HQ_E || f == Feve.F_MQ_E) && this.stockFeve.getQuantite(f) < 95000) {
 				int quantite = 5000 + Filiere.random.nextInt((int)(100001-this.stockFeve.getQuantite(f))); 
 				OffreVente ov = supAO.acheterParAO(this,  cryptogramme, f, quantite);
 				journalAOVente.ajouter("   Je lance un appel d'offre de "+quantite+" T de "+f);
@@ -63,11 +63,27 @@ public class Transformateur3AcheteurAppelDOffre extends Transformateur3VendeurAp
 
 	public OffreVente choisirOV(List<OffreVente> propositions) {
 		BourseCacao bourse = (BourseCacao)(Filiere.LA_FILIERE.getActeur("BourseCacao"));
-		double cours = ( bourse.getCours((Feve)propositions.get(0).getProduit())).getValeur();
-		if (propositions.get(0).getPrixT()<=cours) {
-			return propositions.get(0);
+		OffreVente meilleureOffre = propositions.get(0);
+		for (OffreVente ov : propositions) {
+			if (ov.getPrixT() < meilleureOffre.getPrixT()) {
+				meilleureOffre = ov;
+			}
+		}
+
+		Feve f = (Feve) meilleureOffre.getProduit();
+		double prixMaxAcceptable = 0.0;
+
+		double coursDeBaseMQ = bourse.getCours(Feve.F_MQ).getValeur();
+		if (f == Feve.F_MQ_E) {
+			prixMaxAcceptable = coursDeBaseMQ * 1.20; 
+		} else if (f == Feve.F_HQ_E) {
+			// Pour le HQ_E, on accepte de payer jusqu'à 50% plus cher que le MQ classique
+			prixMaxAcceptable = coursDeBaseMQ * 1.50; 
+		}
+		if (meilleureOffre.getPrixT() <= prixMaxAcceptable) {
+			return meilleureOffre;
 		} else {
-			return null;
+			return null; // Trop cher, on refuse l'offre
 		}
 	}
 

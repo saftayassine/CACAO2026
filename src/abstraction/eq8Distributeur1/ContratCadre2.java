@@ -57,7 +57,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
 
     @Override
-    protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax, boolean TG) {
+    protected void methodeIntermediaireAchatCC(ChocolatDeMarque cdm, double besoinParEtape, double prixCible, double prixMax, boolean TG) {
         this.besoinCourant = besoinParEtape;
         this.prixCibleCourant = prixCible;
         this.prixMaxCourant = prixMax;
@@ -67,7 +67,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
         if (vendeurs != null && vendeurs.size() > 0) {
             // Création d'un échéancier sur 12 étapes
-            Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape(), 12, besoinParEtape);
+            Echeancier ech = new Echeancier(Filiere.LA_FILIERE.getEtape() + 1, 12, besoinParEtape);
             
             // On lance la négociation en précisant si on veut de la TG ou non
             // Le dernier paramètre 'TG' est celui que tu as calculé dans parcourirEtAcheter
@@ -88,40 +88,47 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
 
         Echeancier echVendeur = contrat.getEcheancier();
         Echeancier echReponse = new Echeancier(echVendeur.getStepDebut());
+        int nbSteps = echVendeur.getStepFin() - echVendeur.getStepDebut() + 1;
 
         for (int step = echVendeur.getStepDebut(); step <= echVendeur.getStepFin(); step++) {
             double qteVendeur = echVendeur.getQuantite(step);
 
             if (qteVendeur > this.besoinCourant) {
-                echReponse.set(step, this.besoinCourant);
-            } else if (Math.abs(qteVendeur - this.besoinCourant) < 0.01) {
+                echReponse.set(step, this.besoinCourant/nbSteps); // On répartit notre besoin sur les étapes restantes
+            } else if (Math.abs(qteVendeur - this.besoinCourant/nbSteps) < 0.01) {
                 echReponse.set(step, qteVendeur);
             } else {
                 // Stratégie du milieu
-                echReponse.set(step, (qteVendeur + this.besoinCourant) / 2.0);
+                echReponse.set(step, (qteVendeur + this.besoinCourant/nbSteps) / 2.0);
             }
         }
         return echReponse;
     }
 
     public double contrePropositionPrixAcheteur(ExemplaireContratCadre contrat) {
-        // Pas besoin d'initialiser ici, contrePropositionDeLAcheteur est toujours appelée avant par le superviseur
         double pVendeur = contrat.getPrix();
 
-        if (pVendeur <= this.prixCibleCourant * 0.9) {
+        // Si le vendeur est déjà en dessous de notre cible idéale, on signe immédiatement !
+        if (pVendeur <= this.prixCibleCourant) {
             return pVendeur;
         }
 
-        double debutNego = this.prixCibleCourant * 0.9;
+        // On commence notre négociation à 85% de notre prix cible
+        double debutNego = this.prixCibleCourant * 0.85;
+        
+        // Si le prix max est inférieur au prix du vendeur, on l'ajuste pour laisser une chance à la négociation
+        if (this.prixMaxCourant < debutNego) {
+            this.prixMaxCourant = this.prixCibleCourant * 1.4;
+        }
+        
         double margeTotale = this.prixMaxCourant - debutNego;
         int tourDeNego = contrat.getListePrix().size() / 2;
 
-        double nouvelleOffre = debutNego + (tourDeNego * (margeTotale / 10.0));
+        // Augmentation progressive de notre offre à chaque tour
+        double nouvelleOffre = debutNego + (tourDeNego * (margeTotale / 12.0));
 
-        if (tourDeNego >= 10) {
-            return (pVendeur <= this.prixMaxCourant) ? pVendeur : -1.0;
-        }
 
+        // Si notre calcul mathématique dépasse l'offre du vendeur, on accepte son prix
         if (nouvelleOffre >= pVendeur) {
             return pVendeur;
         }

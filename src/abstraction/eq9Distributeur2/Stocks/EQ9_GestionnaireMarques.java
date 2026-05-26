@@ -1,4 +1,4 @@
-package abstraction.eq9Distributeur2;
+package abstraction.eq9Distributeur2.Stocks;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,9 +54,9 @@ public class EQ9_GestionnaireMarques {
             0.15  // 15%
         ));
         
-        // EQ7 - (à définir)
-        marques.put("Marque_EQ7", new MarqueTransformateur(
-            "Marque_EQ7",
+        // EQ7 - CACAO+ -- BG
+        marques.put("CACAO+", new MarqueTransformateur(
+            "CACAO+",
             "EQ7",
             0.10  // 10%
         ));
