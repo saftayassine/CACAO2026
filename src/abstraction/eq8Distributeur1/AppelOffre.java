@@ -14,6 +14,8 @@ import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
 import abstraction.eqXRomu.produits.IProduit;
 
+/** @author Lucas Levillain */
+
 public class AppelOffre extends ContratCadre2 implements IAcheteurAO {
 
     private static final int TAILLE_HISTORIQUE = 10;

@@ -18,6 +18,8 @@ import abstraction.eqXRomu.produits.Gamme;
 import abstraction.eqXRomu.produits.IProduit;
 
 /** @author Ewen Landron */
+/** @author Lucas Levillain */
+
 public class Approvisionnement extends ChocolatDistributeur1 {
 
     protected Map<ChocolatDeMarque, Double> prixDAchat;
