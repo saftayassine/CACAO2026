@@ -113,6 +113,14 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		Echeancier e = contrat.getEcheancier();
 		Feve f = (Feve) contrat.getProduit();
 
+		// 🚨 LE BOUCLIER ABSOLU 🚨
+		// Si l'acheteur nous propose un contrat illégal (< 100t), on refuse net.
+		// Cela évite d'accepter l'erreur d'un autre bot et de se faire sanctionner !
+		if (e.getQuantiteTotale() < QTE_MIN_ECHEANCIER) {
+			journalCC.ajouter(Color.RED, Color.white, "L'acheteur propose un échéancier illégal (<100t) -> refus immédiat");
+			return null;
+		}
+
 		if(this.onPeutVendre(f, e)){
 			return e;
 		}
@@ -126,9 +134,6 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 		Echeancier newEcheancier = this.correctionEcheancier(e, f);
 
-		// FIX #10 : on refuse si l'échéancier corrigé est sous le seuil minimum (100t)
-		// imposé par les distributeurs. Mieux vaut renvoyer null (refus propre) qu'un
-		// échéancier non conforme qui entraînerait la mise en faillite.
 		if(newEcheancier.getQuantiteTotale() < QTE_MIN_ECHEANCIER){
 			journalCC.ajouter(Color.ORANGE, Color.white,
 				"   contre-proposition refusée : qté corrigée ("
@@ -139,6 +144,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 		return newEcheancier;
 	}
+
 
 	public double propositionPrix(ExemplaireContratCadre contrat){
         return this.prixTonne.get((Feve) contrat.getProduit());
@@ -336,24 +342,19 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 
 	public boolean onPeutVendre(Feve f, Echeancier e){
-		int etape = Filiere.LA_FILIERE.getEtape();
-		int tempsRestant = 24 - etape%24;
-		double quantiteRestante = e.getQuantiteJusquA(tempsRestant);
+		// 1. On calcule la VRAIE demande de l'échéancier pour l'année en cours
+		double demandeCetteAnnee = this.getQuantiteCetteAnnee(e);
 
+		// 2. On calcule la quantité max qu'on a le droit de vendre (pour protéger strictement nos 500t)
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
-		double pourcent = stockRef > 0 ? (quantiteRestante/stockRef)*100 : 0;
+		double pourcentDispo = Math.max(0, this.getPlafondEngagement(f) - this.pourcentageAVendre.getOrDefault(f, 0.0));
+		double maxCetteAnnee = stockRef * (pourcentDispo / 100.0);
 
-		boolean cetteAnnee = pourcent < this.getPlafondEngagement(f) - this.pourcentageAVendre.get(f);
+		// 3. On accepte tel quel SEULEMENT si la demande respecte notre marge
+		boolean cetteAnneeOk = demandeCetteAnnee <= maxCetteAnnee;
 
-		double quantiteApres = e.getQuantiteAPartirDe(etape +tempsRestant + 1) ;
-		if(e.getStepFin()> etape + 48 - etape%24){
-			quantiteApres +=  - e.getQuantiteAPartirDe(etape + 48 - etape%24) ;
-		}
 
-		boolean anneeApres = quantiteApres < 10000000 ;
-
-		return anneeApres && cetteAnnee;
-
+		return cetteAnneeOk;
 	}
 
 	/////////////////////////////////
