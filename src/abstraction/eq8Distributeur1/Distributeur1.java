@@ -27,14 +27,6 @@ public class Distributeur1 extends MiseEnRayon {
 		*/
 		double volumeCibleTotal = qtevendutotal*1.1;
 
-		// On remet tout les produits du rayon en stock pour simplifier les calculs
-		for (int i = 0; i < p.size(); i++) {
-            double q = this.getQuantiteEnStock(p.get(i), this.cryptogramme);
-			double f = this.getQuantiteEnRayon(p.get(i), this.cryptogramme);
-            this.Rayon.put(p.get(i),0.0);
-			this.Stock.put(p.get(i),q+f);
-        }
-		
 		this.trierChocolatsParPrix();
 		if (Filiere.LA_FILIERE.getEtape() == 1) {
 			this.initialiser();
@@ -71,7 +63,7 @@ public class Distributeur1 extends MiseEnRayon {
 		
 		this.actualiserPrixDachatParContrats();
 		this.actualiserPrixDeVente();
-		this.stockPredit = initialiserStockPredit();
+		this.stockPreditAjourPourCeTour = false; // On réinitialise le flag pour le prochain tour, afin de recalculer le stock prédit à la prochaine demande
 
 		//JournalActions
 		this.journal3.ajouter("Numéro de tour : " + Filiere.LA_FILIERE.getEtape());

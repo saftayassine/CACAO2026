@@ -296,6 +296,16 @@ public class Approvisionnement extends ChocolatDistributeur1 {
      * de modifier le stock réel pendant les simulations de calcul.
      */
     protected Map<ChocolatDeMarque, Double> initialiserStockPredit() {
+
+        // On remet tout les produits du rayon en stock pour simplifier les calculs
+        List<ChocolatDeMarque> pro=Filiere.LA_FILIERE.getChocolatsProduits();
+		for (int i = 0; i < pro.size(); i++) {
+            double q = this.getQuantiteEnStock(pro.get(i), this.cryptogramme);
+			double f = this.getQuantiteEnRayon(pro.get(i), this.cryptogramme);
+            this.Rayon.put(pro.get(i),0.0);
+			this.Stock.put(pro.get(i),q+f);
+        }
+		
         Map<ChocolatDeMarque, Double> predit = new HashMap<>();
         this.ChocolatsAchetes = new HashMap<>(); 
         this.stockPreditTG = new HashMap<>(); // Initialisation du dictionnaire TG

@@ -23,6 +23,7 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
     
     // Flag d'initiative (géré dans le next() d'Approvisionnement2)
     protected boolean lancement_CC;
+    protected boolean stockPreditAjourPourCeTour;
 
     public ContratCadre2() {
         super();
@@ -35,6 +36,11 @@ public class ContratCadre2 extends Approvisionnement implements IAcheteurContrat
      * Sinon, on les calcule à la volée via les données d'Approvisionnement2.
      */
     private void verifierEtInitialiserParametres(ExemplaireContratCadre contrat) {
+        if (!this.stockPreditAjourPourCeTour) {
+        this.initialiserStockPredit();
+        this.stockPreditAjourPourCeTour = true; // On verrouille pour le reste de l'étape
+        }
+    
         if (!this.lancement_CC) {
             IProduit p = (IProduit) contrat.getProduit();
             
