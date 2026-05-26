@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import abstraction.eqXRomu.appelDOffre.AppelDOffre;
+import abstraction.eqXRomu.appelDOffre.IAcheteurAO;
+import abstraction.eqXRomu.appelDOffre.OffreVente;
+import abstraction.eqXRomu.appelDOffre.SuperviseurVentesAO;
 import abstraction.eqXRomu.contratsCadres.ExemplaireContratCadre;
 import abstraction.eqXRomu.filiere.Filiere;
 import abstraction.eqXRomu.produits.ChocolatDeMarque;
@@ -196,7 +200,36 @@ public class Approvisionnement extends ChocolatDistributeur1 {
 
     protected void methodeIntermediaireAchat(ChocolatDeMarque cdm, double besoin, double prixCible, double prixMax, boolean TG) {
         methodeIntermediaireAchatCC(cdm, besoin, prixCible, prixMax, TG);
+    
+        if (besoin < AppelDOffre.AO_QUANTITE_MIN) return;
+
+    // Récupération du superviseur AO via son nom dans la filière
+    SuperviseurVentesAO superviseur = (SuperviseurVentesAO) Filiere.LA_FILIERE.getActeur("Sup.AO");
+
+        if (superviseur == null) {
+            this.journal5.ajouter("ERREUR : SuperviseurVentesAO introuvable");
+            return;
+        }
+
+        OffreVente retenue = superviseur.acheterParAO(
+        (IAcheteurAO) this,
+        this.cryptogramme,
+        cdm,
+        besoin,
+        TG
+    );
+
+    if (retenue != null) {
+        this.journal3.ajouter(
+            "AO retenu : " + retenue.getQuantiteT() + " T de " + cdm
+            + " à " + retenue.getPrixT() + " €/T"
+            + (TG ? " [TG]" : "")
+        );
+    } else {
+        this.journal3.ajouter("AO sans résultat pour " + cdm);
     }
+}
+
 
     /**
      * Correction : Création d'une nouvelle Map pour le stock prédit afin d'éviter
