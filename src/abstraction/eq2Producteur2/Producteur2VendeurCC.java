@@ -177,13 +177,24 @@ public class Producteur2VendeurCC extends Producteur2Bourse implements IVendeurC
                         .getCours(feve).getValeur();
         double coutProd = this.cout_unit_t.getOrDefault(feve, 0.0);
 
-        // Pour les fèves équitables (F_HQ_E), appliquer une meilleure marge
-        if (feve == Feve.F_HQ_E) {
-            double prixEquitable = coutProd * MARGE_EQUITABLE;
-            return Math.max(prixEquitable, coutProd * 1.5);
+        int ageMax = this.getAgeAnciennete(feve);
+        double multiplicateurAge = 1.0;
+        
+        if ((feve == Feve.F_HQ || feve == Feve.F_HQ_E) && ageMax >= 8) {
+            multiplicateurAge = 0.90;
+        } else if (feve == Feve.F_MQ && ageMax >= 18) {
+            multiplicateurAge = 0.85;
+        } else if (feve == Feve.F_BQ && ageMax >= 36) {
+            multiplicateurAge = 0.80;
         }
 
-        return Math.max(cours, coutProd * 1.1);
+        // Pour les fèves équitables (F_HQ_E), appliquer une meilleure marge
+        if (feve == Feve.F_HQ_E) {
+            double prixEquitable = coutProd * MARGE_EQUITABLE * multiplicateurAge;
+            return Math.max(prixEquitable, coutProd * 1.5 * multiplicateurAge);
+        }
+
+        return Math.max(cours * multiplicateurAge, coutProd * 1.1 * multiplicateurAge);
     }
 
     @Override

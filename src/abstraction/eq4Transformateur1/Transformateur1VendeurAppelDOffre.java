@@ -102,6 +102,7 @@ public class Transformateur1VendeurAppelDOffre extends Transformateur1AcheteurCC
 		}
 		this.setStocksProduit(cm,this.getStocksProduit(cm)-quantite);
 		this.setStocksPrevuProduit(cm,this.getStocksPrevuProduit(cm)-quantite);
+		this.Vente(cm, quantite);
 
 	}
 

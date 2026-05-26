@@ -33,7 +33,8 @@ public class Transformateur3Acteur implements IActeur, IMarqueChocolat, IFabrica
 
 
 	protected HashMap<IProduit, Double> stockchocomarque;
-    public ChocolatDeMarque LamborghiniduCacao = new ChocolatDeMarque(Chocolat.C_MQ, "LamborghiniduCacao", 70);
+    public ChocolatDeMarque LamborghiniduCacao = new ChocolatDeMarque(Chocolat.C_HQ_E, "LamborghiniduCacao", 80);
+	public ChocolatDeMarque Chocoenbien = new ChocolatDeMarque(Chocolat.C_MQ_E, "Chocoenbien", 60);
 
 	public Transformateur3Acteur() {
 		this.stockFeve = new StockFeve();
@@ -44,7 +45,8 @@ public class Transformateur3Acteur implements IActeur, IMarqueChocolat, IFabrica
 	
 	public void initialiser() {
 		//* @author : Pol Bailleul */
-		this.stockchocomarque.put(LamborghiniduCacao,100000.0);
+		this.stockchocomarque.put(LamborghiniduCacao,0.0);
+		this.stockchocomarque.put(Chocoenbien,0.0);
 		for (Feve feve : stockFeve.getFeves()) {
 			this.journal.ajouter("Stock de "+Journal.texteSurUneLargeurDe(feve+"", 15)+" = "+this.stockFeve.getQuantite(feve));
 			this.Eq6TotalStock.ajouter(this, this.stockFeve.getQuantite(feve),this.cryptogramme);
@@ -201,12 +203,14 @@ public class Transformateur3Acteur implements IActeur, IMarqueChocolat, IFabrica
 	public List<ChocolatDeMarque> getChocolatsProduits(){
 		List<ChocolatDeMarque> ListeChoco=new ArrayList<ChocolatDeMarque>();
 		ListeChoco.add(LamborghiniduCacao);
+		ListeChoco.add(Chocoenbien);
 		return ListeChoco;
     }
 
 	public List<String> getMarquesChocolat(){
 		List<String> ListeNoms= new ArrayList<String>();
 		ListeNoms.add("LamborghiniduCacao");
+		ListeNoms.add("Chocoenbien");
 		return ListeNoms;
     }
 

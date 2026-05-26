@@ -42,8 +42,11 @@ public class TransformateurXVendeurAuxEncheres  extends TransformateurXVendeurCC
 				journalEncheres.ajouter("   Je lance une enchere de "+quantite+" T de "+cm);
 				if (enchere!=null) { // on a retenu l'une des encheres faites
 					journalEncheres.ajouter("   Enchere finalisee : on retire "+quantite+" T de "+cm+" du stock");
+					//System.out.println("stock "+cm+" : avant ="+this.stockChocoMarque.get(cm)+ "    apres = "+(this.stockChocoMarque.get(cm)-quantite)	);
+					//System.out.println("stocktotal : avant ="+this.totalStocksChocoMarque.getValeur(this.cryptogramme)+ "    apres = "+(this.totalStocksChocoMarque.getValeur(this.cryptogramme)-quantite)	);
 					stockChocoMarque.put(cm, stockChocoMarque.get(cm)-quantite);
 					totalStocksChocoMarque.retirer(this, quantite, cryptogramme);
+					//System.out.println(stockChocoMarque.get(cm)+"    total="+totalStocksChocoMarque.getValeur(this.cryptogramme)	);
 					prixRetenus.get(cm).add(enchere.getPrixTonne());
 					if (prixRetenus.get(cm).size()>10) {
 						prixRetenus.get(cm).remove(0); // on ne garde que les dix derniers prix
