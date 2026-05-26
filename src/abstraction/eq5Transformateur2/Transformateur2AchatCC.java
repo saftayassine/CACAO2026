@@ -132,7 +132,6 @@ public class Transformateur2AchatCC extends Transformateur2VendeurAuxEncheres im
 	 */
 	public void notificationNouveauContratCadre(ExemplaireContratCadre contrat){
 		this.mesContratsEnCours.add(contrat);
-		System.out.println("contrat #"+contrat.getNumero()+" "+contrat.getVendeur()+" a "+contrat.getAcheteur());
 		if (contrat.getProduit() instanceof Feve){
 			this.mesContratsEnCours.add(contrat);
 			this.getJournaux().get(3).ajouter("Achat fève en CC : " + contrat.toString() + "\n");
