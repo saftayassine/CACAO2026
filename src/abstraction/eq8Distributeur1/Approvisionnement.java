@@ -20,7 +20,7 @@ import abstraction.eqXRomu.produits.IProduit;
 /** @author Ewen Landron */
 public class Approvisionnement extends ChocolatDistributeur1 {
 
-    protected Map<ChocolatDeMarque, Double> prixDAchat;
+  //  protected Map<ChocolatDeMarque, Double> prixDAchat;
     protected Map<ChocolatDeMarque, Double> stockPredit;
     private Map<String, List<ChocolatDeMarque>> classements;
     protected List<ExemplaireContratCadre> mesContrats;
@@ -29,7 +29,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
 
     public Approvisionnement() {
         super();
-        this.prixDAchat = new HashMap<>();
+        //this.prixDAchat = new HashMap<>();
         this.classements = new HashMap<>();
         this.classements.put("BQ", new ArrayList<>());
         this.classements.put("BQ_EQUITABLE", new ArrayList<>());
@@ -72,6 +72,7 @@ public class Approvisionnement extends ChocolatDistributeur1 {
             if (quantiteTotale > 0) {
                 double prixMoyenPondere = coutTotal / quantiteTotale;
                 this.prixDAchat.put(cdm, prixMoyenPondere);
+                //System.out.println("init "+cdm+" a "+prixMoyenPondere+" €/T basé sur les contrats cadres");
             }
         }
         // Si aucun contrat n'existe, on garde la valeur précédente (initialisée par le ClientFinal)
