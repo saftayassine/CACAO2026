@@ -315,6 +315,7 @@ public class ClientFinal implements IActeur, IAssermente, PropertyChangeListener
 				if (impactTG!=0.0) {
 					attractiviteChocolat.put(choco, attractiviteChocolat.get(choco)*(1.0+impactTG));
 				}
+				//System.out.println(choco.getNom()+" ->"+attractiviteChocolat.get(choco)+" (impact rupture="+impactRupture+"  impact prix="+impactPrix+"  impact TG="+impactTG+")");//NNEEWW
 				journalAttractivites.ajouter("  Attractivite de "+Journal.texteColore(dist, dist.getNom())+" pour "+choco.getNom()+" = "+Journal.doubleSur(attractiviteDistributeur.get(choco).get(dist), 4)+ " (impact rupture="+Journal.doubleSur(impactRupture,  4)+"  impact prix="+Journal.doubleSur(impactPrix,  4)+"  impact TG="+Journal.doubleSur(impactTG,  4)+")");
 			}
 			this.venteCM.get(choco).setValeur(this, totalVentes);
@@ -324,6 +325,10 @@ public class ClientFinal implements IActeur, IAssermente, PropertyChangeListener
 
 		journalAttractivites.ajouter("= Transfert des attractivites entre les chocolats en fonction des rapports qualite/prix");
 		// Transfert d'attractivite entre les chocolats en fonction des rapports qualite/prix
+		HashMap<ChocolatDeMarque, Double> attractiviteChocolatAvantTransfert = new HashMap<ChocolatDeMarque, Double>();
+		for (ChocolatDeMarque choco : chocolatsDeMarquesProduits) {
+			attractiviteChocolatAvantTransfert.put(choco, attractiviteChocolat.get(choco));
+		}
 		for (ChocolatDeMarque choco1 : chocolatsDeMarquesProduits) {
 			for (ChocolatDeMarque choco2 : chocolatsDeMarquesProduits) {
 				if (prixMoyen(choco1)>0.0 && prixMoyen(choco2)>0.0 && choco1!=choco2) {
@@ -335,23 +340,39 @@ public class ClientFinal implements IActeur, IAssermente, PropertyChangeListener
 					}
 					if (moinsCher.qualitePercue()==plusCher.qualitePercue()) {
 						if ((prixMoyen(plusCher)-prixMoyen(moinsCher))/prixMoyen(moinsCher)>this.surcoutMemeQualite.getValeur()) {// a qualite identique un ecart de prix de plus de 25% modifie l'attractivite
-							attractiviteChocolat.put(moinsCher, attractiviteChocolat.get(moinsCher)*(1+this.gainAttractiviteMemeQualite.getValeur()));//1.005);// +0.5%						
-							attractiviteChocolat.put(plusCher, attractiviteChocolat.get(plusCher)*(1-+this.gainAttractiviteMemeQualite.getValeur()));//// -0.5%						
+							attractiviteChocolat.put(moinsCher, attractiviteChocolat.get(moinsCher)*(1+this.gainAttractiviteMemeQualite.getValeur()));//1.005);// +0.5%		
+							//System.out.println(moinsCher.getNom()+" ->"+attractiviteChocolat.get(moinsCher)+" (impact moins cher)");//NNEEWW				
+							attractiviteChocolat.put(plusCher, attractiviteChocolat.get(plusCher)*(1-this.gainAttractiviteMemeQualite.getValeur()));//// -0.5%						
+							//System.out.println(plusCher.getNom()+" ->"+attractiviteChocolat.get(plusCher)+" (impact plus cher)");//NNEEWW				
 							this.journalAttractivites.ajouter("&nbsp;&nbsp;prixMoyen("+moinsCher.getNom()+")="+Journal.doubleSur(prixMoyen(moinsCher), 4)+" et prixMoyen("+plusCher.getNom()+")="+Journal.doubleSur(prixMoyen(plusCher), 4)+" --> attractivite +"+this.gainAttractiviteMemeQualite.getValeur()+" pour le moins cher");
 						}
-					} else if (moinsCher.qualitePercue()>plusCher.qualitePercue()) {
-						attractiviteChocolat.put(moinsCher, attractiviteChocolat.get(moinsCher)*(1+this.gainAttractiviteQualiteDifferente.getValeur()));//// +5%						
+					} else if (moinsCher.qualitePercue()>plusCher.qualitePercue()) {double avant=attractiviteChocolat.get(moinsCher);
+						attractiviteChocolat.put(moinsCher, attractiviteChocolat.get(moinsCher)*(1+this.gainAttractiviteQualiteDifferente.getValeur()));//// +5%
+						//System.out.println(moinsCher.getNom()+":"+avant+" ->"+attractiviteChocolat.get(moinsCher)+" (impact moins cher> "+(1+this.gainAttractiviteQualiteDifferente.getValeur())+")");//NNEEWW				
 						attractiviteChocolat.put(plusCher, attractiviteChocolat.get(plusCher)*(1-this.gainAttractiviteQualiteDifferente.getValeur()));//// -5%						
+						//System.out.println(plusCher.getNom()+" ->"+attractiviteChocolat.get(plusCher)+" (impact plus cher >)");//NNEEWW				
 						this.journalAttractivites.ajouter("&nbsp;&nbsp;prixMoyen("+moinsCher.getNom()+")="+Journal.doubleSur(prixMoyen(moinsCher), 4)+" et prixMoyen("+plusCher.getNom()+")="+Journal.doubleSur(prixMoyen(plusCher), 4)+" --> attractivite +"+this.gainAttractiviteQualiteDifferente.getValeur()+" pour le moins cher");
 					} else {
 						if ((prixMoyen(plusCher)-prixMoyen(moinsCher))/prixMoyen(moinsCher)>this.surcoutQualitesDifferentes.getValeur()*(plusCher.qualitePercue()-moinsCher.qualitePercue())) {
-							attractiviteChocolat.put(moinsCher, attractiviteChocolat.get(moinsCher)*(1+this.gainAttractiviteQualiteDifferente.getValeur()));						
+							attractiviteChocolat.put(moinsCher, attractiviteChocolat.get(moinsCher)*(1+this.gainAttractiviteQualiteDifferente.getValeur()));	
+							//System.out.println(moinsCher.getNom()+" ->"+attractiviteChocolat.get(moinsCher)+" (impact moins cher else)");//NNEEWW				
 							attractiviteChocolat.put(plusCher, attractiviteChocolat.get(plusCher)*(1-this.gainAttractiviteQualiteDifferente.getValeur()));			
+							//System.out.println(plusCher.getNom()+" ->"+attractiviteChocolat.get(plusCher)+" (impact plus cher else)");//NNEEWW							
 							this.journalAttractivites.ajouter("&nbsp;&nbsp;prixMoyen("+moinsCher.getNom()+")="+Journal.doubleSur(prixMoyen(moinsCher), 4)+" et prixMoyen("+plusCher.getNom()+")="+Journal.doubleSur(prixMoyen(plusCher), 4)+" --> attractivite +"+this.gainAttractiviteQualiteDifferente.getValeur()+" pour le moins cher");
 						}
 					}
 				}
 			}
+		}
+		for (ChocolatDeMarque choco : chocolatsDeMarquesProduits) {
+			if (attractiviteChocolat.get(choco)>attractiviteChocolatAvantTransfert.get(choco)*1.15) {
+				this.attractiviteChocolat.put(choco,attractiviteChocolatAvantTransfert.get(choco)*1.15 );
+				this.journalAttractivites.ajouter(Color.red,Color.white,"L'attractivite du chocolat "+choco.getNom()+" a ete limitee a "+Journal.doubleSur(attractiviteChocolat.get(choco), 4)+" (gain de 15% max) pour eviter des variations trop importantes d'une etape a l'autre");
+			} else if (attractiviteChocolat.get(choco)<attractiviteChocolatAvantTransfert.get(choco)*0.85) {
+				this.attractiviteChocolat.put(choco,attractiviteChocolatAvantTransfert.get(choco)*0.85 );
+				this.journalAttractivites.ajouter(Color.red,Color.white,"L'attractivite du chocolat "+choco.getNom()+" a ete limitee a "+Journal.doubleSur(attractiviteChocolat.get(choco), 4)+" (perte de 15% max) pour eviter des variations trop importantes d'une etape a l'autre");
+			}
+			
 		}
 		for (ChocolatDeMarque choco1 : chocolatsDeMarquesProduits) {
 			this.journalAttractivites.ajouter("attractivite du "+choco1.getNom()+" == "+Journal.doubleSur(attractiviteChocolat.get(choco1), 4));
