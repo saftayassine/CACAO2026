@@ -18,10 +18,6 @@ import java.util.LinkedList;
 
 public class Producteur1VendeurContratCadre extends Producteur1Cooperative implements IVendeurContratCadre{
 
-	// FIX #4 : on remonte le plafond annuel d'engagement à 95% (au lieu de 70%)
-	// C'est l'objectif business : 95% de la récolte annuelle écoulée (CC + bourse)
-	protected static final double PLAFOND_ENGAGEMENT = 95.0;
-
 	// FIX #10 : contrainte imposée par les distributeurs : un échéancier doit
 	// faire au minimum 100 tonnes au total. Sous ce seuil, on refuse la négociation.
 	protected static final double QTE_MIN_ECHEANCIER = 100.0;
@@ -64,6 +60,21 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
     }
 
+	/**
+	 * Calcule le plafond d'engagement (en pourcentage) pour une fève donnée, 
+	 * de sorte à conserver exactement 500 tonnes de marge de sécurité.
+	 */
+	protected double getPlafondEngagement(Feve f) {
+		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
+		
+		if (stockRef <= 500.0) {
+			return 0.0; // On ne vend rien si le stock est inférieur ou égal à 500t
+		}
+		
+		double pourcentageMarge = (500.0 / stockRef) * 100.0;
+		return 100.0 - pourcentageMarge;
+	}
+
 	public void initialiser() {
 		super.initialiser();
 		this.supCC = (SuperviseurVentesContratCadre)(Filiere.LA_FILIERE.getActeur("Sup.CCadre"));
@@ -93,7 +104,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 	public boolean vend(IProduit produit){
 		if(produit == Feve.F_BQ || produit == Feve.F_MQ){
-			return this.pourcentageAVendre.get(produit) < PLAFOND_ENGAGEMENT;
+			return this.pourcentageAVendre.get(produit) < this.getPlafondEngagement((Feve)produit);
 		}
 		return false;
 	}
@@ -184,8 +195,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 	public void initialisationContratCadre(Feve f){
 
 		List<IAcheteurContratCadre> acheteurs = this.supCC.getAcheteurs(f);
-		// FIX #4 : plafond passé de 70 à PLAFOND_ENGAGEMENT (=95)
-		if (acheteurs.size()>0 && this.pourcentageAVendre.get(f) <= PLAFOND_ENGAGEMENT) {
+		if (acheteurs.size()>0 && this.pourcentageAVendre.get(f) <= this.getPlafondEngagement(f)) {
 			IAcheteurContratCadre acheteur = acheteurs.get(Filiere.random.nextInt(acheteurs.size()));
 			journalCC.ajouter("   "+acheteur.getNom()+" retenu comme acheteur parmi "+acheteurs.size()+" acheteurs potentiels");
 			if(this.isContratdEnCours(acheteur, f)){
@@ -193,16 +203,13 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 				for (int i = 0; i < this.contratsEnCours.size(); i++) {
 					ExemplaireContratCadre contratAct = this.contratsEnCours.get(i);
-					if(contratAct.getAcheteur()==acheteur && contratAct.getProduit()==f && this.pourcentageAVendre.get(f) <= PLAFOND_ENGAGEMENT){
+					if(contratAct.getAcheteur()==acheteur && contratAct.getProduit()==f && this.pourcentageAVendre.get(f) <= this.getPlafondEngagement(f)){
 						contrat = contratAct;
 					}
 				}
-				// On calcule combien de steps il reste avant la fin du contrat
-				int tempsRestant = contrat.getEcheancier().getStepFin() - Filiere.LA_FILIERE.getEtape();
-				
-				// Si le contrat se termine dans moins d'un an (et qu'il n'est pas déjà fini), on le renouvelle
-				if (tempsRestant >= 0 && tempsRestant <= 24) {
-					this.renouvellementContratCadre(acheteur, f, contrat);
+				int tempsRestant = Filiere.LA_FILIERE.getEtape()-contrat.getEcheancier().getStepFin();
+				if(Filiere.LA_FILIERE.getEtape()%24 >= tempsRestant){
+					this.renouvellementContratCadre(acheteur, f,contrat);
 				}
 			}
 			else{
@@ -220,9 +227,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		int etape = Filiere.LA_FILIERE.getEtape();
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
 
-		// FIX #5 : on cible 95% du stock par AN (et non 95% - 5% de marge sur le total contrat)
-		// La marge de sécurité (5%) sera gérée naturellement par le plafond à 95%
-		double pourcentRestant = Math.max(0, PLAFOND_ENGAGEMENT - this.pourcentageAVendre.get(f));
+		double pourcentRestant = Math.max(0, this.getPlafondEngagement(f) - this.pourcentageAVendre.get(f));
 		double quantiteAnnuelleMax = stockRef * (pourcentRestant / 100.0);
 
 		// Plafonds par défaut sur les volumes négociés
@@ -279,8 +284,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		int temps = 24;
 
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
-		double pourcentRestant = Math.max(0, PLAFOND_ENGAGEMENT - this.pourcentageAVendre.get(f));
-		// FIX #3 : même logique que propositionContratCadre, on ne dépasse pas la marge dispo annuelle
+		double pourcentRestant = Math.max(0, this.getPlafondEngagement(f) - this.pourcentageAVendre.get(f));
 		double quantiteAnnuelleMax = stockRef * (pourcentRestant / 100.0);
 		double quantiteTot = Math.min(contrat.getQuantiteTotale(), quantiteAnnuelleMax);
 
@@ -336,8 +340,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
 		double pourcent = stockRef > 0 ? (quantiteRestante/stockRef)*100 : 0;
 
-		// FIX #7 : on autorise jusqu'à atteindre le plafond PLAFOND_ENGAGEMENT (=95%)
-		boolean cetteAnnee = pourcent < PLAFOND_ENGAGEMENT - this.pourcentageAVendre.get(f);
+		boolean cetteAnnee = pourcent < this.getPlafondEngagement(f) - this.pourcentageAVendre.get(f);
 
 		double quantiteApres = e.getQuantiteAPartirDe(etape +tempsRestant + 1) ;
 		if(e.getStepFin()> etape + 48 - etape%24){
@@ -360,8 +363,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 		int finAnnee = etape + 23 - (etape % 24);
 
 		double stockDispo = this.stockDebutAnnee.getOrDefault(f, 0.0);
-		// FIX #8 : on remonte aussi le plafond à PLAFOND_ENGAGEMENT (=95)
-		double pourcentDispo = Math.max(0, PLAFOND_ENGAGEMENT - this.pourcentageAVendre.getOrDefault(f, 0.0));
+		double pourcentDispo = Math.max(0, this.getPlafondEngagement(f) - this.pourcentageAVendre.getOrDefault(f, 0.0));
 		double maxCetteAnnee = stockDispo * (pourcentDispo / 100.0);
 
 		double demandeCetteAnnee = this.getQuantiteCetteAnnee(echeancier);
@@ -462,8 +464,6 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 
 				for(ExemplaireContratCadre contrat : this.contratsEnCours){
 					if(contrat.getProduit() == f){
-						// FIX #6 : on compte UNIQUEMENT la quantité livrée dans les 24 prochaines étapes
-						// (avant : getQuantiteJusquA(24) qui dépendait de l'étape de référence et était trompeur)
 						double qteAnnee = this.getQuantiteCetteAnnee(contrat.getEcheancier());
 						quantiteEngageeCetteAnnee += qteAnnee;
 
@@ -483,7 +483,7 @@ public class Producteur1VendeurContratCadre extends Producteur1Cooperative imple
 				journalCC.ajouter("  ["+f+"] quantité engagée cette année : "+String.format("%.1f", quantiteEngageeCetteAnnee)+" t"
 					+" | stock de référence : "+String.format("%.1f", stock)+" t"
 					+" | % engagé : "+String.format("%.1f", pourcent)+"%"
-					+" | % disponible : "+String.format("%.1f", Math.max(0, PLAFOND_ENGAGEMENT - pourcent))+"%");
+					+" | % disponible : "+String.format("%.1f", Math.max(0, this.getPlafondEngagement(f) - pourcent))+"%");
 			}
 		}
 

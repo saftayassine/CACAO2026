@@ -17,9 +17,6 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
     private int blacklist=0;
 	protected Journal journalBourse;
 
-	// Marge de sécurité : on ne descend JAMAIS en dessous de 5% du stock initial
-	protected static final double MARGE_SECURITE_PCT = 5.0;
-
 
     public Producteur1VendeurBourse(){
         super();
@@ -82,7 +79,7 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 			return 0;
 		}
 
-		// =========================================================
+		// ===============================s==========================
 		// NOUVELLE LOGIQUE : on calcule à partir du STOCK ACTUEL
 		// (et non du stockRef) pour éviter le double comptage
 		// avec les livraisons CC déjà en cours.
@@ -90,8 +87,10 @@ public class Producteur1VendeurBourse extends Producteur1VendeurContratCadre imp
 
 		double stockRef = this.stockDebutAnnee.getOrDefault(f, 0.0);
 
-		// 1. Marge de sécurité : 5% du stock initial qu'on ne touche jamais
-		double margeSecurite = stockRef * (MARGE_SECURITE_PCT / 100.0);
+		// 1. Marge de sécurité : calculée via le pourcentage équivalent à 500t
+		double plafondEngagement = this.getPlafondEngagement(f);
+		double margeSecuritePct = 100.0 - plafondEngagement;
+		double margeSecurite = stockRef * (margeSecuritePct / 100.0); 
 
 		// 2. Stock réservé aux livraisons CC FUTURES de cette année
 		//    (ce qui reste à livrer aux CC entre maintenant et fin d'année)
