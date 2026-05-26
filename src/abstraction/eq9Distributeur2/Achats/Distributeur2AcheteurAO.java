@@ -34,6 +34,7 @@ public Distributeur2AcheteurAO(){
         }
         return 0.0;
     }
+
     public void faireUnAppelDOffre() {
         EQ9_GestionStocks gs = new EQ9_GestionStocks(this.stock, this::restantDu);
 
@@ -55,6 +56,9 @@ public Distributeur2AcheteurAO(){
         }
 
         for (ChocolatDeMarque choco : produitsFiliere) {
+            if (estMarqueConcurrente(choco)) {
+                continue; // On ignore ce chocolat
+            }
             if (!gs.doitAcheter(choco)) continue;
             if (!gs.prefererAO(choco)) continue; // CC gère le reste
 
